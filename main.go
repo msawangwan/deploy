@@ -7,12 +7,17 @@ import (
 	"net/http"
 )
 
-func main() {
-	log.Printf("listen on 9001")
+const (
+	kENDPOINT = "/webhooks/payload"
+	kPORT     = ":80"
+)
 
-	http.HandleFunc("/payload", func(w http.ResponseWriter, r *http.Request) {
+func main() {
+	log.Printf("listen on %s", kPORT)
+
+	http.HandleFunc(kENDPOINT, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello %q", html.EscapeString(r.URL.Path))
 	})
 
-	log.Fatal(http.ListenAndServe(":80", nil))
+	log.Fatal(http.ListenAndServe(kPORT, nil))
 }
