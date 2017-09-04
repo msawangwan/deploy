@@ -1,6 +1,12 @@
 package main
 
+// TODO:
+// need to run an external script which
+// - pulls the latest code from a repository
+// - makes a build
+
 import (
+	"bytes"
 	"encoding/json"
 	"html"
 	"io/ioutil"
@@ -26,8 +32,6 @@ func init() {
 	if e != nil {
 		log.Fatalln("failed to create/open debug log file:", e)
 	}
-
-	// defer f.Close()
 
 	label := "[DEBUG]"
 	flags := 0
@@ -59,17 +63,18 @@ func main() {
 			recurseAndPrintJSON(data.(map[string]interface{}), "")
 		}
 
-		// TODO:
-		// need to run an external script which
-		// - pulls the latest code from a repository
-		// - makes a build
+		var out bytes.Buffer
 
 		cmd := exec.Command("/bin/sh", "./scripts/webhook.sh")
+		cmd.Stdout = &out
+
 		err = cmd.Run()
 
 		if err != nil {
 			log.Println(err)
 		}
+
+		log.Printf("command executed with result: %q\n", out.String())
 	})
 
 	log.Fatal(http.ListenAndServe(port, nil))
