@@ -36,30 +36,10 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			log.Println(data)
+			for k, v := range data.(map[string]interface{}) {
+				log.Println(k, ":", v)
+			}
 		}
-
-		// formatted, err := prettyPrintJSON([]byte(body))
-
-		// if err != nil {
-		// 	log.Println(err)
-		// } else {
-		// 	log.Println(formatted)
-		// }
-
-		// var data struct {
-		// 	String string
-		// }
-
-		// decoder := json.NewDecoder(r.Body)
-
-		// err := decoder.Decode(&data)
-
-		// if err != nil {
-		// 	log.Printf("err %s", err)
-		// }
-
-		// fmt.Println(data.String)
 	})
 
 	log.Fatal(http.ListenAndServe(port, nil))
