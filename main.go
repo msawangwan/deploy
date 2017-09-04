@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -20,19 +21,43 @@ func main() {
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello %q", html.EscapeString(r.URL.Path))
 
-		var data struct {
-			String string
-		}
+		log.Printf("webhook triggered: %q", html.EscapeString(r.URL.Path))
 
-		decoder := json.NewDecoder(r.Body)
-
-		err := decoder.Decode(&data)
+		body, err := ioutil.ReadAll(r.Body)
 
 		if err != nil {
-			log.Printf("err %s", err)
+			log.Println(err)
 		}
 
-		fmt.Println(data.String)
+		// var data map[string] interface{}
+
+		// err := json.Unmarshal(body, &data)
+
+		// if err != nil {
+		// 	fmt.Printf(err)
+		// }
+
+		formatted, err := prettyPrintJSON([]byte(body))
+
+		if err != nil {
+			log.Println(err)
+		} else {
+			log.Println(formatted)
+		}
+
+		// var data struct {
+		// 	String string
+		// }
+
+		// decoder := json.NewDecoder(r.Body)
+
+		// err := decoder.Decode(&data)
+
+		// if err != nil {
+		// 	log.Printf("err %s", err)
+		// }
+
+		// fmt.Println(data.String)
 	})
 
 	log.Fatal(http.ListenAndServe(port, nil))
