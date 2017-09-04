@@ -48,7 +48,13 @@ func recurseAndPrintJSON(m map[string]interface{}, indent string) {
 		case []interface{}:
 			log.Println(indent, k, ":")
 			for _, u := range cur {
-				log.Println(indent, u)
+				nested, isNested := u.(map[string]interface{})
+
+				if nested {
+					recurseAndPrintJSON(u, indent+"\t")
+				} else {
+					log.Println(indent, u)
+				}
 			}
 		default:
 			log.Println(indent, k, ":", v)
