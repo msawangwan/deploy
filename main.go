@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os/exec"
 )
 
 const (
@@ -33,6 +34,19 @@ func main() {
 			log.Println(err)
 		} else {
 			recurseAndPrintJSON(data.(map[string]interface{}), "")
+		}
+
+		// TODO:
+		// need to run an external script which
+		// - pulls the latest code from a repository
+		// - makes a build
+
+		cmd := exec.Command("/bin/bash", "./scripts/webhooks.sh")
+		// cmd.Stdin = strings.NewReader
+		err = cmd.Run()
+
+		if err != nil {
+			log.Println(err)
 		}
 	})
 
