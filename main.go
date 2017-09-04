@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"html"
 	"io/ioutil"
 	"log"
@@ -19,8 +17,6 @@ func main() {
 	log.Printf("listen on %s", port)
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello %q", html.EscapeString(r.URL.Path))
-
 		log.Printf("webhook recieved: %q", html.EscapeString(r.URL.Path))
 
 		body, err := ioutil.ReadAll(r.Body)
@@ -36,27 +32,21 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			recurseJSON(data.(map[string]interface{}), "")
+			recurseAndPrintJSON(data.(map[string]interface{}), "")
 		}
 	})
 
 	log.Fatal(http.ListenAndServe(port, nil))
 }
 
-func prettyPrintJSON(b []byte) ([]byte, error) {
-	var out bytes.Buffer
-	err := json.Indent(&out, b, "", "\t")
-	return out.Bytes(), err
-}
-
-func recurseJSON(m map[string]interface{}, level string) {
+func recurseAndPrintJSON(m map[string]interface{}, indent string) {
 	for k, v := range m {
 		switch cur := v.(type) {
 		case map[string]interface{}:
-			log.Println(level, k, ":")
-			recurseJSON(cur, level+"\t")
+			log.Println(indent, k, ":")
+			recurseAndPrintJSON(cur, indent+"\t")
 		default:
-			log.Println(level, k, ":", v)
+			log.Println(indent, k, ":", v)
 		}
 	}
 }
