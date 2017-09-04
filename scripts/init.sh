@@ -5,6 +5,9 @@
 
 cd ..
 
+pwd
+ls
+
 VERSION=$("cat conf/globals.json | grep version")
 
 echo "working dir:"

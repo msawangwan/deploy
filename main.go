@@ -42,8 +42,6 @@ func init() {
 func main() {
 	log.Printf("listen on %s", port)
 
-	exec.Command("pwd").Run()
-
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("webhook recieved: %q", html.EscapeString(r.URL.Path))
 
@@ -77,7 +75,7 @@ func main() {
 			log.Printf("%s\n", stderr.String())
 		}
 
-		log.Printf("command executed with result: %s\n", out.String())
+		log.Printf("command executed with result:\n%s\n", out.String())
 	})
 
 	log.Fatal(http.ListenAndServe(port, nil))
