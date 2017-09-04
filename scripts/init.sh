@@ -1,8 +1,19 @@
 #!/bin/bash
 
+# todo:
+# get version number from a config script
+
 cd ..
+
+VERSION=$("cat config/globals.json | grep version")
+
+echo "working dir:"
+pwd
+
+echo "version:"
+echo "$VERSION"
+
+echo "build:"
 
 docker build -t ci.io .
 docker run -p 9001:80 -it --rm --name ci.io.running ci.io
-
-pwd

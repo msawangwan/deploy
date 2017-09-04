@@ -17,6 +17,8 @@ const (
 func main() {
 	log.Printf("listen on %s", port)
 
+	exec.Command("pwd").Run()
+
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("webhook recieved: %q", html.EscapeString(r.URL.Path))
 
