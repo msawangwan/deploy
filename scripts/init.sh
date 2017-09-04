@@ -5,7 +5,7 @@
 
 cd ..
 
-VERSION=$("cat config/globals.json | grep version")
+VERSION=$("cat conf/globals.json | grep version")
 
 echo "working dir:"
 pwd

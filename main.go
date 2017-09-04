@@ -64,17 +64,20 @@ func main() {
 		}
 
 		var out bytes.Buffer
+		var stderr bytes.Buffer
 
 		cmd := exec.Command("/bin/sh", "./scripts/webhook.sh")
 		cmd.Stdout = &out
+		cmd.Stderr = &stderr
 
 		err = cmd.Run()
 
 		if err != nil {
-			log.Println(err)
+			log.Printf("%s\n", err)
+			log.Printf("%s\n", stderr.String())
 		}
 
-		log.Printf("command executed with result: %q\n", out.String())
+		log.Printf("command executed with result: %s\n", out.String())
 	})
 
 	log.Fatal(http.ListenAndServe(port, nil))
