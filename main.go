@@ -27,7 +27,7 @@ func init() {
 		log.Fatalln("failed to create/open debug log file:", e)
 	}
 
-	defer f.Close()
+	// defer f.Close()
 
 	label := "[DEBUG]"
 	flags := log.Ldate | log.Ltime | log.Lshortfile
