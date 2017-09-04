@@ -29,21 +29,23 @@ func main() {
 			log.Println(err)
 		}
 
-		// var data map[string] interface{}
+		var data interface{}
 
-		// err := json.Unmarshal(body, &data)
-
-		// if err != nil {
-		// 	fmt.Printf(err)
-		// }
-
-		formatted, err := prettyPrintJSON([]byte(body))
+		err = json.Unmarshal([]byte(body), &data)
 
 		if err != nil {
 			log.Println(err)
 		} else {
-			log.Println(formatted)
+			log.Println(data)
 		}
+
+		// formatted, err := prettyPrintJSON([]byte(body))
+
+		// if err != nil {
+		// 	log.Println(err)
+		// } else {
+		// 	log.Println(formatted)
+		// }
 
 		// var data struct {
 		// 	String string
