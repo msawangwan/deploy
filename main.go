@@ -50,8 +50,8 @@ func recurseAndPrintJSON(m map[string]interface{}, indent string) {
 			for _, u := range cur {
 				nested, isNested := u.(map[string]interface{})
 
-				if nested {
-					recurseAndPrintJSON(u, indent+"\t")
+				if isNested {
+					recurseAndPrintJSON(nested, indent+"\t")
 				} else {
 					log.Println(indent, u)
 				}
