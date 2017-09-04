@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 )
 
@@ -13,6 +14,26 @@ const (
 	endpoint = "/webhooks/payload"
 	port     = ":80"
 )
+
+var (
+	debug *log.Logger
+)
+
+func init() {
+	log.Println("app init")
+	f, e := os.OpenFile("debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+
+	if e != nil {
+		log.Fatalln("failed to create/open debug log file:", e)
+	}
+
+	defer f.Close()
+
+	label := "[DEBUG]"
+	flags := log.Ldate | log.Ltime | log.Lshortfile
+
+	debug = log.New(f, label, flags)
+}
 
 func main() {
 	log.Printf("listen on %s", port)
@@ -58,21 +79,21 @@ func recurseAndPrintJSON(m map[string]interface{}, indent string) {
 	for k, v := range m {
 		switch cur := v.(type) {
 		case map[string]interface{}:
-			log.Println(indent, k, ":")
+			debug.Println(indent, k, ":")
 			recurseAndPrintJSON(cur, indent+"\t")
 		case []interface{}:
-			log.Println(indent, k, ":")
+			debug.Println(indent, k, ":")
 			for _, u := range cur {
 				nested, isNested := u.(map[string]interface{})
 
 				if isNested {
 					recurseAndPrintJSON(nested, indent+"\t")
 				} else {
-					log.Println(indent+"\t", u)
+					debug.Println(indent+"\t", u)
 				}
 			}
 		default:
-			log.Println(indent, k, ":", v)
+			debug.Println(indent, k, ":", v)
 		}
 	}
 }
