@@ -44,7 +44,6 @@ func main() {
 		// - makes a build
 
 		cmd := exec.Command("/bin/bash", "./webhooks.sh")
-		// cmd.Stdin = strings.NewReader
 		err = cmd.Run()
 
 		if err != nil {
