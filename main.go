@@ -64,7 +64,7 @@ func main() {
 		// - pulls the latest code from a repository
 		// - makes a build
 
-		cmd := exec.Command("/bin/bash", "./webhooks.sh")
+		cmd := exec.Command("/bin/sh", "./webhooks.sh")
 		err = cmd.Run()
 
 		if err != nil {
