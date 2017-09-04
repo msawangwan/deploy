@@ -1,9 +1,10 @@
 package model
 
 import (
-	"github.com/msawangwan/ci.io/model/github"
+	"github.com/msawangwan/ci.io/model/payload"
 )
 
-func Create() *github.Sender {
-	return &github.Sender{}
+// Create is a placeholder func
+func Create() *payload.PushEvent {
+	return &payload.PushEvent{}
 }
