@@ -21,7 +21,7 @@ func main() {
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello %q", html.EscapeString(r.URL.Path))
 
-		log.Printf("webhook triggered: %q", html.EscapeString(r.URL.Path))
+		log.Printf("webhook recieved: %q", html.EscapeString(r.URL.Path))
 
 		body, err := ioutil.ReadAll(r.Body)
 
@@ -36,7 +36,7 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			recurseJSON(data.(map[string]interface{}))
+			recurseJSON(data.(map[string]interface{}), "")
 		}
 	})
 
@@ -49,13 +49,13 @@ func prettyPrintJSON(b []byte) ([]byte, error) {
 	return out.Bytes(), err
 }
 
-func recurseJSON(m map[string]interface{}) {
+func recurseJSON(m map[string]interface{}, level string) {
 	for k, v := range m {
 		switch cur := v.(type) {
 		case map[string]interface{}:
-			recurseJSON(cur)
+			recurseJSON(cur, level+"\t")
 		default:
-			fmt.Println(k, " : ", v)
+			fmt.Println(level, k, ":", v)
 		}
 	}
 }
