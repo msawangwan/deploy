@@ -53,7 +53,7 @@ func recurseAndPrintJSON(m map[string]interface{}, indent string) {
 				if isNested {
 					recurseAndPrintJSON(nested, indent+"\t")
 				} else {
-					log.Println(indent, u)
+					log.Println(indent+"\t", u)
 				}
 			}
 		default:
