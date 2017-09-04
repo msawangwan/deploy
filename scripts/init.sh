@@ -1,17 +1,14 @@
-#!/bin/bash
+#!/bin/sh
 
 # todo:
 # get version number from a config script
 
 cd ..
 
+echo "root dir:"
 pwd
-ls
 
-VERSION=$("cat ../conf/globals.json | grep version")
-
-echo "working dir:"
-pwd
+VERSION="$(/bin/cat conf/globals.json | /bin/grep version)"
 
 echo "version:"
 echo "$VERSION"
