@@ -45,9 +45,15 @@ func recurseAndPrintJSON(m map[string]interface{}, indent string) {
 		case map[string]interface{}:
 			log.Println(indent, k, ":")
 			recurseAndPrintJSON(cur, indent+"\t")
-		case []map[string]interface{}:
+		case []interface{}:
 			for _, u := range cur {
-				log.Println(indent, u)
+				switch item := u.(type) {
+				case map[string]interface{}:
+					log.Println(indent, u, ":")
+					recurseAndPrintJSON(item, indent+"\t")
+				default:
+					log.Println(indent, u)
+				}
 			}
 		default:
 			log.Println(indent, k, ":", v)
