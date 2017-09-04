@@ -36,9 +36,7 @@ func main() {
 		if err != nil {
 			log.Println(err)
 		} else {
-			for k, v := range data.(map[string]interface{}) {
-				log.Println(k, ":", v)
-			}
+			recurseJSON(data.(map[string]interface{}))
 		}
 	})
 
@@ -49,4 +47,15 @@ func prettyPrintJSON(b []byte) ([]byte, error) {
 	var out bytes.Buffer
 	err := json.Indent(&out, b, "", "\t")
 	return out.Bytes(), err
+}
+
+func recurseJSON(m map[string]interface{}) {
+	for k, v := range m {
+		switch cur := v.(type) {
+		case map[string]interface{}:
+			recurseJSON(cur)
+		default:
+			fmt.Println(k, " : ", v)
+		}
+	}
 }
