@@ -53,9 +53,10 @@ func recurseJSON(m map[string]interface{}, level string) {
 	for k, v := range m {
 		switch cur := v.(type) {
 		case map[string]interface{}:
+			log.Println(k, ":")
 			recurseJSON(cur, level+"\t")
 		default:
-			fmt.Println(level, k, ":", v)
+			log.Println(level, k, ":", v)
 		}
 	}
 }
