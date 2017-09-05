@@ -1,0 +1,9 @@
+#!/bin/sh
+
+echo "ci.io build phase ..."
+echo
+
+docker images
+docker images -a
+docker ps
+docker ps -a
