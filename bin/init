@@ -22,4 +22,4 @@ docker system prune -f
 # docker run --rm -it --name ci.io.root -v /var/run/docker.sock:/var/run/docker.sock docker
 
 docker build -t ci.io.root:dev .
-docker run --rm --name ci.io.root -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock ci.io.root:dev
+docker run --rm -it --name ci.io.root -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock ci.io.root:dev
