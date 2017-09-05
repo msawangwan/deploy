@@ -1,4 +1,4 @@
-package key
+package payload
 
 // Author is a github webhook object
 type Author struct {

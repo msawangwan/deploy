@@ -1,4 +1,4 @@
-package key
+package payload
 
 // Committer is a github webhook object
 type Committer struct {

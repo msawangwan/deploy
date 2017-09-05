@@ -14,7 +14,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/msawangwan/ci.io/lib/webhook/payload"
+	"github.com/msawangwan/ci.io/lib/internal/webhook"
 )
 
 const (
@@ -40,7 +40,7 @@ func init() {
 	debug = log.New(f, label, flags)
 }
 
-func handlePushEvent(webhook *payload.PushEvent) {
+func handlePushEvent(payload *webhook.PushEvent) {
 	// pull the repo to a tmp folder
 	// spin up a new container
 	// copy the repo into container
@@ -49,7 +49,7 @@ func handlePushEvent(webhook *payload.PushEvent) {
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 
-	cmd := exec.Command("/bin/sh", "./bin/webhook", webhook.Repository.FullName, webhook.Ref)
+	cmd := exec.Command("/bin/sh", "./bin/webhook", payload.Repository.FullName, payload.Ref)
 
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
@@ -98,14 +98,14 @@ func main() {
 				log.Println(err)
 			}
 
-			var webhook *payload.PushEvent
+			var payload *webhook.PushEvent
 
-			err = json.Unmarshal([]byte(body), &webhook)
+			err = json.Unmarshal([]byte(body), &payload)
 
 			if err != nil {
 				log.Println(err)
 			} else {
-				handlePushEvent(webhook)
+				handlePushEvent(payload)
 			}
 		}
 	})

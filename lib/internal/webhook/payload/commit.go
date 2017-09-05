@@ -1,4 +1,4 @@
-package key
+package payload
 
 // Commit is a webhook object
 type Commit struct {

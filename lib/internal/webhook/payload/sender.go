@@ -1,4 +1,4 @@
-package key
+package payload
 
 // Sender is a github webhook object
 type Sender struct {

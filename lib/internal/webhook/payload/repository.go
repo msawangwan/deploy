@@ -1,4 +1,4 @@
-package key
+package payload
 
 // Repository is a github webhook object
 type Repository struct {
