@@ -1,4 +1,4 @@
-package object
+package key
 
 // Pusher is a github webhook object
 type Pusher struct {

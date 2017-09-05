@@ -1,10 +1,10 @@
 package model
 
 import (
-	"github.com/msawangwan/ci.io/model/payload"
+	"github.com/msawangwan/ci.io/model/webhook"
 )
 
-// Create is a placeholder func
-func Create() *payload.PushEvent {
-	return &payload.PushEvent{}
+// PushEventPayload is a placeholder func
+func PushEventPayload() *webhook.PushEvent {
+	return &webhook.PushEvent{}
 }

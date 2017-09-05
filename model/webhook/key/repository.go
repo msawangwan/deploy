@@ -1,4 +1,4 @@
-package object
+package key
 
 // Repository is a github webhook object
 type Repository struct {

@@ -1,8 +1,8 @@
-package object
+package key
 
 // Author is a github webhook object
 type Author struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
 	Username string `json:"username"`
 }

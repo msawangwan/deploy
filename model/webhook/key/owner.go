@@ -1,4 +1,4 @@
-package object
+package key
 
 // Owner is a github webhook object
 type Owner struct {

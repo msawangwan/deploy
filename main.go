@@ -8,6 +8,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"html"
 	"io/ioutil"
 	"log"
@@ -51,15 +52,32 @@ func main() {
 			log.Println(err)
 		}
 
-		var data interface{}
+		var pretty bytes.Buffer
 
-		err = json.Unmarshal([]byte(body), &data)
+		err = json.Indent(&pretty, []byte(body), "", "\t")
 
-		if err != nil {
-			log.Println(err)
-		} else {
-			recurseAndPrintJSON(data.(map[string]interface{}), "")
-		}
+		fmt.Println(pretty)
+		// var payload *webhook.PushEvent
+
+		// err = json.Unmarshal([]byte(body), &payload)
+
+		// if err != nil {
+		// 	log.Println(err)
+		// } else {
+		// 	var pretty bytes.Buffer
+
+		// 	err = json.Indent(&pretty, []byte(body), "", "\t")
+		// }
+
+		// var data interface{}
+
+		// err = json.Unmarshal([]byte(body), &data)
+
+		// if err != nil {
+		// 	log.Println(err)
+		// } else {
+		// 	recurseAndPrintJSON(data.(map[string]interface{}), "")
+		// }
 
 		var out bytes.Buffer
 		var stderr bytes.Buffer
