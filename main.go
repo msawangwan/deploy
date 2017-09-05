@@ -8,12 +8,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+
+	"github.com/msawangwan/ci.io/model/webhook"
 )
 
 const (
@@ -39,84 +40,93 @@ func init() {
 	debug = log.New(f, label, flags)
 }
 
+func handlePushEvent(payload *webhook.PushEvent) {
+	// startup a container
+	// pull the latest code
+	var out bytes.Buffer
+	var stderr bytes.Buffer
+
+	cmd := exec.Command("/bin/sh", "./bin/webhook", payload.Repository.FullName, payload.Ref)
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+
+	if err != nil {
+		log.Printf("%s\n", err)
+		log.Printf("%s\n", stderr.String())
+	}
+
+	log.Printf("command executed with result:\n%s\n", out.String())
+}
+
+type eventType struct {
+	name      string
+	guid      string
+	signature string
+}
+
+func parse(headers http.Header) *eventType {
+	return &eventType{
+		headers.Get("x-github-event"),
+		headers.Get("x-github-delivery"),
+		headers.Get("x-github-signature"),
+	}
+}
+
 func main() {
-	log.Printf("listen on %s", port)
+	log.Printf("listening for incoming webhooks @ %s", port)
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
 		eventName := r.Header.Get("x-github-event")
 		eventGUID := r.Header.Get("x-github-delivery")
 		eventSig := r.Header.Get("x-github-signature")
 
+		event := parse(r.Header)
+
 		log.Printf("webhook triggered:\n%s\n%s\n%s\n", eventName, eventGUID, eventSig)
+		log.Println(event)
 
-		// if eventName == "push" {
-		// 	log.Println("got push event")
-		// }
+		if eventName == "push" {
+			body, err := ioutil.ReadAll(r.Body)
 
-		// log.Printf("webhook recieved: %q", html.EscapeString(r.URL.Path))
+			if err != nil {
+				log.Println(err)
+			}
 
-		body, err := ioutil.ReadAll(r.Body)
+			var payload *webhook.PushEvent
 
-		if err != nil {
-			log.Println(err)
+			err = json.Unmarshal([]byte(body), &payload)
+
+			if err != nil {
+				log.Println(err)
+			} else {
+				handlePushEvent(payload)
+			}
 		}
 
-		var pretty bytes.Buffer
+		// var pretty bytes.Buffer
 
-		err = json.Indent(&pretty, []byte(body), "", "  ")
+		// err = json.Indent(&pretty, []byte(body), "", "  ")
 
-		fmt.Println(pretty.String())
-		// var payload *webhook.PushEvent
+		// fmt.Println(pretty.String())
 
-		// err = json.Unmarshal([]byte(body), &payload)
+		// var out bytes.Buffer
+		// var stderr bytes.Buffer
+
+		// cmd := exec.Command("/bin/sh", "./scripts/webhook.sh")
+		// cmd.Stdout = &out
+		// cmd.Stderr = &stderr
+
+		// err = cmd.Run()
 
 		// if err != nil {
-		// 	log.Println(err)
-		// } else {
-		// 	var pretty bytes.Buffer
-
-		// 	err = json.Indent(&pretty, []byte(body), "", "\t")
+		// 	log.Printf("%s\n", err)
+		// 	log.Printf("%s\n", stderr.String())
 		// }
 
-		var out bytes.Buffer
-		var stderr bytes.Buffer
-
-		cmd := exec.Command("/bin/sh", "./scripts/webhook.sh")
-		cmd.Stdout = &out
-		cmd.Stderr = &stderr
-
-		err = cmd.Run()
-
-		if err != nil {
-			log.Printf("%s\n", err)
-			log.Printf("%s\n", stderr.String())
-		}
-
-		log.Printf("command executed with result:\n%s\n", out.String())
+		// log.Printf("command executed with result:\n%s\n", out.String())
 	})
 
 	log.Fatal(http.ListenAndServe(port, nil))
 }
-
-// func recurseAndPrintJSON(m map[string]interface{}, indent string) {
-// 	for k, v := range m {
-// 		switch cur := v.(type) {
-// 		case map[string]interface{}:
-// 			debug.Println(indent, k, ":")
-// 			recurseAndPrintJSON(cur, indent+"\t")
-// 		case []interface{}:
-// 			debug.Println(indent, k, ":")
-// 			for _, u := range cur {
-// 				nested, isNested := u.(map[string]interface{})
-
-// 				if isNested {
-// 					recurseAndPrintJSON(nested, indent+"\t")
-// 				} else {
-// 					debug.Println(indent+"\t", u)
-// 				}
-// 			}
-// 		default:
-// 			debug.Println(indent, k, ":", v)
-// 		}
-// 	}
-// }

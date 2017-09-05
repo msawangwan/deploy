@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# REMOTE=""
+# BRANCH=""
+
+# "$(git status)"
+# "$(git reset --hard)"
+# "$(git clean -df)"
+# "$(git pull $REMOTE $BRANCH)"
+
+echo "execute webhook.sh"
+
+REPO="$1"
+BRANCH="$2"
+
+API="https://github.com"
+REMOTE="$($API/$REPO)"
+
+echo "pulling from $REMOTE $BRANCH"
