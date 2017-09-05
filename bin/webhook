@@ -1,11 +1,20 @@
 #!/bin/sh
 
-echo "execute webhook.sh"
+echo "executing webhook"
+
+API="https://github.com"
 
 REPO="$1"
 BRANCH="$2"
 
-API="https://github.com"
 REMOTE="$API/$REPO"
 
+SCRATCH="$(mktemp -d $REPO.XXXXXX)"
+
 echo "pulling from $REMOTE $BRANCH"
+
+function on_exit {
+    rm -rf "$SCRATCH"
+}
+
+trap on_exit EXIT

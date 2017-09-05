@@ -41,10 +41,16 @@ func init() {
 }
 
 func handlePushEvent(payload *webhook.PushEvent) {
+    // pull the repo to a tmp folder
+    // spin up a new container
+    // copy the repo into container
+    // delete tmp folder
+
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 
 	cmd := exec.Command("/bin/sh", "./bin/webhook", payload.Repository.FullName, payload.Ref)
+
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 

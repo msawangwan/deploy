@@ -3,5 +3,10 @@
 tmp/
 tmp/*
 
+.log/
+.log/*
+log/
+log/*
+
 *.log
 *.tmp
