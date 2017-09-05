@@ -56,7 +56,7 @@ func main() {
 
 		err = json.Indent(&pretty, []byte(body), "", "\t")
 
-		fmt.Println(pretty)
+		fmt.Println(pretty.String())
 		// var payload *webhook.PushEvent
 
 		// err = json.Unmarshal([]byte(body), &payload)
