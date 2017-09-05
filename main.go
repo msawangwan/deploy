@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -44,7 +43,17 @@ func main() {
 	log.Printf("listen on %s", port)
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("webhook recieved: %q", html.EscapeString(r.URL.Path))
+		eventName := r.Header["x-github-event"]
+		eventGUID := r.Header["x-github-delivery"]
+		eventSig := r.Header["x-hub-signature"]
+
+		log.Printf("webhook triggered:\n%s\n%s\n%s\n", eventName, eventGUID, eventSig)
+
+		// if eventName == "push" {
+		// 	log.Println("got push event")
+		// }
+
+		// log.Printf("webhook recieved: %q", html.EscapeString(r.URL.Path))
 
 		body, err := ioutil.ReadAll(r.Body)
 
@@ -54,7 +63,7 @@ func main() {
 
 		var pretty bytes.Buffer
 
-		err = json.Indent(&pretty, []byte(body), "", "\t")
+		err = json.Indent(&pretty, []byte(body), "", "  ")
 
 		fmt.Println(pretty.String())
 		// var payload *webhook.PushEvent
@@ -67,16 +76,6 @@ func main() {
 		// 	var pretty bytes.Buffer
 
 		// 	err = json.Indent(&pretty, []byte(body), "", "\t")
-		// }
-
-		// var data interface{}
-
-		// err = json.Unmarshal([]byte(body), &data)
-
-		// if err != nil {
-		// 	log.Println(err)
-		// } else {
-		// 	recurseAndPrintJSON(data.(map[string]interface{}), "")
 		// }
 
 		var out bytes.Buffer
@@ -99,25 +98,25 @@ func main() {
 	log.Fatal(http.ListenAndServe(port, nil))
 }
 
-func recurseAndPrintJSON(m map[string]interface{}, indent string) {
-	for k, v := range m {
-		switch cur := v.(type) {
-		case map[string]interface{}:
-			debug.Println(indent, k, ":")
-			recurseAndPrintJSON(cur, indent+"\t")
-		case []interface{}:
-			debug.Println(indent, k, ":")
-			for _, u := range cur {
-				nested, isNested := u.(map[string]interface{})
+// func recurseAndPrintJSON(m map[string]interface{}, indent string) {
+// 	for k, v := range m {
+// 		switch cur := v.(type) {
+// 		case map[string]interface{}:
+// 			debug.Println(indent, k, ":")
+// 			recurseAndPrintJSON(cur, indent+"\t")
+// 		case []interface{}:
+// 			debug.Println(indent, k, ":")
+// 			for _, u := range cur {
+// 				nested, isNested := u.(map[string]interface{})
 
-				if isNested {
-					recurseAndPrintJSON(nested, indent+"\t")
-				} else {
-					debug.Println(indent+"\t", u)
-				}
-			}
-		default:
-			debug.Println(indent, k, ":", v)
-		}
-	}
-}
+// 				if isNested {
+// 					recurseAndPrintJSON(nested, indent+"\t")
+// 				} else {
+// 					debug.Println(indent+"\t", u)
+// 				}
+// 			}
+// 		default:
+// 			debug.Println(indent, k, ":", v)
+// 		}
+// 	}
+// }
