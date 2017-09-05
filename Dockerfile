@@ -1,11 +1,10 @@
 FROM docker
 
-WORKDIR /src
-
-COPY . .
+WORKDIR /ci.io/bin
+COPY ./bin/build .
+CMD ./build && /bin/sh
 
 #VOLUME /var/run/docker.sock
 
-EXPOSE 80
+# EXPOSE 80
 
-CMD ./bin/build && /bin/sh

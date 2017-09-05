@@ -1,6 +1,6 @@
-package webhook
+package payload
 
-import "github.com/msawangwan/ci.io/model/webhook/key"
+import "github.com/msawangwan/ci.io/lib/webhook/payload/key"
 
 // PushEvent describes a github webhook json data structure
 type PushEvent struct {
