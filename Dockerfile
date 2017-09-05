@@ -8,3 +8,5 @@ VOLUME /var/run/docker.sock
 
 EXPOSE 80
 
+CMD ["/bin/sh"]
+
