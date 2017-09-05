@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# todo:
-# get version number from a config script
-
 cd ..
 
 echo "root dir:"

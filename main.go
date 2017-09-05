@@ -104,28 +104,6 @@ func main() {
 				handlePushEvent(payload)
 			}
 		}
-
-		// var pretty bytes.Buffer
-
-		// err = json.Indent(&pretty, []byte(body), "", "  ")
-
-		// fmt.Println(pretty.String())
-
-		// var out bytes.Buffer
-		// var stderr bytes.Buffer
-
-		// cmd := exec.Command("/bin/sh", "./scripts/webhook.sh")
-		// cmd.Stdout = &out
-		// cmd.Stderr = &stderr
-
-		// err = cmd.Run()
-
-		// if err != nil {
-		// 	log.Printf("%s\n", err)
-		// 	log.Printf("%s\n", stderr.String())
-		// }
-
-		// log.Printf("command executed with result:\n%s\n", out.String())
 	})
 
 	log.Fatal(http.ListenAndServe(port, nil))
