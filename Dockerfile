@@ -1,8 +1,10 @@
-FROM alpine:latest
+FROM docker
 
-USER root
+WORKDIR /go/src/github.com/msawangwan/ci.io
 
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
-RUN apk update
-RUN apk add docker
-RUN service docker start
+COPY . .
+
+VOLUME /var/run/docker.sock
+
+EXPOSE 80
+
