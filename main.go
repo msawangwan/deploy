@@ -43,11 +43,10 @@ func main() {
 	log.Printf("listen on %s", port)
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
-		eventName := r.Header["x-github-event"]
-		eventGUID := r.Header["x-github-delivery"]
-		eventSig := r.Header["x-github-signature"]
+		eventName := r.Header.Get("x-github-event")
+		eventGUID := r.Header.Get("x-github-delivery")
+		eventSig := r.Header.Get("x-github-signature")
 
-		log.Println(eventName)
 		log.Printf("webhook triggered:\n%s\n%s\n%s\n", eventName, eventGUID, eventSig)
 
 		// if eventName == "push" {
