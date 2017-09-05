@@ -8,7 +8,12 @@ tmp/*
 log/
 log/*
 
+.secret/
+.secret/*
+secret/
+secret/*
+
 *.log
 *.tmp
-
+*.secret
 *.swp

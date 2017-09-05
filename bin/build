@@ -3,7 +3,21 @@
 echo "ci.io build phase ..."
 echo
 
+echo
+echo "local images:"
+echo
+
 docker images
-docker images -a
+
+echo
+echo "running containers:"
+echo
+
 docker ps
-docker ps -a
+
+echo
+echo "working dir:"
+echo
+
+pwd
+
