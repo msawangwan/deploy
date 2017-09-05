@@ -12,6 +12,9 @@ echo "$VERSION"
 
 echo "build:"
 
+# docker build -t ci.io .
+# docker run -p 9001:80 -it --rm --name ci.io.running ci.io
 docker system prune -f
-docker build -t ci.io .
-docker run -p 9001:80 -it --rm --name ci.io.running ci.io
+docker build -t ci.io.root
+docker run --rm -it --name ci.io.root -v /var/run/docker.sock:/var/run/docker.sock ci.io.root
+# docker run --rm -it --name ci.io.root -v /var/run/docker.sock:/var/run/docker.sock docker

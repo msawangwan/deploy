@@ -1,15 +1,8 @@
-FROM golang:1.9.0-alpine3.6
+FROM alpine:latest
 
-WORKDIR /go/src/github.com/msawangwan/ci.io
+USER root
 
-COPY . .
-
-RUN go-wrapper download
-RUN go-wrapper install
-
-#RUN go install .
-
-EXPOSE 80
-
-CMD ["go-wrapper", "run"]
-#ENTRYPOINT /go/src/github.com/msawangwan/ci.io
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+RUN apk update
+RUN apk add docker
+RUN service docker start
