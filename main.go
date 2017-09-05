@@ -41,8 +41,6 @@ func init() {
 }
 
 func handlePushEvent(payload *webhook.PushEvent) {
-	// startup a container
-	// pull the latest code
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 
