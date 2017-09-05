@@ -22,9 +22,16 @@ echo
 pwd
 
 echo
+echo "files:"
+echo
+
+ls -al
 
 # create the webhook server and container
 
+cd lib/
+
+ls -al
 
 docker system prune -f
 docker build -t ci.io.srv:dev .
