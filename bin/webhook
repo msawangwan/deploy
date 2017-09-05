@@ -1,5 +1,15 @@
 #!/bin/sh
 
+# todo:
+# left off here with creating
+# - log dir
+# - check if it exists
+# - create it if not and
+# - write shit to it
+
+STDOUT="stdout.log"
+STDERR="stderr.log"
+
 echo "executing webhook"
 
 API="https://github.com"
