@@ -6,6 +6,6 @@ REPO="$1"
 BRANCH="$2"
 
 API="https://github.com"
-REMOTE="$($API/$REPO)"
+REMOTE="$API/$REPO"
 
 echo "pulling from $REMOTE $BRANCH"
