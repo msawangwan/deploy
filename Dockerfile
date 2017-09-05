@@ -9,4 +9,5 @@ VOLUME /var/run/docker.sock
 
 EXPOSE 80
 
-CMD ["/bin/sh", "./bin/build; /bin/sh"]
+#CMD ["/bin/sh", "./bin/build", "/bin/sh"]
+CMD ./bin/build && /bin/sh
