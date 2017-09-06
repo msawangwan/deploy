@@ -9,7 +9,7 @@ RUN apk add --no-cache git
 RUN go-wrapper download
 RUN go-wrapper install
 
-RUN apk del git
+#RUN apk del git
 
 EXPOSE 80
 
