@@ -13,8 +13,13 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+//    "context"
 
 	"github.com/msawangwan/ci.io/lib/internal/webhook"
+
+//    "github.com/docker/docker/client"
+//    "github.com/docker/docker/api/types"
+//    "github.com/docker/docker/api/types/container"
 )
 
 const (
@@ -80,6 +85,25 @@ func parse(headers http.Header) *eventType {
 
 func main() {
 	log.Printf("listening for incoming webhooks @ %s", port)
+
+//#    ctx := context.Background()
+    
+//#    cli, err := client.NewEnvClient()
+
+//#    if err != nil {
+//#        panic(err)
+//#    }
+
+//#    cfg := &container.Config{
+//#        Image: "alpine",
+//#        Cmd: []string{"echo", "hello alpine world"},
+//#    }
+
+//#    resp, err := cli.ContainerCreate(ctx, cfg, nil, nil, "")
+
+//#    if err != nil {
+//#        panic(err)
+//#    }
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
 		eventName := r.Header.Get("x-github-event")
