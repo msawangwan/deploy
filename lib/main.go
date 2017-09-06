@@ -18,9 +18,6 @@ import (
 	"github.com/msawangwan/ci.io/lib/internal/webhook"
 	
 	"github.com/moby/moby/client"
-//    "github.com/docker/docker/client"
-//    "github.com/docker/docker/api/types"
-//    "github.com/docker/docker/api/types/container"
 )
 
 const (
@@ -31,6 +28,30 @@ const (
 var (
 	debug *log.Logger
 )
+
+type eventHeaders struct {
+	name      string
+	guid      string
+	signature string
+}
+
+func (eh eventHeaders) String() string { return fmt.Sprintf("webhook event\nname: %s\nguid: %s\nsignature: %s\n", eh.name, eh.guid, eh.signature) }
+
+func parseWebhookRequest(h http.Header) *eventHeaders {
+	return &eventHeaders{
+		h.Get("x-github-event"),
+		h.Get("x-github-delivery"),
+		h.Get("x-github-signature"),
+	}
+}
+
+func printErr(e error, s string) {
+	if e == nil {
+		e = "error"
+	}
+
+	log.Printf("error\n%s\n%s", e, s)
+}
 
 func init() {
 	log.Println("app init")
@@ -47,95 +68,34 @@ func init() {
 }
 
 func handlePushEvent(payload *webhook.PushEvent) {
-	// pull the repo to a tmp folder
-	// spin up a new container
-	// copy the repo into container
-	// delete tmp folder
-
 	var (
-		dockerClient moby.Client
+		stdout bytes.Buffer
+		stderr bytes.Buffer
 		err error
 	)
 
-	dockerClient, err = moby.NewEnvClient()
-
-	if err != nil {
-		log.Printf("%s\n", err)
-	}
-
-	containers, err := dockerClient.ContainerList(context.Background(), types.ContainerListOptions{})
-
-	if err != nil {
-		log.Printf("%s\n, err")
-	}
-
-	for _, container := range containers {
-		log.Printf("%s %s\n", container.ID[:10], container.Image)
-	}
-
-	var out bytes.Buffer
-	var stderr bytes.Buffer
 
 	cmd := exec.Command("/bin/sh", "./bin/webhook", payload.Repository.FullName, payload.Ref)
 
-	cmd.Stdout = &out
+	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	err = cmd.Run()
 
 	if err != nil {
-		log.Printf("%s\n", err)
-		log.Printf("%s\n", stderr.String())
+		printErr(err, stderr.String())
 	}
 
-	log.Printf("command executed with result:\n%s\n", out.String())
-}
-
-type eventType struct {
-	name      string
-	guid      string
-	signature string
-}
-
-func parse(headers http.Header) *eventType {
-	return &eventType{
-		headers.Get("x-github-event"),
-		headers.Get("x-github-delivery"),
-		headers.Get("x-github-signature"),
-	}
+	log.Printf("command executed with result:\n%s\n", stdout.String())
 }
 
 func main() {
 	log.Printf("listening for incoming webhooks @ %s", port)
 
-//#    ctx := context.Background()
-    
-//#    cli, err := client.NewEnvClient()
-
-//#    if err != nil {
-//#        panic(err)
-//#    }
-
-//#    cfg := &container.Config{
-//#        Image: "alpine",
-//#        Cmd: []string{"echo", "hello alpine world"},
-//#    }
-
-//#    resp, err := cli.ContainerCreate(ctx, cfg, nil, nil, "")
-
-//#    if err != nil {
-//#        panic(err)
-//#    }
-
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
-		eventName := r.Header.Get("x-github-event")
-		eventGUID := r.Header.Get("x-github-delivery")
-		eventSig := r.Header.Get("x-github-signature")
+		event := parseWebhookRequest(r.Header)
 
-		event := parse(r.Header)
-
-		log.Printf("webhook triggered:\n%s\n%s\n%s\n", eventName, eventGUID, eventSig)
-		log.Println(event)
+		log.Printf("incoming:\n%+v", event.String())
 
 		if eventName == "push" {
 			body, err := ioutil.ReadAll(r.Body)

@@ -3,7 +3,7 @@
 echo "ci.io build phase ..."
 echo
 
-# create the webhook server and container
+export $IPADDR
 
 cd lib/
 
