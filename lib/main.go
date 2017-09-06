@@ -13,10 +13,11 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-//    "context"
+   "context"
 
 	"github.com/msawangwan/ci.io/lib/internal/webhook"
-
+	
+	"github.com/moby/moby/client"
 //    "github.com/docker/docker/client"
 //    "github.com/docker/docker/api/types"
 //    "github.com/docker/docker/api/types/container"
@@ -51,6 +52,27 @@ func handlePushEvent(payload *webhook.PushEvent) {
 	// copy the repo into container
 	// delete tmp folder
 
+	var (
+		dockerClient moby.Client
+		err error
+	)
+
+	dockerClient, err = moby.NewEnvClient()
+
+	if err != nil {
+		log.Printf("%s\n", err)
+	}
+
+	containers, err := dockerClient.ContainerList(context.Background(), types.ContainerListOptions{})
+
+	if err != nil {
+		log.Printf("%s\n, err")
+	}
+
+	for _, container := range containers {
+		log.Printf("%s %s\n", container.ID[:10], container.Image)
+	}
+
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -59,7 +81,7 @@ func handlePushEvent(payload *webhook.PushEvent) {
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 
 	if err != nil {
 		log.Printf("%s\n", err)
