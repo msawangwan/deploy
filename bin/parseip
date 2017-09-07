@@ -1,3 +1,5 @@
 #!/bin/sh
 
-echo "$(ifconfig | awk '/net / { x = $2 } END { print x }')"
+#echo "$(ifconfig | awk '/net / { x = $2 } END { print x }')"
+
+echo "$(ip address | awk '/inet / { if ($7 ~ /eth1/) x = $2 } END { print x }')"
