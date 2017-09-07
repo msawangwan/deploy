@@ -1,24 +1,15 @@
 #!/bin/sh
 
-echo "ci.io init phase ..."
-echo
+echo "ci.io init phase ..."; echo
 
-cd ..
-
-echo "root dir:"
-echo
-pwd
+cd ..; echo "root dir:"; echo; pwd
 
 VERSION="$(/bin/cat conf/globals.json | /bin/grep version)"
 
-echo "version:"
-echo "$VERSION"
-echo
+echo "version:"; echo $VERSION; echo
 
-echo "build:"
-echo
+echo "build:"; echo
 
 docker system prune -f
 docker build -t ci.io.root:dev .
 docker run --rm -it --name ci.io.root -v /var/run/docker.sock:/var/run/docker.sock ci.io.root:dev
-# docker run --rm -it --name ci.io.root -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock ci.io.root:dev

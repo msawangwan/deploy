@@ -1,17 +1,16 @@
 #!/bin/sh
 
-echo "ci.io build phase ..."
-echo
+echo "ci.io build phase ..."; echo
 
-export $IPADDR
+CIIO_ROOT_IPADDR=$(./bin/parseip)
 
-cd lib/
+echo $CIIO_ROOT_IPADDR
 
+export CIIO_ROOT_IPADDR
+
+#cd lib/
 ls -al
 
-docker system prune -f
-docker build -t ci.io.srv:dev .
-docker run --rm -it -p 9001:80 --name ci.io.srv ci.io.srv:dev
-#docker run --rm -d -p 9001:80 --name ci.io.srv --link ci.io.root ci.io.srv:dev
-# docker run --rm -d -p 9001:80 --name ci.io.srv ci.io.srv:dev
-# docker run --rm -d -p 9001:80 --name ci.io.srv -v /var/run/docker.sock:/var/run/docker.sock ci.io.srv:dev
+#docker system prune -f
+#docker build -t ci.io.srv:dev .
+#docker run --rm -it -p 9001:80 --name ci.io.srv ci.io.srv:dev
