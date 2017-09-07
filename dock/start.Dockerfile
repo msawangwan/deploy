@@ -2,10 +2,9 @@ FROM docker
 
 WORKDIR /ci.io
 
-COPY ./lib ./lib
-COPY ./bin ./bin
-#COPY ./bin/build ./bin/
-#COPY ./bin/parseip ./bin/
+#COPY ./lib ./lib
+#COPY ./bin ./bin
+COPY . .
 
 EXPOSE 80
 

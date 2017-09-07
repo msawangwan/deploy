@@ -2,7 +2,9 @@
 
 echo "ci.io init phase ..."; echo
 
-cd ..; echo "root dir:"; echo; pwd
+cd ..
+
+echo "root dir:"; echo; pwd
 
 VERSION="$(/bin/cat conf/globals.json | /bin/grep version)"
 
