@@ -1,5 +1,9 @@
 package ci
 
+import (
+    "github.com/msawangwan/ci.io/lib/types/webhooks"
+)
+
 func ProcessPushEvent() {
 	var (
 		stdout bytes.Buffer
