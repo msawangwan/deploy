@@ -1,7 +1,6 @@
 #!/bin/sh
 
-IP="$(ifconfig mlan0)"
-#IP="$(ifconfig mlan0 | grep 'inet ' | awk -F '[: ]+')"
-#IP="$(ifconfig mlan0 | awk '/t addr:/{gsub(/.*:/,"",$2);print$2}')"
+IP="$(ifconfig | awk '/net / { x = $2 } END { print x }')"
+# ifconfig | awk '/net / { $1
 
 echo "$IP"
