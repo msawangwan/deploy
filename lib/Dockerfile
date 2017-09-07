@@ -2,7 +2,7 @@ FROM golang:1.9.0-alpine3.6
 
 WORKDIR /go/src/github.com/msawangwan/ci.io
 
-COPY . .
+COPY ../ .
 
 RUN apk add --no-cache git
 RUN apk add --no-cache curl
