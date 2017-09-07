@@ -4,13 +4,14 @@ echo "ci.io build phase ..."; echo
 
 CIIO_ROOT_IPADDR=$(./bin/parseip)
 
-echo $CIIO_ROOT_IPADDR
+echo $CIIO_ROOT_IPADDR; echo
 
 export CIIO_ROOT_IPADDR
 
-#cd lib/
+cd lib/
+
 ls -al
 
-#docker system prune -f
-#docker build -t ci.io.srv:dev .
-#docker run --rm -it -p 9001:80 --name ci.io.srv ci.io.srv:dev
+docker system prune -f
+docker build -t ci.io.srv:dev .
+docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 --name ci.io.srv ci.io.srv:dev

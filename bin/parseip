@@ -3,5 +3,4 @@
 # wrapper around an awk command that parses an IP given
 # a specific interface, in the default case, eth0
 
-#echo "$(ifconfig | awk '/net / { x = $2 } END { print x }')"
 echo "$(ip address | awk '/inet / { for (i=1; i<=NF; i++) if ($i ~ /eth0*/) x = $2 } END { print x }')"
