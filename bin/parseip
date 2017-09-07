@@ -1,6 +1,3 @@
 #!/bin/sh
 
-IP="$(ifconfig | awk '/net / { x = $2 } END { print x }')"
-# ifconfig | awk '/net / { $1
-
-echo "$IP"
+echo "$(ifconfig | awk '/net / { x = $2 } END { print x }')"
