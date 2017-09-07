@@ -14,4 +14,4 @@ ls -al
 
 docker system prune -f
 docker build -t ci.io.srv:dev .
-docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 --name ci.io.srv ci.io.srv:dev
+docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock --name ci.io.srv ci.io.srv:dev

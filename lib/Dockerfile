@@ -5,6 +5,7 @@ WORKDIR /go/src/github.com/msawangwan/ci.io
 COPY . .
 
 RUN apk add --no-cache git
+RUN apk add --no-cache curl
 
 RUN go-wrapper download
 RUN go-wrapper install
