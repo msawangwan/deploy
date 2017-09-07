@@ -1,4 +1,39 @@
-package payload
+package webhook
+
+// Owner is a github webhook object
+type Owner struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+// Author is a github webhook object
+type Author struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+}
+
+// Committer is a github webhook object
+type Committer struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+}
+
+// Commit is a webhook object
+type Commit struct {
+	ID        string    `json:"id"`
+	TreeID    string    `json:"tree_id"`
+	Distinct  bool      `json:"distinct"`
+	Message   string    `json:"message"`
+	Timestamp string    `json:"timestamp"`
+	URL       string    `json:"url"`
+	Author    Author    `json:"author"`
+	Committer Committer `json:"committer"`
+	Added     []string  `json:"added"`
+	Removed   []string  `json:"removed"`
+	Modified  []string  `json:"modified"`
+}
 
 // Repository is a github webhook object
 type Repository struct {
@@ -71,4 +106,31 @@ type Repository struct {
 	DefaultBranch    string  `json:"default_branch"`
 	Stargazers       float64 `json:"stargazers"`
 	MasterBranch     string  `json:"master_branch"`
+}
+
+// Pusher is a github webhook object
+type Pusher struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+// Sender is a github webhook object
+type Sender struct {
+	Login             string  `json:"login"`
+	ID                float64 `json:"id"`
+	AvatarURL         string  `json:"avatar_url"`
+	GravatarID        string  `json:"gravatar_id"`
+	URL               string  `json:"url"`
+	HTMLURL           string  `json:"html_url"`
+	FollowersURL      string  `json:"followers_url"`
+	FollowingURL      string  `json:"following_url"`
+	GistsURL          string  `json:"gists_url"`
+	StarredURL        string  `json:"starred_url"`
+	SubscriptionsURL  string  `json:"subscriptions_url"`
+	OrganizationsURL  string  `json:"organizations_url"`
+	ReposURL          string  `json:"repos_url"`
+	EventsURL         string  `json:"events_url"`
+	ReceivedEventsURL string  `json:"received_events_url"`
+	Type              string  `json:"type"`
+	SiteAdmin         bool    `json:"site_admin"`
 }

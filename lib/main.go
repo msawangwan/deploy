@@ -25,10 +25,6 @@ const (
 	port     = ":80"
 )
 
-var (
-	debug *log.Logger
-)
-
 type eventHeaders struct {
 	name      string
 	guid      string
@@ -55,16 +51,6 @@ func printErr(e error, s string) {
 
 func init() {
 	log.Println("app init")
-	f, e := os.OpenFile("debug.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-
-	if e != nil {
-		log.Fatalln("failed to create/open debug log file:", e)
-	}
-
-	label := "[DEBUG]"
-	flags := 0
-
-	debug = log.New(f, label, flags)
 }
 
 func handlePushEvent(payload *webhook.PushEvent) {
@@ -73,7 +59,6 @@ func handlePushEvent(payload *webhook.PushEvent) {
 		stderr bytes.Buffer
 		err error
 	)
-
 
 	cmd := exec.Command("/bin/sh", "./bin/webhook", payload.Repository.FullName, payload.Ref)
 
