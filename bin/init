@@ -10,5 +10,5 @@ echo "version:"; echo $VERSION; echo
 echo "build:"; echo
 
 docker system prune -f
-docker build -t ci.io.root:dev .
+docker build -f dock/start.Dockerfile -t ci.io.root:dev .
 docker run --rm -it --name ci.io.root -v /var/run/docker.sock:/var/run/docker.sock ci.io.root:dev
