@@ -1,6 +1,6 @@
 FROM golang:1.9.0-alpine3.6
 
-WORKDIR /go/src/github.com/msawangwan/ci.io/lib
+WORKDIR /go/src/github.com/msawangwan/ci.io
 
 COPY . .
 
