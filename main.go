@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -25,22 +28,19 @@ var (
 	dockerHostAddr string
 )
 
-func concat(adr, ver, src string) string {
+func route(adr, ver, src string) string {
 	return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src)
 }
 
-func read(r io.Reader) {
-	buf := make([]byte, 1024)
+func pretty(b []byte, delim, indent string) (bytes.Buffer, error) {
+	var (
+		out bytes.Buffer
+		err error
+	)
 
-	for {
-		n, e := r.Read(buf[:])
+	err = json.Indent(&out, buf, delim, indent)
 
-		if e != nil {
-			return
-		}
-
-		log.Printf("client response: %s\n", string(buf[0:n]))
-	}
+	return out, err
 }
 
 func timedOut(e error) bool {
@@ -85,36 +85,14 @@ func main() {
 	log.Printf("docker host addr, from env var: %s", dockerHostAddr)
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
-        log.Printf("handling request: %s", r.URL.Path)
-		//        c, e := net.Dial("unix", "/var/run/docker.sock")
-
-		//        if e != nil {
-		//            panic(e)
-		//        }
-
-		//        defer c.Close()
-		//        go read(c)
-
-		//        _, e = c.write([]byte(concat(dockerHostAddr, version, "containers/json"))
-
-		//        if e != nil {
-		//            log.Println(e)
-		//        }
-
-		//        c := &http.Client{
-		//            Transport: &http.Transport{
-		//                DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-		//                    return net.Dial("unix", "/var/run/docker.sock"
-		//                }
-		//            }
-		//        }
+		log.Printf("incoming webhook: %s", r.URL.Path)
 
 		var (
 			res *http.Response
 			err error
 		)
 
-		res, err = dockerClient.Get(concat(dockerHostAddr, version, "containers/json"))
+		res, err = dockerClient.Get(route(dockerHostAddr, version, "containers/json"))
 
 		if err != nil {
 			if timedOut(err) {
@@ -123,7 +101,16 @@ func main() {
 			panic(err)
 		}
 
-		io.Copy(os.Stdout, res.Body)
+		body, err := ioutil.ReadAll(res.Body)
+
+		if err != nil {
+			panic(err)
+		}
+
+		// io.Copy(os.Stdout, res.Body)
+		res.Body.Close()
+		buf, err := pretty([]byte(body), "", "  ")
+		io.Copy(os.Stdout, &buf)
 	})
 
 	log.Fatal(http.ListenAndServe(port, nil))
