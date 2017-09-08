@@ -26,7 +26,7 @@ var (
 )
 
 func concat(adr, ver, src string) string {
-	return fmt.Sprintf("http:/%s/v%s/%s", adr, ver, src)
+	return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src)
 }
 
 func read(r io.Reader) {
@@ -73,7 +73,7 @@ func init() {
 		Timeout: time.Second * 10,
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", "var/run/docker.sock")
+				return net.Dial("unix", "/var/run/docker.sock")
 			},
 		},
 	}
@@ -85,6 +85,7 @@ func main() {
 	log.Printf("docker host addr, from env var: %s", dockerHostAddr)
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
+        log.Printf("handling request: %s", r.URL.Path)
 		//        c, e := net.Dial("unix", "/var/run/docker.sock")
 
 		//        if e != nil {
