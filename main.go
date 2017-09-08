@@ -32,7 +32,7 @@ func route(adr, ver, src string) string {
 	return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src)
 }
 
-func pretty(b []byte, delim, indent string) (bytes.Buffer, error) {
+func pretty(buf []byte, delim, indent string) (bytes.Buffer, error) {
 	var (
 		out bytes.Buffer
 		err error
