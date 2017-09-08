@@ -11,7 +11,7 @@ echo "pwd: $(pwd)"; echo
 
 ls -al
 
-CHECKENV="$(env | grep CIIO_ROOT_IPADDR)"
+CHECKENV="$(env | grep -o $CIIO_ROOT_IPADDR)"
 
 if [ "$CHECKENV" == "$CIIO_ROOT_IPADDR" ]; then
     echo "successfully exported master container addr: $CHECKENV"; echo
