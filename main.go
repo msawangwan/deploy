@@ -20,8 +20,10 @@ import (
 const (
 	version    = "1.30"
 	endpoint   = "/webhooks/payload"
+	mountpoint = "/var/run/docker.sock"
 	controller = "CIIO_ROOT_IPADDR"
 	port       = ":80"
+	socktype   = "unix"
 )
 
 var (
@@ -102,7 +104,7 @@ func init() {
 		Timeout: time.Second * 10,
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", "/var/run/docker.sock")
+				return net.Dial(socktype, mountpoint)
 			},
 		},
 	}
@@ -114,7 +116,8 @@ func init() {
 		log.Printf("%s", err)
 	}
 
-	log.Printf("server container ip: %s\ndocker host container ip: %s\n", localip, dockerHostAddr)
+	log.Printf("server container ip: %s\n", localip)
+	log.Printf("docker host container ip: %s\n", dockerHostAddr)
 }
 
 func main() {
@@ -124,9 +127,11 @@ func main() {
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
 		gocount = runtime.NumGoroutine()
+		ename := r.Header.Get("x-github-event")
 
-		log.Printf("incoming webhook: %s", r.URL.Path)
-		log.Printf("goroutine count: %d", gocount)
+		log.Printf("incoming webhook: %s\n", r.URL.Path)
+		log.Printf("payload event name: %s\n", ename)
+		log.Printf("goroutine count: %d\n", gocount)
 
 		var (
 			res *http.Response
