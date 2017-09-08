@@ -1,16 +1,26 @@
 #!/bin/sh
 
+CONTAINERNAME="ci.io.root"
+CONTAINERVERSION="dev"
+
+DFDIR="dock"
+DF="start.Dockerfile"
+
 echo "ci.io init phase ..."; echo
 
 cd ..
 
 echo "root dir:"; echo; pwd
 
-VERSION="$(/bin/cat conf/globals.json | /bin/grep version)"
+APPVERSION="$(/bin/cat conf/globals.json | grep version)"
 
-echo "version:"; echo $VERSION; echo
+echo "version:"; echo $APPVERSION; echo
 echo "build:"; echo
 
+DFPATH="$DFDIR/$DF"
+CONTAINERTAG="$CONTAINERNAME:$CONTAINERVERSION"
+
+# docker build -f dock/start.Dockerfile -t ci.io.root:dev .
 docker system prune -f
-docker build -f dock/start.Dockerfile -t ci.io.root:dev .
+docker build -f "$DFPATH" -t "$CONTAINERTAG" .
 docker run --rm -it --name ci.io.root -v /var/run/docker.sock:/var/run/docker.sock ci.io.root:dev

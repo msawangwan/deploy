@@ -2,16 +2,22 @@
 
 echo "ci.io build phase ..."; echo
 
-CIIO_ROOT_IPADDR=$(./bin/parseip)
-
-echo $CIIO_ROOT_IPADDR; echo
+CIIO_ROOT_IPADDR="$(./bin/parseip)"
 
 export CIIO_ROOT_IPADDR
 
-#cd lib/
+echo "master container addr: $CIIO_ROOT_IPADDR"; echo
+echo "pwd: $(pwd)"; echo 
 
-pwd
 ls -al
+
+CHECKENV="$(env | grep CIIO_ROOT_IPADDR)"
+
+if [ "$CHECKENV" == "$CIIO_ROOT_IPADDR" ]; then
+    echo "successfully exported master container addr: $CHECKENV"; echo
+else
+    echo "failed to export master container addr: $CHECKENV"; echo
+fi
 
 docker system prune -f
 docker build -f dock/serve.Dockerfile  -t ci.io.srv:dev .

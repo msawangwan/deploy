@@ -17,6 +17,9 @@ var (
 	dockerHostAddr string
 )
 
+// example:
+// curl --unix-socket /var/run/docker.sock http:/172.17.0.2/v1.30/containers/json
+
 func main() {
 	dockerHostAddr = os.Getenv(controller)
 
