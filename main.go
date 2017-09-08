@@ -36,13 +36,19 @@ func route(adr, ver, src string) string {
 	return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src)
 }
 
-func pretty(buf []byte, delim, indent string) (bytes.Buffer, error) {
+func pretty(r io.Reader, delim, indent string) (bytes.Buffer, error) {
 	var (
 		out bytes.Buffer
 		err error
 	)
 
-	err = json.Indent(&out, buf, delim, indent)
+	src, err := ioutil.ReadAll(r)
+
+	if err != nil {
+		return out, err
+	}
+
+	err = json.Indent(&out, []byte(src), delim, indent)
 
 	return out, err
 }
@@ -147,14 +153,13 @@ func main() {
 			panic(err)
 		}
 
-		body, err := ioutil.ReadAll(res.Body)
+		buf, err := pretty(res.Body, "", "  ")
 
 		if err != nil {
 			panic(err)
 		}
 
 		res.Body.Close()
-		buf, err := pretty([]byte(body), "", "  ")
 		io.Copy(os.Stdout, &buf)
 	})
 
