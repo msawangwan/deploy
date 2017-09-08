@@ -26,7 +26,7 @@ var (
 )
 
 func concat(adr, ver, src string) string {
-	return fmt.Sprintf("http:/%s/%s/%s", adr, ver, src)
+	return fmt.Sprintf("http:/%s/v%s/%s", adr, ver, src)
 }
 
 func read(r io.Reader) {
