@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -26,6 +27,7 @@ const (
 var (
 	dockerClient   *http.Client
 	dockerHostAddr string
+	localip        string
 )
 
 func route(adr, ver, src string) string {
@@ -41,6 +43,33 @@ func pretty(buf []byte, delim, indent string) (bytes.Buffer, error) {
 	err = json.Indent(&out, buf, delim, indent)
 
 	return out, err
+}
+
+func localIP(ifname string) (string, error) {
+	intfs, e := net.Interfaces()
+
+	if e != nil {
+		return "none", e
+	}
+
+	for _, intf := range intfs {
+		if strings.Contains(intf.Name, ifname) {
+			addrs, e := intf.Addrs()
+
+			if e != nil {
+				return "none", e
+			}
+
+			for _, addr := range addrs {
+				addrstr := addr.String()
+				if !strings.Contains(addrstr, "[") {
+					return addrstr, nil
+				}
+			}
+		}
+	}
+
+	return "none", nil
 }
 
 func timedOut(e error) bool {
@@ -77,15 +106,27 @@ func init() {
 			},
 		},
 	}
+
+	dockerHostAddr = os.Getenv(controller)
+	localip, err := localIP("eth0")
+
+	if err != nil {
+		log.Printf("%s", err)
+	}
+
+	log.Printf("server container ip: %s\ndocker host container ip: %s\n", localip, dockerHostAddr)
 }
 
 func main() {
-	dockerHostAddr = os.Getenv(controller)
-
-	log.Printf("docker host addr, from env var: %s", dockerHostAddr)
+	var (
+		gocount int
+	)
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
+		gocount = runtime.NumGoroutine()
+
 		log.Printf("incoming webhook: %s", r.URL.Path)
+		log.Printf("goroutine count: %d", gocount)
 
 		var (
 			res *http.Response
@@ -107,7 +148,6 @@ func main() {
 			panic(err)
 		}
 
-		// io.Copy(os.Stdout, res.Body)
 		res.Body.Close()
 		buf, err := pretty([]byte(body), "", "  ")
 		io.Copy(os.Stdout, &buf)
