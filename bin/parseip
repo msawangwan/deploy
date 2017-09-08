@@ -12,4 +12,4 @@
 # echo "$(ip address | awk '/inet / { for (i=1; i<=NF; i++) if ($i ~ /eth0*/) x = $2 } END { print x }')"
 ADDR="$(ip address | awk '/inet / { for (i=1; i<=NF; i++) if ($i ~ /eth0*/) x = $2 } END { print x }')"
 
-echo "$(sed -r 's/.{3}$//' $ADDR)"
+echo "$(echo $ADDR | sed -r 's/.{3}$//')"
