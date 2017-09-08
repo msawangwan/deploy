@@ -8,8 +8,9 @@ echo $CIIO_ROOT_IPADDR; echo
 
 export CIIO_ROOT_IPADDR
 
-cd lib/
+#cd lib/
 
+pwd
 ls -al
 
 docker system prune -f
