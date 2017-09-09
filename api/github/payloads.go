@@ -1,7 +1,7 @@
-package webhook
+package github
 
-// PushEventPayload describes a github webhook json data structure
-type PushEventPayload struct {
+// PushEvent describes a github webhook json data structure
+type PushEvent struct {
 	Ref        string     `json:"ref"`
 	Before     string     `json:"before"`
 	After      string     `json:"after"`

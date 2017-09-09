@@ -3,7 +3,7 @@
 CONTAINERNAME="ci.io.root"
 CONTAINERVERSION="dev"
 
-DFDIR="dock"
+DFDIR="build"
 DF="start.Dockerfile"
 
 echo "ci.io init phase ..."; echo
@@ -20,7 +20,6 @@ echo "build:"; echo
 DFPATH="$DFDIR/$DF"
 CONTAINERTAG="$CONTAINERNAME:$CONTAINERVERSION"
 
-# docker build -f dock/start.Dockerfile -t ci.io.root:dev .
 docker system prune -f
 docker build -f "$DFPATH" -t "$CONTAINERTAG" .
 docker run --rm -it --name ci.io.root -v /var/run/docker.sock:/var/run/docker.sock ci.io.root:dev

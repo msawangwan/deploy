@@ -1,4 +1,4 @@
-package webhook
+package github
 
 // RequestHeaders represent webhook request headers
 type RequestHeaders struct {
