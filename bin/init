@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# init
+
+echo "init"; echo
+
+CON_PREFIX="ci.io"
+CON_NAME="root"
+CON_TAG="dev"
+CON_VER="0.0.1"
+
 CONTAINERNAME="ci.io.root"
 CONTAINERVERSION="dev"
 

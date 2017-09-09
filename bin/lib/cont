@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# cont is for making containers
+#
+
+# usage:
+# $ cont <flags> <container_name>
+#
+
+# todo:
+# touch a file and write its settings for later reads
+
+CONT_DIR="containers"
+
+if [ -z "$CONT_DIR" ]; then
+    mkdir "$CONT_DIR"
+fi
+
+cd "$CONT_DIR"; pwd;
+
+CONT_PREFIX="ci.io"
+CONT_NAME=""
+CONT_TAG=""
+CONT_VER=""
+
+while [ ! $# -eq 0 ]; do
+    case "$1" in
+        --prefix | -p)
+            CONT_PREFIX="$1"
+            continue
+            ;;
+        --version | -v)
+            CONT_VER="$1"
+            continue
+            ;;
+        --tag | -t)
+            CONT_TAG="$1"
+            continue
+            ;;
+#        --name | -n)
+#            CONT_NAME="$1"
+#            continue
+#            ;;
+    esac
+
+    shift
+done
+
+exit 0

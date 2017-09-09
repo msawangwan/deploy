@@ -2,6 +2,7 @@
 
 echo "ci.io build phase ..."; echo
 
+CONTAINER_PREFIX="ci.io"
 CONTAINER_NAME="ci.io.srv"
 CONTAINER_TAG="dev"
 CONTAINER_VERSION="0.1"
