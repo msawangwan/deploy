@@ -2,9 +2,10 @@
 
 echo "ci.io build phase ..."; echo
 
-CONTAINER_LABEL="ci.io.srv"
+CONTAINER_NAME="ci.io.srv"
 CONTAINER_TAG="dev"
-CONTAINER_NAME="$CONTAINER_LABEL:$CONTAINER_TAG"
+CONTAINER_VERSION="0.1"
+CONTAINER_LABEL="$CONTAINER_NAME:$CONTAINER_TAG-$CONTAINER_VERSION"
 
 DF_DIR="build"
 DF_NAME="serve.Dockerfile"
@@ -29,7 +30,10 @@ else
     echo "failed to export master container addr: $CHECKENV"; echo
 fi
 
-# docker build -f dock/serve.Dockerfile  -t ci.io.srv:dev .
 docker system prune -f
-docker build -f "$DF_PATH"  -t "$CONTAINER_NAME" .
-docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock --name ci.io.srv ci.io.srv:dev
+docker build -f "$DF_PATH" -t "$CONTAINER_LABEL" .
+docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock --name "$CONTAINER_NAME" "$CONTAINER_LABEL"
+
+
+# docker build -f dock/serve.Dockerfile  -t ci.io.srv:dev .
+# docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock --name ci.io.srv ci.io.srv:dev
