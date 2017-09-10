@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# bootstrap sources all files in lib/
+#
+
+echo "bootstrap"; echo
+
+for s in lib/*; do
+    echo "loaded: $s"
+    source "$s"
+done
+
+exit 0
