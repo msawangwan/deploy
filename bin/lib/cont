@@ -7,43 +7,57 @@
 # $ cont <flags> <container_name>
 #
 
-# todo:
-# touch a file and write its settings for later reads
+CONT_DIR="containers.local"
+CONT_TYPE=".cont"
 
-CONT_DIR="containers"
-
-if [ -z "$CONT_DIR" ]; then
+if [ ! -d "$CONT_DIR" ]; then
     mkdir "$CONT_DIR"
 fi
 
-cd "$CONT_DIR"; pwd;
-
 CONT_PREFIX="ci.io"
-CONT_NAME=""
-CONT_TAG=""
-CONT_VER=""
+CONT_NAME="_"
+CONT_TAG="dev"
+CONT_VER="0.0.1"
 
-while [ ! $# -eq 0 ]; do
+if [ "$1" == "" ]; then
+    echo "`basename $0` err: no name given to container"; echo
+    exit 1
+fi
+
+CONT_NAME="$1"; shift
+
+while [ ! "$#" -eq 0 ]; do
+
     case "$1" in
         --prefix | -p)
-            CONT_PREFIX="$1"
-            continue
+            CONT_PREFIX="$2"
             ;;
         --version | -v)
-            CONT_VER="$1"
-            continue
+            CONT_VER="$2"
             ;;
         --tag | -t)
-            CONT_TAG="$1"
-            continue
+            CONT_TAG="$2"
             ;;
-#        --name | -n)
-#            CONT_NAME="$1"
-#            continue
-#            ;;
     esac
 
     shift
 done
+
+NEW_CONT="$CONT_DIR/$CONT_NAME$CONT_TYPE"
+
+if [ -e "$NEW_CONT" ]; then
+    echo "container already exists: $CONT_NAME"; echo
+else
+    touch "$NEW_CONT"
+
+    echo "CONTAINER_NAME::$CONT_NAME" >> "$NEW_CONT"
+    echo "CONTAINER_PREFIX::$CONT_PREFIX" >> "$NEW_CONT"
+    echo "CONTAINER_TAG::$CONT_TAG" >> "$NEW_CONT"
+    echo "CONTAINER_VER::$CONT_VER" >> "$NEW_CONT"
+
+    echo "created a new container: $NEW_CONT"; echo
+fi
+
+cat "$NEW_CONT"
 
 exit 0

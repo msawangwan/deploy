@@ -13,7 +13,13 @@ log/*
 secret/
 secret/*
 
+.local/
+.local/*
+local/
+local/*
+
 *.log
 *.tmp
 *.secret
 *.swp
+*.local
