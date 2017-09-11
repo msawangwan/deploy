@@ -152,14 +152,15 @@ func main() {
 
 		payload := &dockr.Container{}
 
-		var b bytes.Buffer
+		// var b bytes.Buffer
+		jsonpayload, _ := json.Marshal(payload)
 
-		json.NewEncoder(b).Encode(payload)
+		// json.NewEncoder(b).Encode(payload)
 
 		res, err = dockerClient.Post(
 			route(dockerHostAddr, version, "containers/create?name=SOME_CONTAINER"),
-			"application/json; charset=utf-8", 
-			b
+			"application/json; charset=utf-8",
+			bytes.NewBuffer(jsonpayload),
 		)
 
 		if err != nil {
