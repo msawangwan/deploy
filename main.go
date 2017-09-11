@@ -15,6 +15,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/msawangwan/ci.io/api/docker"
 )
 
 const (
@@ -71,7 +73,7 @@ func localIP(ifname string) (string, error) {
 			for _, addr := range addrs {
 				addrstr := addr.String()
 				if !strings.Contains(addrstr, "[") {
-					return addrstr, nil
+					return strings.Split(addrstr, "/")[0], nil
 				}
 			}
 		}
@@ -144,7 +146,21 @@ func main() {
 			err error
 		)
 
-		res, err = dockerClient.Get(route(dockerHostAddr, version, "containers/json"))
+		// res, err = dockerClient.Get(route(dockerHostAddr, version, "containers/json"))
+
+		// create a container
+
+		payload := &docker.Container{}
+
+		var b bytes.Buffer
+
+		json.NewEncoder(b).Encode(payload)
+
+		res, err = dockerClient.Post(
+			route(dockerHostAddr, version, "containers/create?name=SOME_CONTAINER"),
+			"application/json; charset=utf-8", 
+			b
+		)
 
 		if err != nil {
 			if timedOut(err) {

@@ -11,17 +11,6 @@ CONTAINER_TAG="dev"
 CONTAINER_VERSION="0.0.1"
 CONTAINER_LABEL="$CONTAINER_PREFIX.$CONTAINER_NAME:$CONTAINER_TAG-$CONTAINER_VERSION"
 
-# CON_PREFIX="ci.io"
-# CON_NAME="root"
-# CON_TAG="dev"
-# CON_VER="0.0.1"
-
-# CONTAINERNAME="ci.io.root"
-# CONTAINERVERSION="dev"
-
-# DFDIR="build"
-# DF="start.Dockerfile"
-
 DF_DIR="build"
 DF_NAME="start.Dockerfile"
 DF_PATH="$DF_DIR/$DF_NAME"
@@ -37,11 +26,6 @@ APP_VERSION="$(/bin/cat conf/globals.json | grep version)"
 echo "version:"; echo $APP_VERSION; echo
 echo "build:"; echo
 
-# DFPATH="$DFDIR/$DF"
-# CONTAINERTAG="$CONTAINERNAME:$CONTAINERVERSION"
-
 docker system prune -f
 docker build -f "$DF_PATH" -t "$CONTAINER_LABEL" .
 docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name "$CONTAINER_PREFIX.$CONTAINER_NAME" "$CONTAINER_LABEL"
-# docker build -f "$DFPATH" -t "$CONTAINERTAG" .
-# docker run --rm -it --name ci.io.root -v /var/run/docker.sock:/var/run/docker.sock ci.io.root:dev

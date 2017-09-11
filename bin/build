@@ -37,7 +37,3 @@ fi
 docker system prune -f
 docker build -f "$DF_PATH" -t "$CONTAINER_LABEL" .
 docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock --name "$CONTAINER_PREFIX.$CONTAINER_NAME" "$CONTAINER_LABEL"
-
-
-# docker build -f dock/serve.Dockerfile  -t ci.io.srv:dev .
-# docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock --name ci.io.srv ci.io.srv:dev
