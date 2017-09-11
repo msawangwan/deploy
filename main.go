@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/msawangwan/ci.io/api/docker"
+	"github.com/msawangwan/ci.io/api/dockr"
 )
 
 const (
@@ -150,7 +150,7 @@ func main() {
 
 		// create a container
 
-		payload := &docker.Container{}
+		payload := &dockr.Container{}
 
 		var b bytes.Buffer
 
