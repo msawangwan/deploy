@@ -158,14 +158,14 @@ func main() {
 		payload := []byte(`{"Image":"alpine", "Cmd": ["date"]}`)
 
 		// var b bytes.Buffer
-		jsonpayload, _ := json.Marshal(payload)
+		// jsonpayload, _ := json.Marshal(payload)
 
 		// json.NewEncoder(b).Encode(payload)
 
 		res, err = dockerClient.Post(
 			route(dockerHostAddr, version, "containers/create?name=SOME_CONTAINER"),
 			"application/json; charset=utf-8",
-			bytes.NewBuffer(jsonpayload),
+			bytes.NewBuffer(payload),
 		)
 
 		if err != nil {
