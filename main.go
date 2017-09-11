@@ -15,8 +15,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/msawangwan/ci.io/api/dockr"
 )
 
 const (
@@ -150,7 +148,14 @@ func main() {
 
 		// create a container
 
-		payload := &dockr.Container{}
+		// payload := &dockr.Container{
+		// 	Image: "alpine",
+		// 	CMD: []string{
+		// 		"date",
+		// 	},
+		// }
+
+		payload := []byte(`{"Image":"alpine", "Cmd": ["date"]}`)
 
 		// var b bytes.Buffer
 		jsonpayload, _ := json.Marshal(payload)
