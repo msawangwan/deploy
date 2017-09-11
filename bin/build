@@ -1,12 +1,15 @@
 #!/bin/sh
 
+# build
+#
+
 echo "ci.io build phase ..."; echo
 
 CONTAINER_PREFIX="ci.io"
-CONTAINER_NAME="ci.io.srv"
+CONTAINER_NAME="srv"
 CONTAINER_TAG="dev"
-CONTAINER_VERSION="0.1"
-CONTAINER_LABEL="$CONTAINER_NAME:$CONTAINER_TAG-$CONTAINER_VERSION"
+CONTAINER_VERSION="0.0.1"
+CONTAINER_LABEL="$CONTAINER_PREFIX.$CONTAINER_NAME:$CONTAINER_TAG-$CONTAINER_VERSION"
 
 DF_DIR="build"
 DF_NAME="serve.Dockerfile"
@@ -19,7 +22,7 @@ export CIIO_ROOT_IPADDR
 export DF_DIR
 
 echo "master container addr: $CIIO_ROOT_IPADDR"; echo
-echo "pwd: $(pwd)"; echo 
+echo "pwd: $(pwd)"; echo
 
 ls -al
 
@@ -33,7 +36,7 @@ fi
 
 docker system prune -f
 docker build -f "$DF_PATH" -t "$CONTAINER_LABEL" .
-docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock --name "$CONTAINER_NAME" "$CONTAINER_LABEL"
+docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock --name "$CONTAINER_PREFIX.$CONTAINER_NAME" "$CONTAINER_LABEL"
 
 
 # docker build -f dock/serve.Dockerfile  -t ci.io.srv:dev .
