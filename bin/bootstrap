@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # bootstrap sources all files in lib/
 #
@@ -6,8 +6,13 @@
 echo "bootstrap"; echo
 
 for s in lib/*; do
-    echo "loaded: $s"
-    source "$s"
+    RES="$(source $s)"
+    #RES="$(. $s)"
+    if [ "$RES" != 0 ]; then
+        echo "err: failed to load: $s"
+    else
+        echo "loaded: $s"
+    fi
 done
 
 exit 0
