@@ -4,6 +4,8 @@ WORKDIR /go/src/github.com/msawangwan/ci.io
 
 COPY . .
 
+RUN echo 'PS1="\[$(tput setaf 3)$(tput bold)[\]appname@\\h$:\\w]#\[$(tput sgr0) \]"' >> /root/.bashrc
+
 RUN apk add --no-cache git
 RUN apk add --no-cache curl
 
