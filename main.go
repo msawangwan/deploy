@@ -162,6 +162,22 @@ func main() {
 
 		// json.NewEncoder(b).Encode(payload)
 
+//        var query struct = {
+//            endpoint string
+//            params string
+//        }, {
+//            "containers/create",
+//            "SOME_CONTAINER",
+//        }
+
+//        tmpl, err := template.New("create_endpoint").Parse("{{.endpoint}}?name={{.params}}")
+
+//        if err != nil {
+//            panic(err)
+//        }
+
+//        err = tmpl.Execute()
+
 		res, err = dockerClient.Post(
 			route(dockerHostAddr, version, "containers/create?name=SOME_CONTAINER"),
 			"application/json; charset=utf-8",
