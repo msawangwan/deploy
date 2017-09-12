@@ -15,6 +15,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/msawangwan/ci.io/api/github"
 )
 
 const (
@@ -24,6 +26,7 @@ const (
 	controller = "CIIO_ROOT_IPADDR"
 	port       = ":80"
 	socktype   = "unix"
+	scratchdir = "__ws"
 )
 
 var (
@@ -106,6 +109,18 @@ func timedOut(e error) bool {
 }
 
 func init() {
+	err := os.Mkdir(scratchdir, 655)
+
+	if err != nil {
+		log.Printf("%s", err.Error())
+	}
+
+	err = os.Chdir(scratchdir)
+
+	if err != nil {
+		log.Printf("%s", err.Error())
+	}
+
 	dockerClient = &http.Client{
 		Timeout: time.Second * 10,
 		Transport: &http.Transport{
@@ -116,7 +131,7 @@ func init() {
 	}
 
 	dockerHostAddr = os.Getenv(controller)
-	localip, err := localIP("eth0")
+	localip, err = localIP("eth0")
 
 	if err != nil {
 		log.Printf("%s", err)
@@ -139,44 +154,37 @@ func main() {
 		log.Printf("payload event name: %s\n", ename)
 		log.Printf("goroutine count: %d\n", gocount)
 
+		if ename != "push" {
+			log.Printf("cannot handle event: %s", ename)
+			return
+		}
+
 		var (
-			res *http.Response
-			err error
+			res  *http.Response
+			weh  *github.PushEvent
+			body []byte
+			err  error
 		)
 
-		// res, err = dockerClient.Get(route(dockerHostAddr, version, "containers/json"))
+		body, err = ioutil.ReadAll(r.Body)
 
-		// create a container
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
 
-		// payload := &dockr.Container{
-		// 	Image: "alpine",
-		// 	CMD: []string{
-		// 		"date",
-		// 	},
-		// }
+		err = json.Unmarshal(body, &weh)
 
-		payload := []byte(`{"Image":"alpine", "Cmd": ["date"]}`)
+		if err != nil {
+			log.Printf("%s", err.Error())
+		}
 
-		// var b bytes.Buffer
-		// jsonpayload, _ := json.Marshal(payload)
-
-		// json.NewEncoder(b).Encode(payload)
-
-//        var query struct = {
-//            endpoint string
-//            params string
-//        }, {
-//            "containers/create",
-//            "SOME_CONTAINER",
-//        }
-
-//        tmpl, err := template.New("create_endpoint").Parse("{{.endpoint}}?name={{.params}}")
-
-//        if err != nil {
-//            panic(err)
-//        }
-
-//        err = tmpl.Execute()
+		payload := []byte(
+			`{
+				"Image":"golang:1.9.0-alpine3.6",
+				"WorkingDir": "/app",
+				"Cmd": ["date"]
+			 }`,
+		)
 
 		res, err = dockerClient.Post(
 			route(dockerHostAddr, version, "containers/create?name=SOME_CONTAINER"),
