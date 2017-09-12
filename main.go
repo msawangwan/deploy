@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -169,13 +170,13 @@ func main() {
 		body, err = ioutil.ReadAll(r.Body)
 
 		if err != nil {
-			log.Printf("%s", err.Error())
+			log.Printf("%s", err)
 		}
 
 		err = json.Unmarshal(body, &weh)
 
 		if err != nil {
-			log.Printf("%s", err.Error())
+			log.Printf("%s", err)
 		}
 
 		payload := []byte(
@@ -186,8 +187,42 @@ func main() {
 			 }`,
 		)
 
+		var (
+			tmpl       *template.Template
+			tmplbuf    bytes.Buffer
+			tmplres    string
+			tmplstring string
+		)
+
+		cmdURL := struct {
+			Endpoint     string
+			QueryStrings map[string]string
+		}{
+			"containers/create",
+			map[string]string{
+				"name": "SOME_CONTAINER",
+			},
+		}
+
+		tmplstring = `{{ .Endpoint }}?{{ range $k, $v := . }}{{ $k }}={{ $v }}{{ end }}`
+		tmpl = template.New("docker_url")
+		tmpl, err = tmpl.Parse(tmplstring)
+
+		if err != nil {
+			log.Printf("%s", err)
+		}
+
+		if err = tmpl.Execute(&tmplbuf, cmdURL); err != nil {
+			log.Printf("%s", err)
+		}
+
+		tmplres = tmplbuf.String()
+
+		log.Printf("executing command: %s", tmplres)
+
 		res, err = dockerClient.Post(
 			route(dockerHostAddr, version, "containers/create?name=SOME_CONTAINER"),
+			// route(dockerHostAddr, version, tmplres),
 			"application/json; charset=utf-8",
 			bytes.NewBuffer(payload),
 		)
