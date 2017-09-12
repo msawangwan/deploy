@@ -188,10 +188,10 @@ func main() {
 		)
 
 		var (
-			tmpl       *template.Template
-			tmplbuf    bytes.Buffer
-			tmplres    string
-			tmplstring string
+			tmpl    *template.Template
+			tmplbuf bytes.Buffer
+			tmplres string
+			tmplurl string
 		)
 
 		cmdURL := struct {
@@ -204,9 +204,9 @@ func main() {
 			},
 		}
 
-		tmplstring = `{{ .Endpoint }}?{{ range $k, $v := . }}{{ $k }}={{ $v }}{{ end }}`
+		tmplurl = `{{ .Endpoint }}?{{ range $k, $v := .QueryStrings }}{{ $k }}={{ $v }}{{ end }}`
 		tmpl = template.New("docker_url")
-		tmpl, err = tmpl.Parse(tmplstring)
+		tmpl, err = tmpl.Parse(tmplurl)
 
 		if err != nil {
 			log.Printf("%s", err)
@@ -221,8 +221,8 @@ func main() {
 		log.Printf("executing command: %s", tmplres)
 
 		res, err = dockerClient.Post(
-			route(dockerHostAddr, version, "containers/create?name=SOME_CONTAINER"),
-			// route(dockerHostAddr, version, tmplres),
+			// route(dockerHostAddr, version, "containers/create?name=SOME_CONTAINER"),
+			route(dockerHostAddr, version, tmplres),
 			"application/json; charset=utf-8",
 			bytes.NewBuffer(payload),
 		)
