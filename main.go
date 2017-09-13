@@ -22,13 +22,14 @@ import (
 )
 
 const (
-	version    = "1.30"
-	endpoint   = "/webhooks/payload"
-	mountpoint = "/var/run/docker.sock"
-	controller = "CIIO_ROOT_IPADDR"
-	port       = ":80"
-	socktype   = "unix"
-	scratchdir = "__ws"
+	version       = "1.30"
+	endpoint      = "/webhooks/payload"
+	mountpoint    = "/var/run/docker.sock"
+	controller    = "CIIO_ROOT_IPADDR"
+	port          = ":80"
+	socktype      = "unix"
+	scratchdir    = "__ws"
+	buildfilename = "buildfile.json"
 )
 
 var (
@@ -118,9 +119,12 @@ func init() {
 	}
 
 	err = os.Chdir(scratchdir)
+	wd, _ = os.Getwd()
 
 	if err != nil {
 		log.Printf("%s", err.Error())
+	} else {
+		log.Printf("working dir: %s", wd)
 	}
 
 	dockerClient = &http.Client{
@@ -149,17 +153,25 @@ func main() {
 	)
 
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
+		/* some stats */
+
 		gocount = runtime.NumGoroutine()
+
+		log.Printf("goroutine count: %d\n", gocount)
+
+		/* parse request header */
+
 		ename := r.Header.Get("x-github-event")
 
 		log.Printf("incoming webhook: %s\n", r.URL.Path)
 		log.Printf("payload event name: %s\n", ename)
-		log.Printf("goroutine count: %d\n", gocount)
 
 		if ename != "push" {
 			log.Printf("cannot handle event: %s", ename)
 			return
 		}
+
+		/* parse webhook json payload */
 
 		var (
 			res  *http.Response
@@ -179,6 +191,10 @@ func main() {
 		if err != nil {
 			log.Printf("%s", err)
 		}
+
+		/* parse project name from payload */
+
+		/* create the container command */
 
 		var (
 			tmpl    *template.Template
@@ -200,7 +216,6 @@ func main() {
 		tmplurl = `{{ .Endpoint }}?{{ range $k, $v := .QueryStrings }}{{ $k }}={{ $v }}{{ end }}`
 		tmpl = template.New("docker_url")
 		tmpl, err = tmpl.Parse(tmplurl)
-
 		if err != nil {
 			log.Printf("%s", err)
 		}
@@ -213,21 +228,37 @@ func main() {
 
 		log.Printf("command: %s", tmplres)
 
-		buildfile, err := os.Open("buildfile.json")
+		/* find the local buildfile */
 
+		var (
+			buildfile *os.File
+		)
+
+		// fs, err := ioutil.ReadDir(".")
+		// if err != nil {
+		// 	log.Printf("%s", err)
+		// }
+
+		// for _, f := range fs {
+		// 	if strings.ToLower(f.Name()) == strings.ToLower(buildfilename) {
+		// 		buildfile, err := os.Open()
+		// 	}
+		// }
+
+		buildfile, err = os.Open(strings.ToLower(buildfilename))
 		if err != nil {
 			log.Printf("%s", err)
 		}
 
 		parsed := json.NewDecoder(buildfile)
 
-		var buildparams ciio.Buildfile
+		var buildfilepayload ciio.Buildfile
 
-		if err = parsed.Decode(&buildparams); err != nil {
+		if err = parsed.Decode(&buildfilepayload); err != nil {
 			log.Printf("%s", err)
 		}
 
-		log.Printf("project build params: %+v", buildparams)
+		log.Printf("project build params: %+v", buildfilepayload)
 
 		jsonbuf := []byte(
 			`{
@@ -236,6 +267,8 @@ func main() {
 				"Cmd": ["date"]
 			 }`,
 		)
+
+		/* query the docker host and create container */
 
 		res, err = dockerClient.Post(
 			route(dockerHostAddr, version, tmplres),
@@ -251,7 +284,6 @@ func main() {
 		}
 
 		buf, err := pretty(res.Body, "", "  ")
-
 		if err != nil {
 			panic(err)
 		}
