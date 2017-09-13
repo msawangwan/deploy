@@ -213,8 +213,6 @@ func main() {
 
 		log.Printf("command: %s", tmplres)
 
-		buildparams := &ciio.Buildfile{}
-
 		buildfile, err := os.Open("buildfile.json")
 
 		if err != nil {
@@ -222,6 +220,8 @@ func main() {
 		}
 
 		parsed := json.NewDecoder(buildfile)
+
+		var buildparams ciio.Buildfile
 
 		if err = parsed.Decode(&buildparams); err != nil {
 			log.Printf("%s", err)

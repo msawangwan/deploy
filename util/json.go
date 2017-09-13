@@ -1,8 +1,8 @@
 package util
 
 import (
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
 )
 
 // ReadFileJSON reads a file f into a type struct value v
