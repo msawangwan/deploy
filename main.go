@@ -179,14 +179,6 @@ func main() {
 			log.Printf("%s", err)
 		}
 
-		payload := []byte(
-			`{
-				"Image":"golang:1.9.0-alpine3.6",
-				"WorkingDir": "/app",
-				"Cmd": ["date"]
-			 }`,
-		)
-
 		var (
 			tmpl    *template.Template
 			tmplbuf bytes.Buffer
@@ -194,7 +186,7 @@ func main() {
 			tmplurl string
 		)
 
-		cmdURL := struct {
+		tmpldata := struct {
 			Endpoint     string
 			QueryStrings map[string]string
 		}{
@@ -212,19 +204,51 @@ func main() {
 			log.Printf("%s", err)
 		}
 
-		if err = tmpl.Execute(&tmplbuf, cmdURL); err != nil {
+		if err = tmpl.Execute(&tmplbuf, tmpldata); err != nil {
 			log.Printf("%s", err)
 		}
 
 		tmplres = tmplbuf.String()
 
-		log.Printf("executing command: %s", tmplres)
+		log.Printf("command: %s", tmplres)
+
+		// var (
+		// 	payloadtmpl    *template.Template
+		// 	payloadtmplbuf bytes.Buffer
+		// 	payloadtmplres string
+		// 	payloadtmplurl string
+		// )
+
+		// buildfile := struct {
+		// 	Image     string
+		// 	Hostport  string
+		// 	Localport string
+		// 	Execute   map[string]string
+		// }{}
+
+		// todo: make this into a type
+		var buildfilejson = struct {
+			Image string
+			Addr  struct {
+				IP      string
+				PortIn  string
+				PortOut string
+			}
+			Execute []map[string][]string
+		}
+
+		jsonbuf := []byte(
+			`{
+				"Image":"golang:1.9.0-alpine3.6",
+				"WorkingDir": "/app",
+				"Cmd": ["date"]
+			 }`,
+		)
 
 		res, err = dockerClient.Post(
-			// route(dockerHostAddr, version, "containers/create?name=SOME_CONTAINER"),
 			route(dockerHostAddr, version, tmplres),
 			"application/json; charset=utf-8",
-			bytes.NewBuffer(payload),
+			bytes.NewBuffer(jsonbuf),
 		)
 
 		if err != nil {
