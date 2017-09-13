@@ -9,17 +9,17 @@ CONTAINER_PREFIX="ci.io"
 CONTAINER_NAME="srv"
 CONTAINER_TAG="dev"
 CONTAINER_VERSION="0.0.1"
-CONTAINER_LABEL="$CONTAINER_PREFIX.$CONTAINER_NAME:$CONTAINER_TAG-$CONTAINER_VERSION"
+CONTAINER_IMAGE_NAME="$CONTAINER_PREFIX.$CONTAINER_NAME:$CONTAINER_TAG-$CONTAINER_VERSION"
 
-DF_DIR="build"
-DF_NAME="serve.Dockerfile"
-DF_PATH="$DF_DIR/$DF_NAME"
+DOCKERFILE_DIR="build"
+DOCKERFILE_FILENAME="serve.Dockerfile"
+DOCKERFILE_PATH="$DOCKERFILE_DIR/$DOCKERFILE_FILENAME"
 
 CIIO_SOCK_MNT="/var/run/docker.sock:/var/run/docker.sock"
 CIIO_ROOT_IPADDR="$(./bin/parseip)"
 
 export CIIO_ROOT_IPADDR
-export DF_DIR
+export DOCKERFILE_DIR
 
 echo "master container addr: $CIIO_ROOT_IPADDR"; echo
 echo "pwd: $(pwd)"; echo
@@ -35,5 +35,13 @@ else
 fi
 
 docker system prune -f
-docker build -f "$DF_PATH" -t "$CONTAINER_LABEL" .
-docker run --rm -it -e CIIO_ROOT_IPADDR -p 9001:80 -v /var/run/docker.sock:/var/run/docker.sock --name "$CONTAINER_PREFIX.$CONTAINER_NAME" "$CONTAINER_LABEL"
+docker build -f "$DOCKERFILE_PATH" -t "$CONTAINER_IMAGE_NAME" .
+
+docker run \
+--name "$CONTAINER_PREFIX.$CONTAINER_NAME" \
+--rm \
+-it \
+-e CIIO_ROOT_IPADDR \
+-p 9001:80 \
+-v /var/run/docker.sock:/var/run/docker.sock \
+"$CONTAINER_IMAGE_NAME"

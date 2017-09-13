@@ -18,8 +18,14 @@ secret/*
 local/
 local/*
 
-*.log
+.run/
+.run/*
+run/
+run/*
+
 *.tmp
+*.log
 *.secret
+*.run
 *.swp
 *.local

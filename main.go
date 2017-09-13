@@ -36,6 +36,7 @@ var (
 	dockerClient   *http.Client
 	dockerHostAddr string
 	localip        string
+	accesstoken    string
 )
 
 func route(adr, ver, src string) string {
@@ -119,7 +120,7 @@ func init() {
 	}
 
 	err = os.Chdir(scratchdir)
-	wd, _ = os.Getwd()
+	wd, _ := os.Getwd()
 
 	if err != nil {
 		log.Printf("%s", err.Error())
@@ -174,10 +175,10 @@ func main() {
 		/* parse webhook json payload */
 
 		var (
-			res  *http.Response
-			weh  *github.PushEvent
-			body []byte
-			err  error
+			res     *http.Response
+			payload *github.PushEvent
+			body    []byte
+			err     error
 		)
 
 		body, err = ioutil.ReadAll(r.Body)
@@ -186,13 +187,42 @@ func main() {
 			log.Printf("%s", err)
 		}
 
-		err = json.Unmarshal(body, &weh)
+		err = json.Unmarshal(body, &payload)
 
 		if err != nil {
 			log.Printf("%s", err)
 		}
 
 		/* parse project name from payload */
+
+		var (
+			repo     string
+			projname string
+		)
+
+		repo = payload.Repository.HTMLURL
+		projname = payload.Repository.Name
+
+		log.Printf("project name: %s", projname)
+		log.Printf("repo: %s", repo)
+
+		/* pull the repo into a tmp dir */
+
+		var (
+			tmpdir       string
+			tmpdirpath   string
+			tmpdirprefix string
+		)
+
+		tmpdirpath = "./"
+		tmpdirprefix = projname
+
+		tmpdir, err = ioutil.TempDir(tmpdirpath, tmpdirprefix)
+		if err != nil {
+			log.Printf("%s", err)
+		}
+
+		defer os.RemoveAll(tmpdir)
 
 		/* create the container command */
 
