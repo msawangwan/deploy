@@ -1,4 +1,4 @@
-package cico
+package ciio
 
 type Command struct {
     Exec string

@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/msawangwan/ci.io/api/ciio"
 	"github.com/msawangwan/ci.io/api/github"
 )
 
@@ -212,30 +213,21 @@ func main() {
 
 		log.Printf("command: %s", tmplres)
 
-		// var (
-		// 	payloadtmpl    *template.Template
-		// 	payloadtmplbuf bytes.Buffer
-		// 	payloadtmplres string
-		// 	payloadtmplurl string
-		// )
+		buildparams := &ciio.Buildfile{}
 
-		// buildfile := struct {
-		// 	Image     string
-		// 	Hostport  string
-		// 	Localport string
-		// 	Execute   map[string]string
-		// }{}
+		buildfile, err := os.Open("buildfile.json")
 
-		// todo: make this into a type
-		var buildfilejson = struct {
-			Image string
-			Addr  struct {
-				IP      string
-				PortIn  string
-				PortOut string
-			}
-			Execute []map[string][]string
+		if err != nil {
+			log.Printf("%s", err)
 		}
+
+		parsed := json.NewDecoder(buildfile)
+
+		if err = parsed.Decode(&buildparams); err != nil {
+			log.Printf("%s", err)
+		}
+
+		log.Printf("project build params: %+v", buildparams)
 
 		jsonbuf := []byte(
 			`{
