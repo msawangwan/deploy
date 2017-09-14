@@ -12,7 +12,7 @@ type jsonData struct {
 	K4 string `json:"k4"`
 }
 
-func TestReadJSONFile(t *testing.T) {
+func TestFromFile(t *testing.T) {
 	er := os.Chdir("../")
 
 	if er != nil {
@@ -38,4 +38,8 @@ func TestReadJSONFile(t *testing.T) {
 	}
 
 	t.Logf("data: %+v", data)
+}
+
+func TestBufPretty(t *testing.T) {
+	t.Logf("complete")
 }
