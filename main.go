@@ -39,6 +39,12 @@ var (
 	accesstoken    string
 )
 
+var commands = struct {
+	cloneRemoteRepo string
+}{
+	"clrep",
+}
+
 func route(adr, ver, src string) string {
 	return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src)
 }
@@ -223,6 +229,26 @@ func main() {
 		}
 
 		defer os.RemoveAll(tmpdir)
+
+		log.Printf("created tmp workspace: %s", tmpdir)
+
+		/* clone the remote repo into temp workspace */
+
+		var (
+			repouser string = "user"
+			reponame string = "repository"
+			cmdout   bytes.Buffer
+			cmderr   bytes.Buffer
+		)
+
+		clone := exec.Command(commands.cloneRemoteRepo, repouser, reponame)
+		clone.Dir = tmpdir
+		clone.Stdout = &cmdout
+		clone.Stderr = &cmderr
+
+		if err = clone.Run(); err != nil {
+			log.Printf("%s", err)
+		}
 
 		/* create the container command */
 
