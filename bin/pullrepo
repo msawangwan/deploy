@@ -13,12 +13,28 @@ REPO=$1
 BRANCH="master"
 OWNER=$2
 TOKEN=$3
-
-echo "pulling from $REPO/$BRANCH as $OWNER"; echo
+FORMAT="tarball"
+REF="master"
 
 API="https://api.github.com"
-ENDPOINT="/repos/$OWNER/$REPO/branches/$BRANCH"
+#ENDPOINT="/repos/$OWNER/$REPO/$FORMAT"
+ENDPOINT="/users/msawangwan/repos"
+URL="$API$ENDPOINT"
+
+echo "pulling from $REPO/$BRANCH as $OWNER (url: $URL)"; echo
+
+if [ ! -e "TMP" ]; then
+    mkdir TMP
+fi
+
+cd TMP
 
 curl -H "Authorization: token $TOKEN" \
      -iH "User-Agent: $OWNER" \
-     "$API/$ENDPOINT"
+     -L \
+     "$URL"
+#     > \
+#     "$REPO-$REF.tar.gz"
+
+
+echo; exit 0
