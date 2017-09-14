@@ -19,6 +19,9 @@ import (
 
 	"github.com/msawangwan/ci.io/api/ciio"
 	"github.com/msawangwan/ci.io/api/github"
+	"github.com/msawangwan/ci.io/lib/jsonutil"
+	"github.com/msawangwan/ci.io/types/cred"
+	//	"github.com/msawangwan/ci.io/util"
 )
 
 const (
@@ -33,6 +36,7 @@ const (
 )
 
 var (
+	credential     *cred.Github
 	dockerClient   *http.Client
 	dockerHostAddr string
 	localip        string
@@ -119,18 +123,25 @@ func timedOut(e error) bool {
 }
 
 func init() {
-	err := os.Mkdir(scratchdir, 655)
+	var (
+		err error
+	)
 
+	err = jsonutil.FromFile("secret/github.auth.json", credentials)
 	if err != nil {
-		log.Printf("%s", err.Error())
+		log.Printf("%s", err)
+	}
+
+	err := os.Mkdir(scratchdir, 655)
+	if err != nil {
+		log.Printf("%s", err)
 	}
 
 	err = os.Chdir(scratchdir)
-	wd, _ := os.Getwd()
-
 	if err != nil {
-		log.Printf("%s", err.Error())
+		log.Printf("%s", err)
 	} else {
+		wd, _ := os.Getwd()
 		log.Printf("working dir: %s", wd)
 	}
 
@@ -144,8 +155,8 @@ func init() {
 	}
 
 	dockerHostAddr = os.Getenv(controller)
-	localip, err = localIP("eth0")
 
+	localip, err = localIP("eth0")
 	if err != nil {
 		log.Printf("%s", err)
 	}
@@ -235,13 +246,15 @@ func main() {
 		/* clone the remote repo into temp workspace */
 
 		var (
-			repouser string = "user"
-			reponame string = "repository"
-			cmdout   bytes.Buffer
-			cmderr   bytes.Buffer
+			repouser  string = "user"
+			reponame  string = "repository"
+			repoowner string = payload.Repository.Owner.Name
+			cloneurl  string = payload.Repository.CloneURL
+			cmdout    bytes.Buffer
+			cmderr    bytes.Buffer
 		)
 
-		clone := exec.Command(commands.cloneRemoteRepo, repouser, reponame)
+		clone := exec.Command(commands.cloneRemoteRepo, repoowner, cloneurl)
 		clone.Dir = tmpdir
 		clone.Stdout = &cmdout
 		clone.Stderr = &cmderr
@@ -289,17 +302,6 @@ func main() {
 		var (
 			buildfile *os.File
 		)
-
-		// fs, err := ioutil.ReadDir(".")
-		// if err != nil {
-		// 	log.Printf("%s", err)
-		// }
-
-		// for _, f := range fs {
-		// 	if strings.ToLower(f.Name()) == strings.ToLower(buildfilename) {
-		// 		buildfile, err := os.Open()
-		// 	}
-		// }
 
 		buildfile, err = os.Open(strings.ToLower(buildfilename))
 		if err != nil {
