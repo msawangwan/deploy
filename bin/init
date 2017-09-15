@@ -53,5 +53,4 @@ docker run \
 --rm \
 -it \
 -v  "$DOCKERMOUNT_SOCK" \
--v "$DOCKERMOUNT_RUNTIME" \
 "$CONTAINER_IMAGE_NAME"
