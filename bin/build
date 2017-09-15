@@ -15,7 +15,9 @@ DOCKERFILE_DIR="build"
 DOCKERFILE_FILENAME="serve.Dockerfile"
 DOCKERFILE_PATH="$DOCKERFILE_DIR/$DOCKERFILE_FILENAME"
 
-CIIO_SOCK_MNT="/var/run/docker.sock:/var/run/docker.sock"
+DOCKERMOUNT_SOCK="/var/run/docker.sock:/var/run/docker.sock"
+
+# CIIO_SOCK_MNT="/var/run/docker.sock:/var/run/docker.sock"
 CIIO_ROOT_IPADDR="$(./bin/parseip)"
 
 export CIIO_ROOT_IPADDR
@@ -43,6 +45,6 @@ docker run \
 -it \
 -e CIIO_ROOT_IPADDR \
 -p 9001:80 \
--v /var/run/docker.sock:/var/run/docker.sock \
+-v "${DOCKERMOUNT_SOCK}" \
 "$CONTAINER_IMAGE_NAME"
 

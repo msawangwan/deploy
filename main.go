@@ -11,8 +11,8 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -20,8 +20,8 @@ import (
 	"github.com/msawangwan/ci.io/api/ciio"
 	"github.com/msawangwan/ci.io/api/github"
 	"github.com/msawangwan/ci.io/lib/jsonutil"
+	"github.com/msawangwan/ci.io/lib/netutil"
 	"github.com/msawangwan/ci.io/types/cred"
-	//	"github.com/msawangwan/ci.io/util"
 )
 
 const (
@@ -53,86 +53,69 @@ func route(adr, ver, src string) string {
 	return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src)
 }
 
-func pretty(r io.Reader, delim, indent string) (bytes.Buffer, error) {
-	var (
-		out bytes.Buffer
-		err error
-	)
+// func localIP(ifname string) (string, error) {
+// 	intfs, e := net.Interfaces()
 
-	src, err := ioutil.ReadAll(r)
+// 	if e != nil {
+// 		return "none", e
+// 	}
 
-	if err != nil {
-		return out, err
-	}
+// 	for _, intf := range intfs {
+// 		if strings.Contains(intf.Name, ifname) {
+// 			addrs, e := intf.Addrs()
 
-	err = json.Indent(&out, []byte(src), delim, indent)
+// 			if e != nil {
+// 				return "none", e
+// 			}
 
-	return out, err
-}
+// 			for _, addr := range addrs {
+// 				addrstr := addr.String()
+// 				if !strings.Contains(addrstr, "[") {
+// 					return strings.Split(addrstr, "/")[0], nil
+// 				}
+// 			}
+// 		}
+// 	}
 
-func localIP(ifname string) (string, error) {
-	intfs, e := net.Interfaces()
+// 	return "none", nil
+// }
 
-	if e != nil {
-		return "none", e
-	}
+// func timedOut(e error) bool {
+// 	switch e := e.(type) {
+// 	case *url.Error:
+// 		if e, ok := e.Err.(net.Error); ok && e.Timeout() {
+// 			return true
+// 		}
+// 	case net.Error:
+// 		if e.Timeout() {
+// 			return true
+// 		}
+// 	case *net.OpError:
+// 		if e.Timeout() {
+// 			return true
+// 		}
+// 	}
 
-	for _, intf := range intfs {
-		if strings.Contains(intf.Name, ifname) {
-			addrs, e := intf.Addrs()
+// 	if e != nil {
+// 		if strings.Contains(e.Error(), "use of closed network connection") {
+// 			return true
+// 		}
+// 	}
 
-			if e != nil {
-				return "none", e
-			}
-
-			for _, addr := range addrs {
-				addrstr := addr.String()
-				if !strings.Contains(addrstr, "[") {
-					return strings.Split(addrstr, "/")[0], nil
-				}
-			}
-		}
-	}
-
-	return "none", nil
-}
-
-func timedOut(e error) bool {
-	switch e := e.(type) {
-	case *url.Error:
-		if e, ok := e.Err.(net.Error); ok && e.Timeout() {
-			return true
-		}
-	case net.Error:
-		if e.Timeout() {
-			return true
-		}
-	case *net.OpError:
-		if e.Timeout() {
-			return true
-		}
-	}
-
-	if e != nil {
-		if strings.Contains(e.Error(), "use of closed network connection") {
-			return true
-		}
-	}
-
-	return false
-}
+// 	return false
+// }
 
 func init() {
 	var (
 		err error
 	)
 
-	err = jsonutil.FromFile("secret/github.auth.json", credentials)
+	err = jsonutil.FromFile("secret/github.auth.json", credential)
 	if err != nil {
 		log.Printf("%s", err)
 	}
 
-	err := os.Mkdir(scratchdir, 655)
+	err = os.Mkdir(scratchdir, 655)
 	if err != nil {
 		log.Printf("%s", err)
 	}
@@ -156,7 +139,7 @@ func init() {
 
 	dockerHostAddr = os.Getenv(controller)
 
-	localip, err = localIP("eth0")
+	localip, err = netutil.LocalIP("eth0")
 	if err != nil {
 		log.Printf("%s", err)
 	}
@@ -246,13 +229,18 @@ func main() {
 		/* clone the remote repo into temp workspace */
 
 		var (
-			repouser  string = "user"
-			reponame  string = "repository"
-			repoowner string = payload.Repository.Owner.Name
-			cloneurl  string = payload.Repository.CloneURL
-			cmdout    bytes.Buffer
-			cmderr    bytes.Buffer
+			repouser  = "user"
+			reponame  = "repository"
+			repoowner = payload.Repository.Owner.Name
+			cloneurl  = payload.Repository.CloneURL
 		)
+
+		var (
+			cmdout bytes.Buffer
+			cmderr bytes.Buffer
+		)
+
+		log.Printf("user [%s] and repo [%s]", repouser, reponame)
 
 		clone := exec.Command(commands.cloneRemoteRepo, repoowner, cloneurl)
 		clone.Dir = tmpdir
@@ -284,6 +272,7 @@ func main() {
 
 		tmplurl = `{{ .Endpoint }}?{{ range $k, $v := .QueryStrings }}{{ $k }}={{ $v }}{{ end }}`
 		tmpl = template.New("docker_url")
+
 		tmpl, err = tmpl.Parse(tmplurl)
 		if err != nil {
 			log.Printf("%s", err)
@@ -335,13 +324,13 @@ func main() {
 		)
 
 		if err != nil {
-			if timedOut(err) {
+			if netutil.IsTimeOutError(err) {
 				log.Println("timeout error")
 			}
 			panic(err)
 		}
 
-		buf, err := pretty(res.Body, "", "  ")
+		buf, err := jsonutil.BufPretty(res.Body, "", "  ")
 		if err != nil {
 			panic(err)
 		}
