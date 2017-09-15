@@ -2,6 +2,7 @@ package jsonutil
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -14,13 +15,11 @@ type jsonData struct {
 
 func TestFromFile(t *testing.T) {
 	er := os.Chdir("../")
-
 	if er != nil {
 		t.Error(er)
 	}
 
 	wd, er := os.Getwd()
-
 	if er != nil {
 		t.Error(er)
 	}
@@ -32,7 +31,6 @@ func TestFromFile(t *testing.T) {
 	)
 
 	er = FromFile("test/Buildfile.test", data)
-
 	if er != nil {
 		t.Error(er)
 	}
@@ -41,5 +39,12 @@ func TestFromFile(t *testing.T) {
 }
 
 func TestBufPretty(t *testing.T) {
-	t.Logf("complete")
+	var r = strings.NewReader(`{ "key1": "value1", "key2": "value2", "key3": "value3" }`)
+
+	buf, er := BufPretty(r, "", "  ")
+	if er != nil {
+		t.Error(er)
+	}
+
+	t.Log(buf.String())
 }
