@@ -29,7 +29,7 @@ const (
 	port          = ":80"
 	endpoint      = "/webhooks/payload"
 	mountpoint    = "/var/run/docker.sock"
-	controller    = "CIIO_ROOT_IPADDR"
+	envipaddr     = "CIIO_ROOT_IPADDR"
 	socktype      = "unix"
 	scratchdir    = "__ws"
 	buildfilename = "buildfile.json"
@@ -46,13 +46,18 @@ var (
 var commands = struct {
 	cloneRemoteRepo string
 }{
-	"./bin/clrep",
+	"clrep",
 }
 
 var pwd = func() { d, _ := os.Getwd(); log.Printf("current working dir: %s", d) }
 var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
 
 func init() {
+	rootdir, _ := os.Getwd()
+	pathenv := os.Getenv("PATH")
+
+	os.Setenv(fmt.Sprintf("%s:%s/bin", pathenv, rootdir), "PATH")
+
 	var (
 		err error
 	)
@@ -73,8 +78,6 @@ func init() {
 	if err != nil {
 		log.Printf("%s", err)
 	} else {
-		// wd, _ := os.Getwd()
-		// log.Printf("working dir: %s", wd)
 		pwd()
 	}
 
@@ -87,7 +90,7 @@ func init() {
 		},
 	}
 
-	dockerHostAddr = os.Getenv(controller)
+	dockerHostAddr = os.Getenv(envipaddr)
 
 	localip, err = netutil.LocalIP("eth0")
 	if err != nil {
