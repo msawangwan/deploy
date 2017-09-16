@@ -14,7 +14,7 @@ type jsonData struct {
 }
 
 func TestFromFile(t *testing.T) {
-	er := os.Chdir("../")
+	er := os.Chdir("../../")
 	if er != nil {
 		t.Error(er)
 	}

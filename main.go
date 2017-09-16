@@ -26,10 +26,10 @@ import (
 
 const (
 	version       = "1.30"
+	port          = ":80"
 	endpoint      = "/webhooks/payload"
 	mountpoint    = "/var/run/docker.sock"
 	controller    = "CIIO_ROOT_IPADDR"
-	port          = ":80"
 	socktype      = "unix"
 	scratchdir    = "__ws"
 	buildfilename = "buildfile.json"
@@ -46,64 +46,12 @@ var (
 var commands = struct {
 	cloneRemoteRepo string
 }{
-	"clrep",
+	"./bin/clrep",
 }
 
 func route(adr, ver, src string) string {
 	return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src)
 }
-
-// func localIP(ifname string) (string, error) {
-// 	intfs, e := net.Interfaces()
-
-// 	if e != nil {
-// 		return "none", e
-// 	}
-
-// 	for _, intf := range intfs {
-// 		if strings.Contains(intf.Name, ifname) {
-// 			addrs, e := intf.Addrs()
-
-// 			if e != nil {
-// 				return "none", e
-// 			}
-
-// 			for _, addr := range addrs {
-// 				addrstr := addr.String()
-// 				if !strings.Contains(addrstr, "[") {
-// 					return strings.Split(addrstr, "/")[0], nil
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	return "none", nil
-// }
-
-// func timedOut(e error) bool {
-// 	switch e := e.(type) {
-// 	case *url.Error:
-// 		if e, ok := e.Err.(net.Error); ok && e.Timeout() {
-// 			return true
-// 		}
-// 	case net.Error:
-// 		if e.Timeout() {
-// 			return true
-// 		}
-// 	case *net.OpError:
-// 		if e.Timeout() {
-// 			return true
-// 		}
-// 	}
-
-// 	if e != nil {
-// 		if strings.Contains(e.Error(), "use of closed network connection") {
-// 			return true
-// 		}
-// 	}
-
-// 	return false
-// }
 
 func init() {
 	var (

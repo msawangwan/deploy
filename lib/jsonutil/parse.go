@@ -21,19 +21,14 @@ func FromFile(f string, v interface{}) error {
 }
 
 // BufPretty formats json into a buffer
-func BufPretty(r io.Reader, delim, indent string) (bytes.Buffer, error) {
-	var (
-		out bytes.Buffer
-		err error
-	)
-
+func BufPretty(r io.Reader, delim, indent string) (out bytes.Buffer, err error) {
 	src, err := ioutil.ReadAll(r)
 
 	if err != nil {
-		return out, err
+		return
 	}
 
 	err = json.Indent(&out, []byte(src), delim, indent)
 
-	return out, err
+	return
 }
