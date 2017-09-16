@@ -57,7 +57,7 @@ func init() {
 	pathenv := os.Getenv("PATH")
 	newpathenv := fmt.Sprintf("%s:%s/bin", pathenv, rootdir)
 
-	os.Setenv(newpathenv, "PATH")
+	os.Setenv("PATH", newpathenv)
 
 	log.Printf("old path: %s", pathenv)
 	log.Printf("new path: %s", newpathenv)
