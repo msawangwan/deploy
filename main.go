@@ -49,9 +49,8 @@ var commands = struct {
 	"./bin/clrep",
 }
 
-func route(adr, ver, src string) string {
-	return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src)
-}
+var pwd = func() { d, _ := os.Getwd(); log.Printf("current working dir: %s", d) }
+var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
 
 func init() {
 	var (
@@ -61,6 +60,8 @@ func init() {
 	err = jsonutil.FromFile("secret/github.auth.json", credential)
 	if err != nil {
 		log.Printf("%s", err)
+	} else {
+		log.Printf("loaded credentials: %+v", credential)
 	}
 
 	err = os.Mkdir(scratchdir, 655)
@@ -72,8 +73,9 @@ func init() {
 	if err != nil {
 		log.Printf("%s", err)
 	} else {
-		wd, _ := os.Getwd()
-		log.Printf("working dir: %s", wd)
+		// wd, _ := os.Getwd()
+		// log.Printf("working dir: %s", wd)
+		pwd()
 	}
 
 	dockerClient = &http.Client{
@@ -176,21 +178,19 @@ func main() {
 
 		/* clone the remote repo into temp workspace */
 
-		var (
-			repouser  = "user"
-			reponame  = "repository"
-			repoowner = payload.Repository.Owner.Name
-			cloneurl  = payload.Repository.CloneURL
-		)
+		pwd()
 
 		var (
 			cmdout bytes.Buffer
 			cmderr bytes.Buffer
 		)
 
-		log.Printf("user [%s] and repo [%s]", repouser, reponame)
+		clone := exec.Command(
+			commands.cloneRemoteRepo,
+			credential.User,
+			payload.Repository.CloneURL,
+		)
 
-		clone := exec.Command(commands.cloneRemoteRepo, repoowner, cloneurl)
 		clone.Dir = tmpdir
 		clone.Stdout = &cmdout
 		clone.Stderr = &cmderr
