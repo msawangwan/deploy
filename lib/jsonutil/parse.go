@@ -15,7 +15,7 @@ func FromFile(f string, v interface{}) error {
 		return err
 	}
 
-	json.Unmarshal(raw, &v)
+	json.Unmarshal(raw, v)
 
 	return nil
 }

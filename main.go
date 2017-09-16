@@ -57,7 +57,7 @@ func init() {
 		err error
 	)
 
-	err = jsonutil.FromFile("secret/github.auth.json", credential)
+	err = jsonutil.FromFile("secret/github.auth.json", &credential)
 	if err != nil {
 		log.Printf("%s", err)
 	} else {
