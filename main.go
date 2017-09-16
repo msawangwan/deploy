@@ -60,7 +60,7 @@ func init() {
 	os.Setenv("PATH", newpathenv)
 
 	log.Printf("old path: %s", pathenv)
-	log.Printf("new path: %s", newpathenv)
+	log.Printf("new path: %s", os.Getenv("PATH"))
 
 	var (
 		err error
