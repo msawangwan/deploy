@@ -55,8 +55,12 @@ var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%
 func init() {
 	rootdir, _ := os.Getwd()
 	pathenv := os.Getenv("PATH")
+	newpathenv := fmt.Sprintf("%s:%s/bin", pathenv, rootdir)
 
-	os.Setenv(fmt.Sprintf("%s:%s/bin", pathenv, rootdir), "PATH")
+	os.Setenv(newpathenv, "PATH")
+
+	log.Printf("old path: %s", pathenv)
+	log.Printf("new path: %s", newpathenv)
 
 	var (
 		err error
