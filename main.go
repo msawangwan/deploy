@@ -179,7 +179,7 @@ func main() {
 			log.Printf("%s", err)
 		}
 
-//		defer os.RemoveAll(tmpdir)
+		//		defer os.RemoveAll(tmpdir)
 
 		log.Printf("created tmp workspace: %s", tmpdir)
 
@@ -205,8 +205,10 @@ func main() {
 
 		if err = clone.Run(); err != nil {
 			log.Printf("err when calling exec: %s", err)
+			log.Printf("%s", cmderr.String())
 		} else {
 			log.Printf("no err when calling exec: %+v", commands.cloneRemoteRepo)
+			log.Printf("%s", cmdout.String())
 		}
 
 		/* create the container command */
