@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/msawangwan/ci.io/api/ciio"
@@ -39,7 +40,7 @@ const (
 )
 
 var (
-	cache          repoCache
+	// cache          repoCache
 	credential     *cred.Github
 	dockerClient   *http.Client
 	dockerHostAddr string
@@ -47,11 +48,14 @@ var (
 	accesstoken    string
 )
 
+var cache = struct {
+	sync.RWMutex
+	m map[string]string
+}{m: make(map[string]string)}
+
 var commands = struct {
 	cloneRemoteRepo string
-}{
-	"clrep",
-}
+}{"clrep"}
 
 var pwd = func() { d, _ := os.Getwd(); log.Printf("current working dir: %s", d) }
 var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
@@ -100,6 +104,8 @@ func init() {
 	if err != nil {
 		log.Printf("%s", err)
 	}
+
+	// cache = make(map[string]string)
 
 	log.Printf("server container ip: %s\n", localip)
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
@@ -174,7 +180,9 @@ func main() {
 		tmpdirpath = "./"
 		tmpdirprefix = projname
 
-		if cached, ok := cache[projname]; ok {
+		cache.RLock()
+
+		if cached, ok := cache.m[projname]; ok {
 			log.Printf("already exists in cache %s", projname)
 			tmpdir = cached
 		} else {
@@ -185,8 +193,12 @@ func main() {
 				log.Printf("%s", err)
 			}
 
-			cache[projname] = tmpdir
+			cache.Lock()
+			cache.m[projname] = tmpdir
+			cache.Unlock()
 		}
+
+		cache.RUnlock()
 
 		log.Printf("workspace: %s", tmpdir)
 
