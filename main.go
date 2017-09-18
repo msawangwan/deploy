@@ -196,7 +196,7 @@ func main() {
 			commands.cloneRemoteRepo,
 			credential.User,
 			credential.OAuth,
-			payload.Repository.CloneURL,
+			projname,
 		)
 
 		clone.Dir = tmpdir
