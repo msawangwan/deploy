@@ -20,7 +20,7 @@ REPO="$4"
 # WS="$(mktemp -d $REPO.XXXXXX)"
 mkdir -v ${WS}
 
-cd "${WS}"
+#cd "${WS}"
 
 URL="${SCHEME}://${OAUTH}@${PREFIX}/${USERNAME}/${REPO}${SUFFIX}"
 WD="$(pwd)"
