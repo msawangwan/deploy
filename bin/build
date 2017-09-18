@@ -3,7 +3,7 @@
 # build
 #
 
-echo "ci.io build phase ..."; echo
+echo "build"; echo
 
 CONTAINER_PREFIX="ci.io"
 CONTAINER_NAME="srv"
@@ -17,7 +17,6 @@ DOCKERFILE_PATH="$DOCKERFILE_DIR/$DOCKERFILE_FILENAME"
 
 DOCKERMOUNT_SOCK="/var/run/docker.sock:/var/run/docker.sock"
 
-# CIIO_SOCK_MNT="/var/run/docker.sock:/var/run/docker.sock"
 CIIO_ROOT_IPADDR="$(./bin/parseip)"
 
 export CIIO_ROOT_IPADDR

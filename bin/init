@@ -18,21 +18,21 @@ DOCKERFILE_FILENAME="init.Dockerfile"
 DOCKERFILE_PATH="$DOCKERFILE_DIR/$DOCKERFILE_FILENAME"
 
 DOCKERMOUNT_SOCK="/var/run/docker.sock:/var/run/docker.sock"
-DOCKERMOUNT_RUNTIME="run:run"
+# DOCKERMOUNT_RUNTIME="run:run"
 
 SECRET_DIR="secret"
 SECRET_PATH="$SECRET_DIR"
 
-echo "ci.io init ..."; echo
+echo "init"; echo
 
 cd ..
 
 echo "root dir:"; echo; pwd
 
-if [ ! -e "$DOCKERMOUNT_RUNTIME" ]; then
-    echo "couldnt find runtime mount dir, creating new"; echo
-    mkdir "$DOCKERMOUNT_RUNTIME"
-fi
+# if [ ! -e "$DOCKERMOUNT_RUNTIME" ]; then
+#     echo "couldnt find runtime mount dir, creating new"; echo
+#     mkdir "$DOCKERMOUNT_RUNTIME"
+# fi
 
 if [ ! -e "$SECRET_PATH" ]; then
     echo "missing secrets dir!"; echo
@@ -47,7 +47,7 @@ echo "build:"; echo
 
 docker system prune -f
 docker build -f "$DOCKERFILE_PATH" -t "$CONTAINER_IMAGE_NAME" .
-# docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock --name "$CONTAINER_PREFIX.$CONTAINER_NAME" "$CONTAINER_IMAGE_NAME"
+
 docker run \
 --name "$CONTAINER_PREFIX.$CONTAINER_NAME" \
 --rm \

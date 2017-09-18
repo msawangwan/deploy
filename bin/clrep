@@ -4,7 +4,7 @@ echo "clrep (clone repository)"; echo
 
 if [ $# != 3 ]; then
     echo "err: missing args"
-    echo "usage: `basename $0` <username> <token> <repo>"; echo
+    echo "usage: `basename $0` <username> <token> <dirname> <repo>"; echo
     exit 1
 fi
 
@@ -14,9 +14,11 @@ SUFFIX=".git"
 
 USERNAME="$1"
 OAUTH="$2"
-REPO="$3"
+WS="$3"
+REPO="$4"
 
-WS="$(mktemp -d $REPO.XXXXXX)"
+# WS="$(mktemp -d $REPO.XXXXXX)"
+mkdir -v ${WS}
 
 cd "${WS}"
 
@@ -25,10 +27,7 @@ WD="$(pwd)"
 
 echo "cloning ${URL} into ${WD}"
 
-# git clone "${URL}"
-# don't clone cus it writes creds to disk? (.git/config)
-
-git init
+git init # don't clone cus it writes creds to .git/config?
 git pull "${URL}"
 
 exit 0

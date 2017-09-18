@@ -14,8 +14,6 @@ RUN apk add --no-cache curl
 RUN go-wrapper download
 RUN go-wrapper install
 
-#RUN apk del git
-
 EXPOSE 80
 
 CMD ["go-wrapper", "run"]

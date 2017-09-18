@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -23,6 +24,8 @@ import (
 	"github.com/msawangwan/ci.io/lib/netutil"
 	"github.com/msawangwan/ci.io/types/cred"
 )
+
+type repoCache map[string]string
 
 const (
 	version       = "1.30"
@@ -36,6 +39,7 @@ const (
 )
 
 var (
+	cache          repoCache
 	credential     *cred.Github
 	dockerClient   *http.Client
 	dockerHostAddr string
@@ -55,12 +59,8 @@ var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%
 func init() {
 	rootdir, _ := os.Getwd()
 	pathenv := os.Getenv("PATH")
-	newpathenv := fmt.Sprintf("%s:%s/bin", pathenv, rootdir)
 
-	os.Setenv("PATH", newpathenv)
-
-	log.Printf("old path: %s", pathenv)
-	log.Printf("new path: %s", os.Getenv("PATH"))
+	os.Setenv("PATH", fmt.Sprintf("%s:%s/bin", pathenv, rootdir))
 
 	var (
 		err error
@@ -163,7 +163,7 @@ func main() {
 		log.Printf("project name: %s", projname)
 		log.Printf("repo: %s", repo)
 
-		/* pull the repo into a tmp dir */
+		/* create and cache (or read from cache) the tmp workspace */
 
 		var (
 			tmpdir       string
@@ -174,16 +174,23 @@ func main() {
 		tmpdirpath = "./"
 		tmpdirprefix = projname
 
-		tmpdir, err = ioutil.TempDir(tmpdirpath, tmpdirprefix)
-		if err != nil {
-			log.Printf("%s", err)
+		if cached, ok := cache[projname]; ok {
+			log.Printf("already exists in cache %s", projname)
+			tmpdir = cached
+		} else {
+			log.Printf("creating a cache entry for: %s", projname)
+
+			tmpdir, err = ioutil.TempDir(tmpdirpath, tmpdirprefix)
+			if err != nil {
+				log.Printf("%s", err)
+			}
+
+			cache[projname] = tmpdir
 		}
 
-		//		defer os.RemoveAll(tmpdir)
+		log.Printf("workspace: %s", tmpdir)
 
-		log.Printf("created tmp workspace: %s", tmpdir)
-
-		/* clone the remote repo into temp workspace */
+		/* clone/pull the remote repo into temp workspace */
 
 		pwd()
 
@@ -196,6 +203,7 @@ func main() {
 			commands.cloneRemoteRepo,
 			credential.User,
 			credential.OAuth,
+			tmpdir,
 			projname,
 		)
 
@@ -211,7 +219,31 @@ func main() {
 			log.Printf("%s", cmdout.String())
 		}
 
-		/* create the container command */
+		/* find the project buildfile */
+
+		var (
+			buildfile     *os.File
+			buildfilepath string
+		)
+
+		buildfilepath = filepath.Join(tmpdir, strings.ToLower(buildfilename))
+
+		buildfile, err = os.Open(buildfilepath)
+		if err != nil {
+			log.Printf("%s", err)
+		}
+
+		parsed := json.NewDecoder(buildfile)
+
+		var buildfilepayload ciio.Buildfile
+
+		if err = parsed.Decode(&buildfilepayload); err != nil {
+			log.Printf("%s", err)
+		}
+
+		log.Printf("project build params: %+v", buildfilepayload)
+
+		/* create the container url */
 
 		var (
 			tmpl    *template.Template
@@ -246,26 +278,7 @@ func main() {
 
 		log.Printf("command: %s", tmplres)
 
-		/* find the local buildfile */
-
-		var (
-			buildfile *os.File
-		)
-
-		buildfile, err = os.Open(strings.ToLower(buildfilename))
-		if err != nil {
-			log.Printf("%s", err)
-		}
-
-		parsed := json.NewDecoder(buildfile)
-
-		var buildfilepayload ciio.Buildfile
-
-		if err = parsed.Decode(&buildfilepayload); err != nil {
-			log.Printf("%s", err)
-		}
-
-		log.Printf("project build params: %+v", buildfilepayload)
+		/* query the docker host and create container from parameters */
 
 		jsonbuf := []byte(
 			`{
@@ -274,8 +287,6 @@ func main() {
 				"Cmd": ["date"]
 			 }`,
 		)
-
-		/* query the docker host and create container */
 
 		res, err = dockerClient.Post(
 			route(dockerHostAddr, version, tmplres),
