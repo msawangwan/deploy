@@ -13,7 +13,8 @@ USERNAME="/$1"
 REPO="/$2"
 
 URL="${PREFIX}${USERNAME}${REPO}${SUFFIX}"
+WD="$(pwd)"
 
-echo "url: ${URL}"
+echo "cloning ${URL} into ${WD}"
 
-#git clone "${URL}"
+git clone "${URL}"
