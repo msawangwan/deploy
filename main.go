@@ -204,6 +204,8 @@ func main() {
 
 		if err = clone.Run(); err != nil {
 			log.Printf("%s", err)
+		} else {
+			log.Printf("no err when calling exec: %+v", commands.cloneRemoteRepo)
 		}
 
 		/* create the container command */

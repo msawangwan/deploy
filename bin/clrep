@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "clrep (clone repository)"; echo
+
 if [ $# != 2 ]; then
     echo "err: missing args"
     echo "usage: `basename $0` <username> <repo>"; echo
