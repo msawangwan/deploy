@@ -179,7 +179,7 @@ func main() {
 			log.Printf("%s", err)
 		}
 
-		defer os.RemoveAll(tmpdir)
+//		defer os.RemoveAll(tmpdir)
 
 		log.Printf("created tmp workspace: %s", tmpdir)
 
