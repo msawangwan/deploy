@@ -2,7 +2,7 @@
 
 echo "clrep (clone repository)"; echo
 
-if [ $# != 3 ]; then
+if [ $# != 4 ]; then
     echo "err: missing args"
     echo "usage: `basename $0` <username> <token> <dirname> <repo>"; echo
     exit 1
