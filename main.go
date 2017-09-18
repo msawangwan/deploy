@@ -203,7 +203,7 @@ func main() {
 		clone.Stderr = &cmderr
 
 		if err = clone.Run(); err != nil {
-			log.Printf("%s", err)
+			log.Printf("err when calling exec: %s", err)
 		} else {
 			log.Printf("no err when calling exec: %+v", commands.cloneRemoteRepo)
 		}
