@@ -26,8 +26,6 @@ import (
 	"github.com/msawangwan/ci.io/types/cred"
 )
 
-type repoCache map[string]string
-
 const (
 	version       = "1.30"
 	port          = ":80"
@@ -40,7 +38,6 @@ const (
 )
 
 var (
-	// cache          repoCache
 	credential     *cred.Github
 	dockerClient   *http.Client
 	dockerHostAddr string
@@ -49,7 +46,7 @@ var (
 )
 
 var cache = struct {
-	sync.RWMutex
+	sync.Mutex
 	m map[string]string
 }{m: make(map[string]string)}
 
@@ -104,8 +101,6 @@ func init() {
 	if err != nil {
 		log.Printf("%s", err)
 	}
-
-	// cache = make(map[string]string)
 
 	log.Printf("server container ip: %s\n", localip)
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
@@ -180,7 +175,7 @@ func main() {
 		tmpdirpath = "./"
 		tmpdirprefix = projname
 
-		cache.RLock()
+		cache.Lock()
 
 		if cached, ok := cache.m[projname]; ok {
 			log.Printf("already exists in cache %s", projname)
@@ -193,12 +188,10 @@ func main() {
 				log.Printf("%s", err)
 			}
 
-			cache.Lock()
 			cache.m[projname] = tmpdir
-			cache.Unlock()
 		}
 
-		cache.RUnlock()
+		cache.Unlock()
 
 		log.Printf("workspace: %s", tmpdir)
 
