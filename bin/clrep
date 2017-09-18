@@ -2,21 +2,33 @@
 
 echo "clrep (clone repository)"; echo
 
-if [ $# != 2 ]; then
+if [ $# != 3 ]; then
     echo "err: missing args"
-    echo "usage: `basename $0` <username> <repo>"; echo
+    echo "usage: `basename $0` <username> <token> <repo>"; echo
     exit 1
 fi
 
-PREFIX="https://github.com"
+SCHEME="https"
+PREFIX="github.com"
 SUFFIX=".git"
 
-USERNAME="/$1"
-REPO="/$2"
+USERNAME="$1"
+OAUTH="$2"
+REPO="$3"
 
-URL="${PREFIX}${USERNAME}${REPO}${SUFFIX}"
+WS="$(mktemp -d $REPO.XXXXXX)"
+
+cd "${WS}"
+
+URL="${SCHEME}://${OAUTH}@${PREFIX}/${USERNAME}/${REPO}${SUFFIX}"
 WD="$(pwd)"
 
 echo "cloning ${URL} into ${WD}"
 
-git clone "${URL}"
+# git clone "${URL}"
+# don't clone cus it writes creds to disk? (.git/config)
+
+git init
+git pull "${URL}"
+
+exit 0

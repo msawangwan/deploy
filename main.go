@@ -195,6 +195,7 @@ func main() {
 		clone := exec.Command(
 			commands.cloneRemoteRepo,
 			credential.User,
+			credential.OAuth,
 			payload.Repository.CloneURL,
 		)
 
