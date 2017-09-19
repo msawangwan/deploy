@@ -26,6 +26,11 @@ import (
 	"github.com/msawangwan/ci.io/types/cred"
 )
 
+type cache struct {
+    sync.Mutex
+    m map[string]string
+}
+
 const (
 	version       = "1.30"
 	port          = ":80"
@@ -45,7 +50,17 @@ var (
 	accesstoken    string
 )
 
-var cache = struct {
+//var cache = struct {
+//	sync.Mutex
+//	m map[string]string
+//}{m: make(map[string]string)}
+
+var containercache = struct {
+	sync.Mutex
+	m map[string]string
+}{m: make(map[string]string)}
+
+var dircache = struct {
 	sync.Mutex
 	m map[string]string
 }{m: make(map[string]string)}
@@ -111,7 +126,7 @@ func main() {
 		gocount int
 	)
 
-	var panicHandler = func(h http.HandlerFunc) {
+	var panicHandler = func(h http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var e error
 
@@ -132,11 +147,11 @@ func main() {
 				}
 			}()
 
-			h.ServeHTTP(w, r)
+			h(w, r)
 		}
 	}
 
-	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(endpoint, panicHandler(func(w http.ResponseWriter, r *http.Request) {
 		/* some stats */
 
 		gocount = runtime.NumGoroutine()
@@ -200,9 +215,9 @@ func main() {
 		tmpdirpath = "./"
 		tmpdirprefix = projname
 
-		cache.Lock()
+		dircache.Lock()
 
-		if cached, ok := cache.m[projname]; ok {
+		if cached, ok := dircache.m[projname]; ok {
 			log.Printf("already exists in cache %s", projname)
 			tmpdir = cached
 		} else {
@@ -213,10 +228,10 @@ func main() {
 				log.Printf("%s", err)
 			}
 
-			cache.m[projname] = tmpdir
+			dircache.m[projname] = tmpdir
 		}
 
-		cache.Unlock()
+		dircache.Unlock()
 
 		log.Printf("workspace: %s", tmpdir)
 
@@ -273,7 +288,24 @@ func main() {
 
 		log.Printf("project build params: %+v", buildfilepayload)
 
+		var (
+			containername = buildfilepayload.ContainerName
+		)
+
 		/* find any previous images and replace them! */
+
+        if cached, ok := containercache.m[containername]; ok {
+            log.Printf("remove %s", cached)
+
+            prev := struct { ID string }{ID: cached}
+
+  //          t := template.New("previas container")
+
+
+//             vat t = `containers/{{ .ID }}/inspect`
+        } else {
+            log.Printf("couldnt load container from cache"
+        }
 
 		/* create the container url */
 
@@ -290,7 +322,7 @@ func main() {
 		}{
 			"containers/create",
 			map[string]string{
-				"name": "SOME_CONTAINER",
+				"name": containername,
 			},
 		}
 
@@ -340,7 +372,7 @@ func main() {
 
 		res.Body.Close()
 		io.Copy(os.Stdout, &buf)
-	})
+	}))
 
 	log.Fatal(http.ListenAndServe(port, nil))
 }
