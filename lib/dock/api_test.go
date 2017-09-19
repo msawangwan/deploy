@@ -6,8 +6,31 @@ import (
 	"github.com/msawangwan/ci.io/lib/dockutil"
 )
 
-func TestAPIURL(t *testing.T) {
-	apiurl := APIURL{
+func TestBuildAPIURLs(t *testing.T) {
+	var (
+		apiurl APIURL
+		res    string
+		err    error
+	)
+
+	didPass := func() {
+		if err != nil {
+			t.Errorf("%s", err)
+		} else {
+			t.Logf("%s", res)
+		}
+	}
+
+	apiurl = APIURL{
+		Command: "containers",
+		Option:  "json",
+	}
+
+	res, err = dockutil.ResolveAPIEndpoint(&List{apiurl})
+
+	didPass()
+
+	apiurl = APIURL{
 		Command: "containers",
 		Option:  "create",
 		Parameters: map[string]string{
@@ -15,12 +38,17 @@ func TestAPIURL(t *testing.T) {
 		},
 	}
 
-	create := &Create{apiurl}
+	res, err = dockutil.ResolveAPIEndpoint(&Create{apiurl})
 
-	result, err := dockutil.ResolveAPIEndpoint(create)
-	if err != nil {
-		t.Errorf("%s", err)
-	} else {
-		t.Logf("%s", result)
+	didPass()
+
+	apiurl = APIURL{
+		Command: "containers",
+		Option:  "json",
+		ID:      "1234598765abcdefg",
 	}
+
+	res, err = dockutil.ResolveAPIEndpoint(&Inspect{apiurl})
+
+	didPass()
 }

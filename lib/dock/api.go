@@ -15,7 +15,7 @@ type List struct {
 
 // Resolve satisfies the APIEndpointResolver interface
 func (l List) Resolve() string {
-	return `{{with $l := .URLComponents}}{{$l.Command}}/{{$l.Option}}`
+	return `{{with $l := .URLComponents}}{{$l.Command}}/{{$l.Option}}{{end}}`
 }
 
 // Create is the create command
@@ -26,10 +26,14 @@ type Create struct {
 // Resolve satisfies the APIEndpointResolver interface
 func (c Create) Resolve() string {
 	return `{{with $c := .URLComponents}}{{$c.Command}}/{{$c.Option}}?{{range $k, $v := $c.Parameters}}{{$k}}={{$v}}{{end}}{{end}}`
-	// return `{{with .}}{{.URLComponents.Command}}/{{.URLComponents.Option}}?{{range $k, $v := .URLComponents.Parameters}}{{$k}}={{$v}}{{end}}{{end}}`
 }
 
 // Inspect is a inspect command
 type Inspect struct {
 	URLComponents APIURL
+}
+
+// Resolve satisfies the APIEndpointResolver interface
+func (i Inspect) Resolve() string {
+	return `{{with $c := .URLComponents}}{{$c.Command}}/{{$c.ID}}/{{$c.Option}}{{end}}`
 }
