@@ -24,7 +24,7 @@ func TestResolveEndpoint(t *testing.T) {
 		[]string{"ONE STRING", "TWO STRING", "THREE STRING"},
 	}
 
-	result, err := ResolveEndpoint(m)
+	result, err := ResolveAPIEndpoint(m)
 
 	if err != nil {
 		t.Errorf("%s", err)

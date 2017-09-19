@@ -5,13 +5,13 @@ import (
 	"text/template"
 )
 
-// APIResolver returns an api endpoint string
-type APIResolver interface {
+// APIEndpointResolver returns an api endpoint string
+type APIEndpointResolver interface {
 	Resolve() string
 }
 
-// ResolveEndpoint builds a an endpoint string
-func ResolveEndpoint(r APIResolver) (s string, e error) {
+// ResolveAPIEndpoint builds an endpoint string
+func ResolveAPIEndpoint(r APIEndpointResolver) (s string, e error) {
 	t, e := template.New("").Parse(r.Resolve())
 
 	if e != nil {
