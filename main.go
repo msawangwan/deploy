@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -27,8 +28,8 @@ import (
 )
 
 type cache struct {
-    sync.Mutex
-    m map[string]string
+	sync.Mutex
+	m map[string]string
 }
 
 const (
@@ -294,18 +295,16 @@ func main() {
 
 		/* find any previous images and replace them! */
 
-        if cached, ok := containercache.m[containername]; ok {
-            log.Printf("remove %s", cached)
+		if cached, ok := containercache.m[containername]; ok {
+			prev := struct{ ID string }{ID: cached}
+			log.Printf("remove %+v", prev)
 
-            prev := struct { ID string }{ID: cached}
+			//          t := template.New("previas container")
 
-  //          t := template.New("previas container")
-
-
-//             vat t = `containers/{{ .ID }}/inspect`
-        } else {
-            log.Printf("couldnt load container from cache"
-        }
+			//             vat t = `containers/{{ .ID }}/inspect`
+		} else {
+			log.Printf("couldnt load container from cache")
+		}
 
 		/* create the container url */
 
