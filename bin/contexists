@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# script built from ideas in this thread:
+# https://stackoverflow.com/questions/30543409/how-to-check-if-a-docker-image-with-a-specific-tag-exist-locally
+
+docker image inspect $NAME:$TAG >/dev/null 2>&1 echo "YES" || echo "NO"

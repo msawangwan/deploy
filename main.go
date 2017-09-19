@@ -248,6 +248,8 @@ func main() {
 
 		log.Printf("project build params: %+v", buildfilepayload)
 
+		/* find any previous images and replace them! */
+
 		/* create the container url */
 
 		var (
