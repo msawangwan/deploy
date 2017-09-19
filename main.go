@@ -111,6 +111,31 @@ func main() {
 		gocount int
 	)
 
+	var panicHandler = func(h http.HandlerFunc) {
+		return func(w http.ResponseWriter, r *http.Request) {
+			var e error
+
+			defer func() {
+				r := recover()
+
+				if r != nil {
+					switch t := r.(type) {
+					case string:
+						e = errors.New(t)
+					case error:
+						e = t
+					default:
+						e = errors.New("unknown error")
+					}
+
+					http.Error(w, e.Error(), http.StatusInternalServerError)
+				}
+			}()
+
+			h.ServeHTTP(w, r)
+		}
+	}
+
 	http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
 		/* some stats */
 
