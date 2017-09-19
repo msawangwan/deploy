@@ -7,48 +7,37 @@ import (
 )
 
 func TestBuildAPIURLs(t *testing.T) {
-	var (
-		apiurl APIURL
-		res    string
-		err    error
-	)
+	apiurls := []dockutil.APIEndpointResolver{
+		&ListContainers{
+			APIURL{
+				Command: "containers",
+				Option:  "json",
+			},
+		},
+		&CreateContainer{
+			APIURL{
+				Command: "containers",
+				Option:  "create",
+				Parameters: map[string]string{
+					"name": "container_name",
+				},
+			},
+		},
+		&InspectContainer{
+			APIURL{
+				Command: "containers",
+				Option:  "json",
+				ID:      "1234598765abcdefg",
+			},
+		},
+	}
 
-	didPass := func() {
+	for _, apiurl := range apiurls {
+		res, err := dockutil.ResolveAPIEndpoint(apiurl)
 		if err != nil {
 			t.Errorf("%s", err)
 		} else {
 			t.Logf("%s", res)
 		}
 	}
-
-	apiurl = APIURL{
-		Command: "containers",
-		Option:  "json",
-	}
-
-	res, err = dockutil.ResolveAPIEndpoint(&List{apiurl})
-
-	didPass()
-
-	apiurl = APIURL{
-		Command: "containers",
-		Option:  "create",
-		Parameters: map[string]string{
-			"name": "container_name",
-		},
-	}
-
-	res, err = dockutil.ResolveAPIEndpoint(&Create{apiurl})
-
-	didPass()
-
-	apiurl = APIURL{
-		Command: "containers",
-		Option:  "json",
-		ID:      "1234598765abcdefg",
-	}
-
-	res, err = dockutil.ResolveAPIEndpoint(&Inspect{apiurl})
-
-	didPass()
 }

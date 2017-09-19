@@ -8,32 +8,42 @@ type APIURL struct {
 	Parameters map[string]string
 }
 
-// List is eqivualnt to docker containers ls
-type List struct {
+// ListContainers is eqivualnt to docker containers ls
+type ListContainers struct {
 	URLComponents APIURL
 }
 
 // Resolve satisfies the APIEndpointResolver interface
-func (l List) Resolve() string {
+func (l ListContainers) Resolve() string {
 	return `{{with $l := .URLComponents}}{{$l.Command}}/{{$l.Option}}{{end}}`
 }
 
-// Create is the create command
-type Create struct {
+// CreateContainer is the create command
+type CreateContainer struct {
 	URLComponents APIURL
 }
 
 // Resolve satisfies the APIEndpointResolver interface
-func (c Create) Resolve() string {
+func (c CreateContainer) Resolve() string {
 	return `{{with $c := .URLComponents}}{{$c.Command}}/{{$c.Option}}?{{range $k, $v := $c.Parameters}}{{$k}}={{$v}}{{end}}{{end}}`
 }
 
-// Inspect is a inspect command
-type Inspect struct {
+// InspectContainer is a inspect command
+type InspectContainer struct {
 	URLComponents APIURL
 }
 
 // Resolve satisfies the APIEndpointResolver interface
-func (i Inspect) Resolve() string {
-	return `{{with $c := .URLComponents}}{{$c.Command}}/{{$c.ID}}/{{$c.Option}}{{end}}`
+func (i InspectContainer) Resolve() string {
+	return `{{with $i := .URLComponents}}{{$i.Command}}/{{$i.ID}}/{{$i.Option}}{{end}}`
+}
+
+// StartContainer is the docker start container command
+type StartContainer struct {
+	URLComponents APIURL
+}
+
+// Resolve satisfies the APIEndpointResolver interface
+func (s StartContainer) Resolve() string {
+	return `{{with $s := .URLComponents}}{{end}}`
 }
