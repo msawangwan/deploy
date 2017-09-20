@@ -1,35 +1,30 @@
 package dock
 
-// URLComponents is a api url
-type URLComponents struct {
-	Command    string
-	Option     string
-	Parameters map[string]string
+import (
+	"bytes"
+	"text/template"
+)
+
+// APIStringBuilder returns an api endpoint string
+type APIStringBuilder interface {
+	Build() string
 }
 
-/*
-	the two formats for docker container commands via api are:
-	containers/{command}?<param_0>&<param_1>& ...
-	containers/{id}/{command}?<param_0>&<param_1>& ...
-*/
+// BuildAPIURLString builds an endpoint string
+func BuildAPIURLString(r APIStringBuilder) (s string, e error) {
+	t, e := template.New("").Parse(r.Build())
 
-// ContainerCommand represents any command given to the docker host
-type ContainerCommand struct {
-	URLComponents URLComponents
-}
+	if e != nil {
+		return
+	}
 
-// Resolve satisfies the APIEndpointResolver interface
-func (c ContainerCommand) Resolve() string {
-	return `{{with $c := .URLComponents}}{{$c.Command}}/{{$c.Option}}{{if $c.Parameters}}?{{range $k, $v := $c.Parameters}}{{$k}}={{$v}}&{{end}}{{end}}{{end}}`
-}
+	var b bytes.Buffer
 
-// ContainerCommandByID represents any command given to a unique docker container
-type ContainerCommandByID struct {
-	URLComponents URLComponents
-	ID            string
-}
+	if e = t.Execute(&b, r); e != nil {
+		return
+	}
 
-// Resolve satisfies the APIEndpointResolver interface
-func (c ContainerCommandByID) Resolve() string {
-	return `{{with .}}{{.URLComponents.Command}}/{{.ID}}/{{.URLComponents.Option}}{{if .URLComponents.Parameters}}?{{range $k, $v := .URLComponents.Parameters}}{{$k}}={{$v}}&{{end}}{{end}}{{end}}`
+	s = b.String()
+
+	return
 }

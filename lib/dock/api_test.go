@@ -2,60 +2,33 @@ package dock
 
 import (
 	"testing"
-
-	"github.com/msawangwan/ci.io/lib/dockutil"
 )
 
-func TestBuildAPIURLs(t *testing.T) {
-	apiurls := []dockutil.APIEndpointResolver{
-		&ContainerCommand{
-			URLComponents{
-				Command: "containers",
-				Option:  "json",
-			},
-		},
-		&ContainerCommand{
-			URLComponents{
-				Command: "containers",
-				Option:  "create",
-				Parameters: map[string]string{
-					"name": "container_name",
-				},
-			},
-		},
-		&ContainerCommandByID{
-			URLComponents{
-				Command: "containers",
-				Option:  "json",
-			},
-			"1234598765abcdefg",
-		},
-		&ContainerCommandByID{
-			URLComponents{
-				Command: "containers",
-				Option:  "start",
-			},
-			"1234598765abcdefg",
-		},
-		&ContainerCommandByID{
-			URLComponents{
-				Command: "containers",
-				Option:  "stop",
-				Parameters: map[string]string{
-					"some_param":    "some_value",
-					"another_param": "another_value",
-				},
-			},
-			"1234598765abcdefg",
-		},
+type mockAPICommandURL struct {
+	MockEndPoint string
+	MockParams   []string
+}
+
+func (m mockAPICommandURL) Build() string {
+	return `{{- with . -}}
+		mock endpoint: {{- .MockEndPoint -}} 
+		mock params: {{- range .MockParams -}}
+			{{- . -}}&
+		{{- end -}}
+	{{- end -}}`
+}
+
+func TestBuildAPIURLStrings(t *testing.T) {
+	m := &mockAPICommandURL{
+		"SOME_ENDPOINT",
+		[]string{"ONE_STRING", "TWO_STRING", "THREE_STRING"},
 	}
 
-	for _, apiurl := range apiurls {
-		res, err := dockutil.ResolveAPIEndpoint(apiurl)
-		if err != nil {
-			t.Errorf("%s", err)
-		} else {
-			t.Logf("%s", res)
-		}
+	result, err := BuildAPIURLString(m)
+
+	if err != nil {
+		t.Errorf("%s", err)
+	} else {
+		t.Logf("%s", result)
 	}
 }
