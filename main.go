@@ -313,17 +313,40 @@ func main() {
 
 		/* find any previous images and replace them! */
 
+		// TODO: finish from here
 		if cachedID, ok := containercache.m[containername]; ok {
-			//inspect := dock.ContainerCommandByID{
-			//	URLComponents: dock.URLComponents{
-			//		Command: "containers",
-			//		Option:  "inspect",
-			//	},
-			//	ID: cachedID,
-			//}
-			inspect := dock.NewContainerCommandByID("containers", "inspect", cachedID)
+			var exec = func(c) {
+				log.Printf("executing: %+v", c)
 
-			url, err := dock.BuildAPIURLString(inspect)
+				u, e := dock.BuildAPIURLString(c)
+				if e != nil {
+					panic(e)
+				}
+
+				log.Printf("cmd url: %s", u)
+
+				a := route(dockerHostAddr, version, u)
+
+				r, e := dockerClient.Get(a, u)
+				if e != nil {
+					if netutil.IsTimeOutError(e) {
+						return
+					} else {
+						panic(e)
+					}
+				}
+			}
+
+			var (
+				inspect dock.ContainerCommandByID
+				stop    dock.ContainerCommandByID
+				remove  dock.ContainerCommandByID
+				url     string
+			)
+
+			inspect = dock.NewContainerCommandByID("containers", "inspect", cachedID)
+
+			url, err = dock.BuildAPIURLString(inspect)
 			if err != nil {
 				panic(err)
 			}
@@ -339,25 +362,14 @@ func main() {
 				panic(err)
 			}
 
-			// TODO: finish from here
 			stop := dock.NewContainerCommandByID("containers", "stop", cachedID)
+
+			res, err = dock.BuildAPIURLString(stop)
+			if err != nil {
+				panic(err)
+			}
+
 			remove := dock.NewContainerCommandByID("containers", "remove", cachedID)
-
-			//stop := dock.ContainerCommandByID{
-			//	URLComponents: dock.URLComponents{
-			//		Command: "containers",
-			//		Option:  "stop",
-			//	},
-			//	ID: cachedID,
-			//}
-
-			//remove := dock.ContainerCommandByID{
-			//	URLComponents: dock.URLComponents{
-			//		Command: "containers",
-			//		Option:  "remove",
-			//	},
-			//	ID: cachedID,
-			//}
 		} else {
 			log.Printf("no previous container found")
 		}
