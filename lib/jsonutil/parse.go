@@ -7,15 +7,30 @@ import (
 	"io/ioutil"
 )
 
-// FromFile reads a file f into a type struct value v
+// FromFile reads a file f into a type struct value v (TODO: rename to 'FromFilePath(...)')
 func FromFile(f string, v interface{}) error {
-	raw, err := ioutil.ReadFile(f)
-
-	if err != nil {
-		return err
+	b, e := ioutil.ReadFile(f)
+	if e != nil {
+		return e
 	}
 
-	json.Unmarshal(raw, v)
+	if e = json.Unmarshal(b, v); e != nil {
+		return e
+	}
+
+	return nil
+}
+
+// FromReader wraps ioutil.ReadAll() and json.Unmarshal()
+func FromReader(r io.Reader, v interface{}) error {
+	b, e := ioutil.ReadAll(r)
+	if e != nil {
+		return e
+	}
+
+	if e = json.Unmarshal(b, v); e != nil {
+		return e
+	}
 
 	return nil
 }

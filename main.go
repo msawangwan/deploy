@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -53,6 +52,11 @@ var (
 	accesstoken    string
 )
 
+var (
+	errInvalidWebhookEvent = errors.New("not a valid webhook event, expected: push")
+	errJSONParseErr        = errors.New("encountered an error while read/writing json")
+)
+
 //var cache = struct {
 //	sync.Mutex
 //	m map[string]string
@@ -72,7 +76,7 @@ var commands = struct {
 	cloneRemoteRepo string
 }{"clrep"}
 
-var pwd = func() { d, _ := os.Getwd(); log.Printf("current working dir: %s", d) }
+var pwd = func(s string) { d, _ := os.Getwd(); log.Printf("[current working dir %s] %s", d, s) }
 var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
 
 func init() {
@@ -101,7 +105,7 @@ func init() {
 	if err != nil {
 		log.Printf("%s", err)
 	} else {
-		pwd()
+		pwd("created scratch dir")
 	}
 
 	dockerClient = &http.Client{
@@ -155,6 +159,10 @@ func main() {
 	}
 
 	http.HandleFunc(endpoint, panicHandler(func(w http.ResponseWriter, r *http.Request) {
+		var (
+			err error
+		)
+
 		/* some stats */
 
 		gocount = runtime.NumGoroutine()
@@ -163,14 +171,13 @@ func main() {
 
 		/* parse request header */
 
-		ename := r.Header.Get("x-github-event")
+		eventname := r.Header.Get("x-github-event")
 
 		log.Printf("incoming webhook: %s\n", r.URL.Path)
-		log.Printf("payload event name: %s\n", ename)
+		log.Printf("payload event name: %s\n", eventname)
 
-		if ename != "push" {
-			log.Printf("cannot handle event: %s", ename)
-			return
+		if eventname != "push" {
+			panic(errInvalidWebhookEvent)
 		}
 
 		/* parse webhook json payload */
@@ -178,55 +185,61 @@ func main() {
 		var (
 			res     *http.Response
 			payload *github.PushEvent
-			body    []byte
-			err     error
 		)
 
-		body, err = ioutil.ReadAll(r.Body)
-
-		if err != nil {
-			log.Printf("%s", err)
+		if err = jsonutil.FromReader(r.Body, payload); err != nil {
+			panic(err)
 		}
 
-		err = json.Unmarshal(body, &payload)
+		//err error
+		//body    []byte
 
-		if err != nil {
-			log.Printf("%s", err)
-		}
+		//body, err = ioutil.ReadAll(r.Body)
+
+		//if err != nil {
+		//log.Printf("%s", err)
+		//}
+
+		//err = json.Unmarshal(body, &payload)
+
+		//if err != nil {
+		//	log.Printf("%s", err)
+		//}
 
 		/* parse project name from payload */
 
 		var (
-			repo     string
+			//repo     string
 			projname string
 		)
 
-		repo = payload.Repository.HTMLURL
+		//repo = payload.Repository.HTMLURL
 		projname = payload.Repository.Name
 
 		log.Printf("project name: %s", projname)
-		log.Printf("repo: %s", repo)
+		//log.Printf("repo: %s", repo)
 
 		/* create and cache (or read from cache) the tmp workspace */
 
 		var (
-			tmpdir       string
-			tmpdirpath   string
-			tmpdirprefix string
+			tmpdir string
+			//tmpdirpath   string
+			//tmpdirprefix string
 		)
 
-		tmpdirpath = "./"
-		tmpdirprefix = projname
+		//tmpdirpath = "./"
+		//tmpdirprefix = projname
 
 		dircache.Lock()
 
-		if cached, ok := dircache.m[projname]; ok {
+		if cachedDir, ok := dircache.m[projname]; ok {
 			log.Printf("already exists in cache %s", projname)
-			tmpdir = cached
+			tmpdir = cachedDir
 		} else {
 			log.Printf("creating a cache entry for: %s", projname)
 
-			tmpdir, err = ioutil.TempDir(tmpdirpath, tmpdirprefix)
+			//tmpdir, err = ioutil.TempDir(tmpdirpath, tmpdirprefix)
+			tmpdir, err = ioutil.TempDir("./", projname)
 			if err != nil {
 				log.Printf("%s", err)
 			}
@@ -240,7 +253,7 @@ func main() {
 
 		/* clone/pull the remote repo into temp workspace */
 
-		pwd()
+		pwd("pulling remote repo")
 
 		var (
 			cmdout bytes.Buffer
@@ -260,34 +273,37 @@ func main() {
 		clone.Stderr = &cmderr
 
 		if err = clone.Run(); err != nil {
-			log.Printf("err when calling exec: %s", err)
-			log.Printf("%s", cmderr.String())
+			log.Printf("err: %s", cmderr.String())
 		} else {
-			log.Printf("no err when calling exec: %+v", commands.cloneRemoteRepo)
-			log.Printf("%s", cmdout.String())
+			log.Printf("succ: %s", cmdout.String())
 		}
 
 		/* find the project buildfile */
 
 		var (
-			buildfile     *os.File
-			buildfilepath string
+			buildfile        *os.File
+			buildfilepath    string
+			buildfilepayload ciio.Buildfile
 		)
 
 		buildfilepath = filepath.Join(tmpdir, strings.ToLower(buildfilename))
 
-		buildfile, err = os.Open(buildfilepath)
-		if err != nil {
-			log.Printf("%s", err)
+		if err = jsonutil.FromFile(buildfilepath, buildfilepayload); err != nil {
+			panic(err)
 		}
 
-		parsed := json.NewDecoder(buildfile)
+		//buildfile, err = os.Open(buildfilepath)
+		//if err != nil {
+		//	log.Printf("%s", err)
+		//}
 
-		var buildfilepayload ciio.Buildfile
+		//parsed := json.NewDecoder(buildfile)
 
-		if err = parsed.Decode(&buildfilepayload); err != nil {
-			log.Printf("%s", err)
-		}
+		//var buildfilepayload ciio.Buildfile
+
+		//if err = parsed.Decode(&buildfilepayload); err != nil {
+		//	log.Printf("%s", err)
+		//}
 
 		log.Printf("project build params: %+v", buildfilepayload)
 
@@ -298,50 +314,50 @@ func main() {
 		/* find any previous images and replace them! */
 
 		if cachedID, ok := containercache.m[containername]; ok {
-			inspect := dock.ContainerCommandByID{
-				URLComponents: dock.URLComponents{
-					Command: "containers",
-					Option:  "inspect",
-				},
-				ID: cachedID,
-			}
-
-			log.Printf("executing: %+v", inspect)
+			//inspect := dock.ContainerCommandByID{
+			//	URLComponents: dock.URLComponents{
+			//		Command: "containers",
+			//		Option:  "inspect",
+			//	},
+			//	ID: cachedID,
+			//}
+			inspect := dock.NewContainerCommandByID("containers", "inspect", cachedID)
 
 			url, err := dock.BuildAPIURLString(inspect)
 			if err != nil {
 				panic(err)
 			}
 
-			log.Printf("%s", url)
+			log.Printf("executing: %+v", inspect)
+			log.Printf("command url: %s", url)
 
 			res, err = dockerClient.Get(route(dockerHostAddr, version, url))
 			if err != nil {
 				if netutil.IsTimeOutError(err) {
 					log.Println("timeout error") // todo: fix
-				} else {
-					panic(err)
 				}
+				panic(err)
 			}
 
 			// TODO: finish from here
 			stop := dock.NewContainerCommandByID("containers", "stop", cachedID)
+			remove := dock.NewContainerCommandByID("containers", "remove", cachedID)
 
-			stop := dock.ContainerCommandByID{
-				URLComponents: dock.URLComponents{
-					Command: "containers",
-					Option:  "stop",
-				},
-				ID: cachedID,
-			}
+			//stop := dock.ContainerCommandByID{
+			//	URLComponents: dock.URLComponents{
+			//		Command: "containers",
+			//		Option:  "stop",
+			//	},
+			//	ID: cachedID,
+			//}
 
-			remove := dock.ContainerCommandByID{
-				URLComponents: dock.URLComponents{
-					Command: "containers",
-					Option:  "remove",
-				},
-				ID: cachedID,
-			}
+			//remove := dock.ContainerCommandByID{
+			//	URLComponents: dock.URLComponents{
+			//		Command: "containers",
+			//		Option:  "remove",
+			//	},
+			//	ID: cachedID,
+			//}
 		} else {
 			log.Printf("no previous container found")
 		}
