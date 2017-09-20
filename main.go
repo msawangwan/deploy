@@ -22,6 +22,7 @@ import (
 
 	"github.com/msawangwan/ci.io/api/ciio"
 	"github.com/msawangwan/ci.io/api/github"
+	"github.com/msawangwan/ci.io/lib/dock"
 	"github.com/msawangwan/ci.io/lib/jsonutil"
 	"github.com/msawangwan/ci.io/lib/netutil"
 	"github.com/msawangwan/ci.io/types/cred"
@@ -295,18 +296,30 @@ func main() {
 
 		/* find any previous images and replace them! */
 
-		if cached, ok := containercache.m[containername]; ok {
-			prev := struct{ ID string }{ID: cached}
-			log.Printf("remove %+v", prev)
+		if cachedID, ok := containercache.m[containername]; ok {
+			inspect := dock.ContainerCommandByID{
+				URLComponents: dock.URLComponents{
+					Command: "containers",
+					Option:  "inspect",
+				},
+				ID: cachedID,
+			}
 
-			//          t := template.New("previas container")
+			log.Printf("executing: %+v", inspect)
 
-			//             vat t = `containers/{{ .ID }}/inspect`
+			url, err := dock.BuildAPIURLString(inspect)
+			if err != nil {
+				panic(err)
+			}
+
+			log.Printf("%s", url)
+
+			// TODO: finish from here
 		} else {
 			log.Printf("couldnt load container from cache")
 		}
 
-		/* create the container url */
+		/* create the container url TODO: replace with dock.ContainerCommand struct*/
 
 		var (
 			tmpl    *template.Template

@@ -49,7 +49,6 @@ func TestBuildAPIURLs(t *testing.T) {
 	}
 
 	for _, apiurl := range apiurls {
-		// res, err := dockutil.ResolveAPIEndpoint(apiurl)
 		res, err := BuildAPIURLString(apiurl)
 		if err != nil {
 			t.Errorf("%s", err)

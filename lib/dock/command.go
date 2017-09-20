@@ -7,8 +7,7 @@ type URLComponents struct {
 	Parameters map[string]string
 }
 
-// ContainerCommand represents any command given to the docker host of the form:
-// containers/{command}?<param>&<param>& etc
+// ContainerCommand represents a command url: containers/{command}?<param>&<param>& etc
 type ContainerCommand struct {
 	URLComponents URLComponents
 }
@@ -25,8 +24,7 @@ func (c ContainerCommand) Build() string {
 			{{- end -}}`
 }
 
-// ContainerCommandByID represents any command given to a unique docker container of the form:
-// containers/{id}/{command}?<param_0>&<param_1>& etc
+// ContainerCommandByID represents a command url: containers/{id}/{command}?<param_0>&<param_1>& etc
 type ContainerCommandByID struct {
 	URLComponents URLComponents
 	ID            string
