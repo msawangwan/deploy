@@ -12,6 +12,13 @@ type ContainerCommand struct {
 	URLComponents URLComponents
 }
 
+// NewContainerCommand returns a container command given the command and option
+func NewContainerCommand(c, o string) ContainerCommand {
+	return ContainerCommand{
+		URLComponents{Command: c, Option: o},
+	}
+}
+
 // Build satisfies the APIEndpointResolver interface
 func (c ContainerCommand) Build() string {
 	return `{{- with $c := .URLComponents -}}
@@ -28,6 +35,14 @@ func (c ContainerCommand) Build() string {
 type ContainerCommandByID struct {
 	URLComponents URLComponents
 	ID            string
+}
+
+// NewContainerCommandByID returns a container command given the command and option and id
+func NewContainerCommandByID(c, o, id string) ContainerCommandByID {
+	return ContainerCommandByID{
+		URLComponents: URLComponents{Command: c, Option: o},
+		ID:            id,
+	}
 }
 
 // Build satisfies the APIEndpointResolver interface

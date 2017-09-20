@@ -36,6 +36,7 @@ type cache struct {
 const (
 	version       = "1.30"
 	port          = ":80"
+	mime          = "application/json; charset=utf-8"
 	endpoint      = "/webhooks/payload"
 	mountpoint    = "/var/run/docker.sock"
 	envipaddr     = "CIIO_ROOT_IPADDR"
@@ -314,9 +315,35 @@ func main() {
 
 			log.Printf("%s", url)
 
+			res, err = dockerClient.Get(route(dockerHostAddr, version, url))
+			if err != nil {
+				if netutil.IsTimeOutError(err) {
+					log.Println("timeout error") // todo: fix
+				} else {
+					panic(err)
+				}
+			}
+
 			// TODO: finish from here
+			stop := dock.NewContainerCommandByID("containers", "stop", cachedID)
+
+			stop := dock.ContainerCommandByID{
+				URLComponents: dock.URLComponents{
+					Command: "containers",
+					Option:  "stop",
+				},
+				ID: cachedID,
+			}
+
+			remove := dock.ContainerCommandByID{
+				URLComponents: dock.URLComponents{
+					Command: "containers",
+					Option:  "remove",
+				},
+				ID: cachedID,
+			}
 		} else {
-			log.Printf("couldnt load container from cache")
+			log.Printf("no previous container found")
 		}
 
 		/* create the container url TODO: replace with dock.ContainerCommand struct*/
