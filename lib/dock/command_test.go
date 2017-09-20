@@ -2,12 +2,10 @@ package dock
 
 import (
 	"testing"
-
-	"github.com/msawangwan/ci.io/lib/dockutil"
 )
 
 func TestBuildAPIURLs(t *testing.T) {
-	apiurls := []dockutil.APIEndpointResolver{
+	apiurls := []APIStringBuilder{
 		&ContainerCommand{
 			URLComponents{
 				Command: "containers",
@@ -51,7 +49,8 @@ func TestBuildAPIURLs(t *testing.T) {
 	}
 
 	for _, apiurl := range apiurls {
-		res, err := dockutil.ResolveAPIEndpoint(apiurl)
+		// res, err := dockutil.ResolveAPIEndpoint(apiurl)
+		res, err := BuildAPIURLString(apiurl)
 		if err != nil {
 			t.Errorf("%s", err)
 		} else {
