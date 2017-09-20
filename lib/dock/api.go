@@ -1,49 +1,35 @@
 package dock
 
-// APIURL is a api url
-type APIURL struct {
-	ID         string
+// URLComponents is a api url
+type URLComponents struct {
 	Command    string
 	Option     string
 	Parameters map[string]string
 }
 
-// ListContainers is eqivualnt to docker containers ls
-type ListContainers struct {
-	URLComponents APIURL
+/*
+	the two formats for docker container commands via api are:
+	containers/{command}?<param_0>&<param_1>& ...
+	containers/{id}/{command}?<param_0>&<param_1>& ...
+*/
+
+// ContainerCommand represents any command given to the docker host
+type ContainerCommand struct {
+	URLComponents URLComponents
 }
 
 // Resolve satisfies the APIEndpointResolver interface
-func (l ListContainers) Resolve() string {
-	return `{{with $l := .URLComponents}}{{$l.Command}}/{{$l.Option}}{{end}}`
+func (c ContainerCommand) Resolve() string {
+	return `{{with $c := .URLComponents}}{{$c.Command}}/{{$c.Option}}{{if $c.Parameters}}?{{range $k, $v := $c.Parameters}}{{$k}}={{$v}}&{{end}}{{end}}{{end}}`
 }
 
-// CreateContainer is the create command
-type CreateContainer struct {
-	URLComponents APIURL
-}
-
-// Resolve satisfies the APIEndpointResolver interface
-func (c CreateContainer) Resolve() string {
-	return `{{with $c := .URLComponents}}{{$c.Command}}/{{$c.Option}}?{{range $k, $v := $c.Parameters}}{{$k}}={{$v}}{{end}}{{end}}`
-}
-
-// InspectContainer is a inspect command
-type InspectContainer struct {
-	URLComponents APIURL
+// ContainerCommandByID represents any command given to a unique docker container
+type ContainerCommandByID struct {
+	URLComponents URLComponents
+	ID            string
 }
 
 // Resolve satisfies the APIEndpointResolver interface
-func (i InspectContainer) Resolve() string {
-	return `{{with $i := .URLComponents}}{{$i.Command}}/{{$i.ID}}/{{$i.Option}}{{end}}`
-}
-
-// StartContainer is the docker start container command
-type StartContainer struct {
-	URLComponents APIURL
-}
-
-// Resolve satisfies the APIEndpointResolver interface
-func (s StartContainer) Resolve() string {
-	return `{{with $s := .URLComponents}}{{end}}`
+func (c ContainerCommandByID) Resolve() string {
+	return `{{with .}}{{.URLComponents.Command}}/{{.ID}}/{{.URLComponents.Option}}{{if .URLComponents.Parameters}}?{{range $k, $v := .URLComponents.Parameters}}{{$k}}={{$v}}&{{end}}{{end}}{{end}}`
 }

@@ -8,14 +8,14 @@ import (
 
 func TestBuildAPIURLs(t *testing.T) {
 	apiurls := []dockutil.APIEndpointResolver{
-		&ListContainers{
-			APIURL{
+		&ContainerCommand{
+			URLComponents{
 				Command: "containers",
 				Option:  "json",
 			},
 		},
-		&CreateContainer{
-			APIURL{
+		&ContainerCommand{
+			URLComponents{
 				Command: "containers",
 				Option:  "create",
 				Parameters: map[string]string{
@@ -23,12 +23,30 @@ func TestBuildAPIURLs(t *testing.T) {
 				},
 			},
 		},
-		&InspectContainer{
-			APIURL{
+		&ContainerCommandByID{
+			URLComponents{
 				Command: "containers",
 				Option:  "json",
-				ID:      "1234598765abcdefg",
 			},
+			"1234598765abcdefg",
+		},
+		&ContainerCommandByID{
+			URLComponents{
+				Command: "containers",
+				Option:  "start",
+			},
+			"1234598765abcdefg",
+		},
+		&ContainerCommandByID{
+			URLComponents{
+				Command: "containers",
+				Option:  "stop",
+				Parameters: map[string]string{
+					"some_param":    "some_value",
+					"another_param": "another_value",
+				},
+			},
+			"1234598765abcdefg",
 		},
 	}
 
