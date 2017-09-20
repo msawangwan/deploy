@@ -187,7 +187,7 @@ func main() {
 			payload *github.PushEvent
 		)
 
-		if err = jsonutil.DecodeFromReader(r.Body, payload); err != nil {
+		if err = jsonutil.FromReader(r.Body, payload); err != nil {
 			panic(err)
 		}
 
@@ -288,7 +288,7 @@ func main() {
 
 		buildfilepath = filepath.Join(tmpdir, strings.ToLower(buildfilename))
 
-		if err = jsonutil.DecodeFromFilepath(buildfilepath, buildfilepayload); err != nil {
+		if err = jsonutil.FromFilepath(buildfilepath, buildfilepayload); err != nil {
 			panic(err)
 		}
 

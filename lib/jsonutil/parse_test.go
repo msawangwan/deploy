@@ -1,10 +1,12 @@
 package jsonutil
 
 import (
-	"os"
+	"io"
 	"strings"
 	"testing"
 )
+
+var jsonReader io.Reader
 
 type jsonData struct {
 	K1 string `json:"k1"`
@@ -13,21 +15,19 @@ type jsonData struct {
 	K4 string `json:"k4"`
 }
 
-var cd = func() error { return os.Chdir("../../") }
-var pwd = func() string { wd, _ := os.Getwd(); return wd }
-
-func TestDecoderFromFilepath(t *testing.T) {
-	e := cd()
-	if e != nil {
-		t.Errorf("%s", e)
-	}
-
-	wd := pwd()
-	t.Logf("%s", wd)
-
+func TestDecodeReader(t *testing.T) {
 	var data jsonData
 
-	if e = DecodeFromFilepath("test/Testfile.json", &data); e != nil {
+	jsonReader = strings.NewReader(
+		`{ 
+			"k1": "v1",
+			"k2": "v2",
+			"k3": "v3",
+			"k4": "v4"
+		}`,
+	)
+
+	if e := FromReader(jsonReader, &data); e != nil {
 		t.Errorf("%s", e)
 	}
 
@@ -35,25 +35,26 @@ func TestDecoderFromFilepath(t *testing.T) {
 }
 
 func TestFromFilepath(t *testing.T) {
-	wd := pwd()
-	t.Logf("%s", wd)
+	var data jsonData
 
-	var (
-		data jsonData
-	)
-
-	e := FromFilepath("test/Testfile.json", &data)
-	if e != nil {
-		t.Error(e)
+	if e := FromFilepath("../../test/Testfile.json", &data); e != nil {
+		t.Errorf("%s", e)
 	}
 
-	t.Logf("data: %+v", data)
+	t.Logf("%+v", data)
 }
 
 func TestBufPretty(t *testing.T) {
-	var r = strings.NewReader(`{ "key1": "value1", "key2": "value2", "key3": "value3" }`)
+	jsonReader = strings.NewReader(
+		`{ 
+			"k1": "v1",
+			"k2": "v2",
+			"k3": "v3",
+			"k4": "v4"
+		}`,
+	)
 
-	buf, er := BufPretty(r, "", "  ")
+	buf, er := BufPretty(jsonReader, "", "  ")
 	if er != nil {
 		t.Error(er)
 	}
