@@ -13,26 +13,38 @@ type jsonData struct {
 	K4 string `json:"k4"`
 }
 
-func TestFromFile(t *testing.T) {
-	er := os.Chdir("../../")
-	if er != nil {
-		t.Error(er)
+var cd = func() error { return os.Chdir("../../") }
+var pwd = func() string { wd, _ := os.Getwd(); return wd }
+
+func TestDecoderFromFilepath(t *testing.T) {
+	e := cd()
+	if e != nil {
+		t.Errorf("%s", e)
 	}
 
-	wd, er := os.Getwd()
-	if er != nil {
-		t.Error(er)
+	wd := pwd()
+	t.Logf("%s", wd)
+
+	var data jsonData
+
+	if e = DecodeFromFilepath("test/Testfile.json", &data); e != nil {
+		t.Errorf("%s", e)
 	}
 
-	t.Log(wd)
+	t.Logf("%+v", data)
+}
+
+func TestFromFilepath(t *testing.T) {
+	wd := pwd()
+	t.Logf("%s", wd)
 
 	var (
 		data jsonData
 	)
 
-	er = FromFile("test/Buildfile.test", data)
-	if er != nil {
-		t.Error(er)
+	e := FromFilepath("test/Testfile.json", &data)
+	if e != nil {
+		t.Error(e)
 	}
 
 	t.Logf("data: %+v", data)

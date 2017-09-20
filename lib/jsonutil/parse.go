@@ -5,10 +5,28 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"os"
 )
 
-// FromFile reads a file f into a type struct value v (TODO: rename to 'FromFilePath(...)')
-func FromFile(f string, v interface{}) error {
+// DecodeFromReader Decodes json in a stream format
+func DecodeFromReader(r io.Reader, v interface{}) error {
+	return json.NewDecoder(r).Decode(v)
+}
+
+// DecodeFromFilepath is a wrapper for DecodeFromReader
+func DecodeFromFilepath(p string, v interface{}) error {
+	r, e := os.Open(p)
+	if e != nil {
+		return e
+	}
+
+	return DecodeFromReader(r, v)
+}
+
+/* TODO: delete these deprecated functions */
+
+// FromFilepath reads a file f into a type struct value v
+func FromFilepath(f string, v interface{}) error {
 	b, e := ioutil.ReadFile(f)
 	if e != nil {
 		return e

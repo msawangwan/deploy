@@ -89,7 +89,7 @@ func init() {
 		err error
 	)
 
-	err = jsonutil.FromFile("secret/github.auth.json", &credential)
+	err = jsonutil.FromFilepath("secret/github.auth.json", &credential)
 	if err != nil {
 		log.Printf("%s", err)
 	} else {
@@ -187,7 +187,7 @@ func main() {
 			payload *github.PushEvent
 		)
 
-		if err = jsonutil.FromReader(r.Body, payload); err != nil {
+		if err = jsonutil.DecodeFromReader(r.Body, payload); err != nil {
 			panic(err)
 		}
 
@@ -288,7 +288,7 @@ func main() {
 
 		buildfilepath = filepath.Join(tmpdir, strings.ToLower(buildfilename))
 
-		if err = jsonutil.FromFile(buildfilepath, buildfilepayload); err != nil {
+		if err = jsonutil.DecodeFromFilepath(buildfilepath, buildfilepayload); err != nil {
 			panic(err)
 		}
 
