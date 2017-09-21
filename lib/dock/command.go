@@ -2,9 +2,14 @@ package dock
 
 // URLComponents are the individual strings that compose a docker api command url
 type URLComponents struct {
+	Method     string
 	Command    string
 	Option     string
 	Parameters map[string]string
+}
+
+func newURLComponents(m, c, o string) URLComponents {
+	return URLComponents{Type: m, Command: c, Option: o}
 }
 
 // ContainerCommand represents a command url: containers/{command}?<param>&<param>& etc
@@ -13,9 +18,9 @@ type ContainerCommand struct {
 }
 
 // NewContainerCommand returns a container command given the command and option
-func NewContainerCommand(c, o string) ContainerCommand {
+func NewContainerCommand(m, c, o string) ContainerCommand {
 	return ContainerCommand{
-		URLComponents{Command: c, Option: o},
+		newURLComponents(m, c, o),
 	}
 }
 
@@ -38,9 +43,9 @@ type ContainerCommandByID struct {
 }
 
 // NewContainerCommandByID returns a container command given the command and option and id
-func NewContainerCommandByID(c, o, id string) ContainerCommandByID {
+func NewContainerCommandByID(m, c, o, id string) ContainerCommandByID {
 	return ContainerCommandByID{
-		URLComponents: URLComponents{Command: c, Option: o},
+		URLComponents: newURLComponents(m, c, o),
 		ID:            id,
 	}
 }

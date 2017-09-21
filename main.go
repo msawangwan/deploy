@@ -271,52 +271,82 @@ func main() {
 		step("find previous container instances and remove and replace")
 
 		// TODO: finish from here
-		// TODO: add a field to the type that determines if its a get or post
 		if cachedID, ok := containercache.m[containername]; ok {
-			exec := func(c dock.APIStringBuilder) {
+			exec := func(c dock.APIStringBuilder) (r *http.Response, e error) {
 				log.Printf("executing: %+v", c)
 
 				u, e := dock.BuildAPIURLString(c)
 				if e != nil {
-					panic(e)
+					return nil, e
 				}
 
 				log.Printf("cmd url: %s", u)
 
+				var (
+					method string
+				)
+
+				switch t := c.(type) {
+				case dock.ContainerCommand:
+					method = t.Method
+				case dock.ContainerCommandByID:
+					method = t.Method
+				}
+
 				a := route(dockerHostAddr, version, u)
 
-				r, e := dockerClient.Get(a)
-				if e != nil {
-					if netutil.IsTimeOutError(e) {
-						return
-					}
-					panic(e)
+				switch method {
+				case "GET":
+					r, e = dockerClient.Get(a)
+				case "POST":
+					r, e = dockerClient.Post(a, mime, bytes.NewBuffer(c.Build()))
+				case "PUT":
+				case "PATCH":
+				case "DELETE":
 				}
 
-				b, e := jsonutil.BufPretty(r.Body, "", "  ")
-				if e != nil {
-					panic(e)
-				}
-
-				io.Copy(os.Stdout, &b)
+				return
 			}
 
 			var (
+				res     *http.Response
 				inspect dock.ContainerCommandByID
 				stop    dock.ContainerCommandByID
 				remove  dock.ContainerCommandByID
 			)
 
-			inspect = dock.NewContainerCommandByID("containers", "inspect", cachedID)
-			stop = dock.NewContainerCommandByID("containers", "stop", cachedID)
-			remove = dock.NewContainerCommandByID("containers", "remove", cachedID)
+			inspect = dock.NewContainerCommandByID("GET", "containers", "inspect", cachedID)
+			stop = dock.NewContainerCommandByID("POST", "containers", "stop", cachedID)
+			remove = dock.NewContainerCommandByID("DELETE", "containers", "remove", cachedID)
 
-			exec(inspect) // TODO: need to verify this is not nil
-			exec(stop)
-			exec(remove)
-		} else {
-			log.Printf("no previous container found")
+			// TODO: left off with theseeeee executions
+			res, e = exec(inspect)
+			if e != nil {
+				panic(e)
+			}
+
+			if res.StatusCode != 200 {
+				panic(errors.New("expected 200 ok but got something else"))
+			}
+
+			res, e = exec(stop)
+			if e != nil {
+				panic(e)
+			}
+
+			res, e = exec(remove)
+			if e != nil {
+				panic(e)
+			}
 		}
+
+		var (
+			create dock.ContainerCommand
+			start  dock.ContainerCommandByID
+		)
+
+		create = dock.NewContainerCommand("POST", "containers", "create") // TODO: get id from this result
+		start = dock.NewContainerCommandByID("POST", "containers", "start", "")
 
 		/* create the container url TODO: replace with dock.ContainerCommand struct*/
 
