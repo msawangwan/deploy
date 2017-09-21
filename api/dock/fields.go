@@ -1,7 +1,8 @@
-package dockr
+package dock
 
 // Port is a json field for the containers payload
 type Port struct {
+	IP          string  `json:"IP"`
 	PrivatePort float64 `json:"PrivatePort"`
 	PublicPort  float64 `json:"PublicPort"`
 	Type        string  `json:"Type"`
@@ -53,6 +54,7 @@ type Mounts struct {
 	Propagation string `json:"Propagation"`
 }
 
+// State is a json field
 type State struct {
 	Status     string  `json:"Status"`
 	Running    bool    `json:"Running"`
@@ -67,4 +69,57 @@ type State struct {
 	FinishedAt string  `json:"FinishedAt"`
 }
 
-type Node struct{}
+// GraphDriver is a json field
+type GraphDriver struct {
+	Name string   `json:"Name"`
+	Data struct{} `json:"Data"`
+}
+
+// HealthConfig is a json field
+type HealthConfig struct {
+	Test        []string `json:"Test"`
+	Interval    float64  `json:"Interval"`
+	Timeout     float64  `json:"Timeout"`
+	Retries     float64  `json:"Retries"`
+	StartPeriod float64  `json:"StartPeriod"`
+}
+
+// Config is a json field
+type Config struct {
+	HostName        string       `json:"Hostname"`
+	DomainName      string       `json:"Domainname"`
+	User            string       `json:"User"`
+	AttachStdin     bool         `json:"AttachStdin"`
+	AttachStdout    bool         `json:"AttachStdout"`
+	AttachStderr    bool         `json:"AttachStderr"`
+	ExposedPorts    struct{}     `json:"ExposedPorts"`
+	TTY             bool         `json:"Tty"`
+	OpenStdin       bool         `json:"OpenStdin"`
+	StdinOnce       bool         `json:"StdinOnce"`
+	Env             []string     `json:"Env"`
+	Cmd             []string     `json:"Cmd"`
+	HealthCheck     HealthConfig `json:"HealthCheck"`
+	ArgsEscaped     bool         `json:"ArgsEscaped"`
+	Image           string       `json:"Image"`
+	Volumes         struct{}     `json:"Volumes"`
+	WorkingDir      string       `json:"WorkingDir"`
+	EntryPoint      []string     `json:"Entrypoint"`
+	NetworkDisabled bool         `json:"NetworkDisabled"`
+	MacAddress      string       `json:"MacAddress"`
+	OnBuild         []string     `json:"OnBuild"`
+	Labels          struct{}     `json:"Labels"`
+	StopSignal      string       `json:"StopSignal"`
+	StopTimeout     float64      `json:"StopTimeout"`
+	Shell           []string     `json:"Shell"`
+}
+
+// NetworkConfig is a json field
+type NetworkConfig struct {
+	Bridge      string  `json:"Bridge"`
+	Gateway     string  `json:"Gateway"`
+	Address     string  `json:"Address"`
+	IPPrefixLen float64 `json:"IPPrefixLen"`
+	MacAddress  string  `json:"MacAddress"`
+	PortMapping string  `json:"PortMapping"`
+	Ports       Port    `json:"Ports"`
+}

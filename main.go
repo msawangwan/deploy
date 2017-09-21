@@ -338,7 +338,11 @@ func main() {
 				panic(err)
 			}
 
-			printresponse(res.Body)
+			if err = jsonutil.FromReader(res.Body); err != nil {
+				panic(err)
+			}
+
+			// printresponse(res.Body)
 			res.Body.Close()
 
 			if res.StatusCode != 200 {

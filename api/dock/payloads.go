@@ -1,4 +1,4 @@
-package dockr
+package dock
 
 // Container is a docker api json payload
 type Container struct {
