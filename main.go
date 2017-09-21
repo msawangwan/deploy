@@ -288,9 +288,9 @@ func main() {
 
 				switch t := c.(type) {
 				case dock.ContainerCommand:
-					method = t.Method
+					method = t.URLComponents.Method
 				case dock.ContainerCommandByID:
-					method = t.Method
+					method = t.URLComponents.Method
 				}
 
 				a := route(dockerHostAddr, version, u)
@@ -333,16 +333,16 @@ func main() {
 			stop = dock.NewContainerCommandByID("POST", "containers", "stop", cachedID)
 			remove = dock.NewContainerCommandByID("DELETE", "containers", "", cachedID)
 
-			// var (
-			// 	suc200 api.dock.Success200
-			// )
+			var (
+				suc200 dock.Success200
+			)
 
 			res, err = exec(inspect)
 			if err != nil {
 				panic(err)
 			}
 
-			if err = jsonutil.FromReader(res.Body); err != nil {
+			if err = jsonutil.FromReader(res.Body, &suc200); err != nil {
 				panic(err)
 			}
 
