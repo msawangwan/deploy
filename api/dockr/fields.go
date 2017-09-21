@@ -52,3 +52,19 @@ type Mounts struct {
 	RW          bool   `json:"RW"`
 	Propagation string `json:"Propagation"`
 }
+
+type State struct {
+	Status     string  `json:"Status"`
+	Running    bool    `json:"Running"`
+	Paused     bool    `json:"Paused"`
+	Restarting bool    `json:"Restarting"`
+	OOMKilled  bool    `json:"OOMKilled"`
+	Dead       bool    `json:"Dead"`
+	PID        float64 `json:"Pid"`
+	ExitCode   float64 `json:"ExitCode"`
+	Error      string  `json:"Error"`
+	StartedAt  string  `json:"StartedAt"`
+	FinishedAt string  `json:"FinishedAt"`
+}
+
+type Node struct{}

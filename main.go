@@ -303,6 +303,12 @@ func main() {
 				case "PUT":
 				case "PATCH":
 				case "DELETE":
+					req, e = http.NewRequest("DELETE", a, nil)
+					if req != nil {
+						return
+					}
+
+					r, e = dockerClient.Do(req)
 				}
 
 				return
@@ -310,34 +316,50 @@ func main() {
 
 			var (
 				res     *http.Response
+				result  bytes.Buffer
 				inspect dock.ContainerCommandByID
 				stop    dock.ContainerCommandByID
 				remove  dock.ContainerCommandByID
 			)
 
+			printresponse := func(r io.Reader) {
+				r, e := jsonutil.BufPretty(r, "", "  ")
+				if e != nil {
+					panic(e)
+				}
+			}
+
 			inspect = dock.NewContainerCommandByID("GET", "containers", "inspect", cachedID)
 			stop = dock.NewContainerCommandByID("POST", "containers", "stop", cachedID)
-			remove = dock.NewContainerCommandByID("DELETE", "containers", "remove", cachedID)
+			remove = dock.NewContainerCommandByID("DELETE", "containers", "", cachedID)
 
-			// TODO: left off with theseeeee executions
-			res, e = exec(inspect)
-			if e != nil {
-				panic(e)
+			res, err = exec(inspect)
+			if err != nil {
+				panic(err)
 			}
+
+			printresponse(res.Body)
+			res.Body.Close()
 
 			if res.StatusCode != 200 {
 				panic(errors.New("expected 200 ok but got something else"))
 			}
 
-			res, e = exec(stop)
-			if e != nil {
-				panic(e)
+			res, err = exec(stop)
+			if err != nil {
+				panic(err)
 			}
 
-			res, e = exec(remove)
-			if e != nil {
-				panic(e)
+			printresponse(res.Body)
+			res.Body.Close()
+
+			res, err = exec(remove)
+			if err != nil {
+				panic(err)
 			}
+
+			printresponse(res.Body)
+			res.Body.Close()
 		}
 
 		var (
@@ -395,7 +417,8 @@ func main() {
 
 		res, err = dockerClient.Post(
 			route(dockerHostAddr, version, tmplres),
-			"application/json; charset=utf-8",
+			//			"application/json; charset=utf-8",
+			mime,
 			bytes.NewBuffer(jsonbuf),
 		)
 
