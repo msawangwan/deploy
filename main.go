@@ -322,7 +322,7 @@ func main() {
 				remove  dock.ContainerCommandByID
 			)
 
-			printresponse := func(r io.Reader) {
+			printJSON := func(r io.Reader) {
 				r, e := jsonutil.BufPretty(r, "", "  ")
 				if e != nil {
 					panic(e)
@@ -333,6 +333,10 @@ func main() {
 			stop = dock.NewContainerCommandByID("POST", "containers", "stop", cachedID)
 			remove = dock.NewContainerCommandByID("DELETE", "containers", "", cachedID)
 
+			// var (
+			// 	suc200 api.dock.Success200
+			// )
+
 			res, err = exec(inspect)
 			if err != nil {
 				panic(err)
@@ -342,8 +346,9 @@ func main() {
 				panic(err)
 			}
 
-			// printresponse(res.Body)
 			res.Body.Close()
+			log.Printf("%+v")
+			// printJSON(res.Body)
 
 			if res.StatusCode != 200 {
 				panic(errors.New("expected 200 ok but got something else"))
@@ -354,7 +359,7 @@ func main() {
 				panic(err)
 			}
 
-			printresponse(res.Body)
+			printJSON(res.Body)
 			res.Body.Close()
 
 			res, err = exec(remove)
@@ -362,7 +367,7 @@ func main() {
 				panic(err)
 			}
 
-			printresponse(res.Body)
+			printJSON(res.Body)
 			res.Body.Close()
 		}
 

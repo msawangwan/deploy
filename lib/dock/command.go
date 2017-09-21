@@ -9,7 +9,7 @@ type URLComponents struct {
 }
 
 func newURLComponents(m, c, o string) URLComponents {
-	return URLComponents{Type: m, Command: c, Option: o}
+	return URLComponents{Method: m, Command: c, Option: o}
 }
 
 // ContainerCommand represents a command url: containers/{command}?<param>&<param>& etc
