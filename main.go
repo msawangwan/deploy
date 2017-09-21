@@ -129,9 +129,11 @@ func init() {
 }
 
 func main() {
-	var (
-		gocount int
-	)
+	var step = func(ms ...string) {
+		for _, s := range ms {
+			log.Printf("%s", s)
+		}
+	}
 
 	var panicHandler = func(h http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -159,17 +161,13 @@ func main() {
 	}
 
 	http.HandleFunc(endpoint, panicHandler(func(w http.ResponseWriter, r *http.Request) {
+		step("stats", fmt.Sprintf("goroutine count: %d\n", runtime.NumGoroutine()))
+
 		var (
 			err error
 		)
 
-		/* some stats */
-
-		gocount = runtime.NumGoroutine()
-
-		log.Printf("goroutine count: %d\n", gocount)
-
-		/* parse request header */
+		step("parse headers")
 
 		eventname := r.Header.Get("x-github-event")
 
@@ -180,7 +178,7 @@ func main() {
 			panic(errInvalidWebhookEvent)
 		}
 
-		/* parse webhook json payload */
+		step("parse webhook json payload")
 
 		var (
 			res     *http.Response
@@ -191,44 +189,21 @@ func main() {
 			panic(err)
 		}
 
-		//err error
-		//body    []byte
-
-		//body, err = ioutil.ReadAll(r.Body)
-
-		//if err != nil {
-		//log.Printf("%s", err)
-		//}
-
-		//err = json.Unmarshal(body, &payload)
-
-		//if err != nil {
-		//	log.Printf("%s", err)
-		//}
-
-		/* parse project name from payload */
+		step("extract project name from webhook payload")
 
 		var (
-			//repo     string
 			projname string
 		)
 
-		//repo = payload.Repository.HTMLURL
 		projname = payload.Repository.Name
 
 		log.Printf("project name: %s", projname)
-		//log.Printf("repo: %s", repo)
 
-		/* create and cache (or read from cache) the tmp workspace */
+		step("fetch workspace from cache or create if none")
 
 		var (
 			tmpdir string
-			//tmpdirpath   string
-			//tmpdirprefix string
 		)
-
-		//tmpdirpath = "./"
-		//tmpdirprefix = projname
 
 		dircache.Lock()
 
@@ -238,7 +213,6 @@ func main() {
 		} else {
 			log.Printf("creating a cache entry for: %s", projname)
 
-			//tmpdir, err = ioutil.TempDir(tmpdirpath, tmpdirprefix)
 			tmpdir, err = ioutil.TempDir("./", projname)
 			if err != nil {
 				log.Printf("%s", err)
@@ -249,11 +223,8 @@ func main() {
 
 		dircache.Unlock()
 
-		log.Printf("workspace: %s", tmpdir)
-
-		/* clone/pull the remote repo into temp workspace */
-
-		pwd("pulling remote repo")
+		step("fetch remote repository into tmp workspace", fmt.Sprintf("workspace: %s", tmpdir))
+		pwd("working dir")
 
 		var (
 			cmdout bytes.Buffer
@@ -278,10 +249,9 @@ func main() {
 			log.Printf("succ: %s", cmdout.String())
 		}
 
-		/* find the project buildfile */
+		step("find the project buildfile")
 
 		var (
-			buildfile        *os.File
 			buildfilepath    string
 			buildfilepayload ciio.Buildfile
 		)
@@ -292,30 +262,18 @@ func main() {
 			panic(err)
 		}
 
-		//buildfile, err = os.Open(buildfilepath)
-		//if err != nil {
-		//	log.Printf("%s", err)
-		//}
-
-		//parsed := json.NewDecoder(buildfile)
-
-		//var buildfilepayload ciio.Buildfile
-
-		//if err = parsed.Decode(&buildfilepayload); err != nil {
-		//	log.Printf("%s", err)
-		//}
-
 		log.Printf("project build params: %+v", buildfilepayload)
 
 		var (
 			containername = buildfilepayload.ContainerName
 		)
 
-		/* find any previous images and replace them! */
+		step("find previous container instances and remove and replace")
 
 		// TODO: finish from here
+		// TODO: add a field to the type that determines if its a get or post
 		if cachedID, ok := containercache.m[containername]; ok {
-			var exec = func(c) {
+			exec := func(c dock.APIStringBuilder) {
 				log.Printf("executing: %+v", c)
 
 				u, e := dock.BuildAPIURLString(c)
@@ -327,49 +285,35 @@ func main() {
 
 				a := route(dockerHostAddr, version, u)
 
-				r, e := dockerClient.Get(a, u)
+				r, e := dockerClient.Get(a)
 				if e != nil {
 					if netutil.IsTimeOutError(e) {
 						return
-					} else {
-						panic(e)
 					}
+					panic(e)
 				}
+
+				b, e := jsonutil.BufPretty(r.Body, "", "  ")
+				if e != nil {
+					panic(e)
+				}
+
+				io.Copy(os.Stdout, &b)
 			}
 
 			var (
 				inspect dock.ContainerCommandByID
 				stop    dock.ContainerCommandByID
 				remove  dock.ContainerCommandByID
-				url     string
 			)
 
 			inspect = dock.NewContainerCommandByID("containers", "inspect", cachedID)
+			stop = dock.NewContainerCommandByID("containers", "stop", cachedID)
+			remove = dock.NewContainerCommandByID("containers", "remove", cachedID)
 
-			url, err = dock.BuildAPIURLString(inspect)
-			if err != nil {
-				panic(err)
-			}
-
-			log.Printf("executing: %+v", inspect)
-			log.Printf("command url: %s", url)
-
-			res, err = dockerClient.Get(route(dockerHostAddr, version, url))
-			if err != nil {
-				if netutil.IsTimeOutError(err) {
-					log.Println("timeout error") // todo: fix
-				}
-				panic(err)
-			}
-
-			stop := dock.NewContainerCommandByID("containers", "stop", cachedID)
-
-			res, err = dock.BuildAPIURLString(stop)
-			if err != nil {
-				panic(err)
-			}
-
-			remove := dock.NewContainerCommandByID("containers", "remove", cachedID)
+			exec(inspect) // TODO: need to verify this is not nil
+			exec(stop)
+			exec(remove)
 		} else {
 			log.Printf("no previous container found")
 		}
