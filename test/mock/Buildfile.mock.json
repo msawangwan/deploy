@@ -1,0 +1,44 @@
+{
+    "containerName": "buildfile_test",
+    "image": "golang:alpine",
+    "networkParameters": {
+        "ip": "127.0.0.1",
+        "portOut": "8080",
+        "portIn": "8080"
+    },
+    "stages": [
+        {
+            "label": "init_stage_label",
+            "commands": [
+                {
+                    "exec": "echo",
+                    "args": [
+                        "hello world"
+                    ]
+                }
+            ]
+        },
+        {
+            "label": "run_stage_label",
+            "commands": [
+                {
+                    "exec": "echo",
+                    "args": [
+                        "this is the run stage"
+                    ]
+                }
+            ]
+        },
+        {
+            "label": "exit_stage_label",
+            "commands": [
+                {
+                    "exec": "echo",
+                    "args": [
+                        "this is the exit stage"
+                    ]
+                }
+            ]
+        }
+    ]
+}

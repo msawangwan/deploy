@@ -1,6 +1,0 @@
-{
-    "containerName": "buildfile_test",
-    "image": "golang:alpine",
-    "addr": ":80",
-    "cmd": ["echo", "hello world"]
-}

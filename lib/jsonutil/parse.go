@@ -23,8 +23,8 @@ func FromFilepath(p string, v interface{}) error {
 	return FromReader(r, v)
 }
 
-// BufPretty pretty-print formats a reader into a bytes.Buffer, assumes the reader is JSON
-func BufPretty(r io.Reader, delim, indent string) (out bytes.Buffer, e error) {
+// ExtractBufferFormatted extracts a formatted json byte buffer from a reader
+func ExtractBufferFormatted(r io.Reader, delim, indent string) (out bytes.Buffer, e error) {
 	src, e := ioutil.ReadAll(r)
 	if e != nil {
 		return
@@ -33,4 +33,16 @@ func BufPretty(r io.Reader, delim, indent string) (out bytes.Buffer, e error) {
 	e = json.Indent(&out, []byte(src), delim, indent)
 
 	return
+}
+
+// PrettyPrintStruct is a wrapper function that simply prints a formatted struct to stdout
+func PrettyPrintStruct(v interface{}) error {
+	b, e := json.MarshalIndent(v, "", "  ")
+	if e != nil {
+		return e
+	}
+
+	io.Copy(os.Stdout, bytes.NewReader(b))
+
+	return nil
 }

@@ -8,8 +8,8 @@ type Buildfile struct {
 	Cmd           Command `json:"cmd"`
 }
 
-// APITemplate is for templating a docker api call
-type APITemplate struct {
-	Endpoint         string            `json:"endpoint"`
-	QueryStringPairs map[string]string `json:"queryStringPairs"`
-}
+// // APITemplate is for templating a docker api call
+// type APITemplate struct {
+// 	Endpoint         string            `json:"endpoint"`
+// 	QueryStringPairs map[string]string `json:"queryStringPairs"`
+// }

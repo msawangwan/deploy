@@ -3,4 +3,4 @@
 * * *
 
 - move 'pretty()' into lib/jsonutil
-- write test for 'bufpretty()'
+- write test for 'ExtractBufferFormatted()'

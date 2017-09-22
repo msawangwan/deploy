@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -158,7 +159,7 @@ func main() {
 		}
 	}
 
-	var exec = func(c dock.APIStringBuilder) (r *http.Response, e error) {
+	var executeDockCmd = func(c dock.APIStringBuilder) (r *http.Response, e error) {
 		log.Printf("executing: %+v", c)
 
 		u, e := dock.BuildAPIURLString(c)
@@ -310,7 +311,6 @@ func main() {
 
 		step("find previous container instances and remove and replace")
 
-		// TODO: finish from here
 		if cachedID, ok := containercache.m[containername]; ok {
 			var (
 				res     *http.Response
@@ -320,7 +320,7 @@ func main() {
 			)
 
 			printJSON := func(r io.Reader) {
-				formatted, e := jsonutil.BufPretty(r, "", "  ")
+				formatted, e := jsonutil.ExtractBufferFormatted(r, "", "  ")
 				if e != nil {
 					panic(e)
 				}
@@ -333,26 +333,30 @@ func main() {
 			remove = dock.NewContainerCommandByID("DELETE", "containers", "", cachedID)
 
 			var (
-				suc200 dock.InspectResponse
+				inspectPayload dock.InspectResponse
 			)
 
-			res, err = exec(inspect)
+			res, err = executeDockCmd(inspect)
 			if err != nil {
 				panic(err)
 			}
 
-			if err = jsonutil.FromReader(res.Body, &suc200); err != nil {
+			if err = jsonutil.FromReader(res.Body, &inspectPayload); err != nil {
 				panic(err)
 			}
 
 			res.Body.Close()
-			log.Printf("%+v", suc200)
+			log.Printf("%+v", inspectPayload)
 
 			if res.StatusCode != 200 {
-				panic(errors.New("expected 200 ok but got something else when inspecting a container"))
+				panic(fmt.Errorf("expected 200 ok but got something else when inspecting a container"))
 			}
 
-			res, err = exec(stop)
+			if inspectPayload.ID != cachedID {
+				panic(fmt.Errorf("expected id %s but got id %s", inspectPayload.ID, cachedID))
+			}
+
+			res, err = executeDockCmd(stop)
 			if err != nil {
 				panic(err)
 			}
@@ -360,7 +364,7 @@ func main() {
 			printJSON(res.Body)
 			res.Body.Close()
 
-			res, err = exec(remove)
+			res, err = executeDockCmd(remove)
 			if err != nil {
 				panic(err)
 			}
@@ -377,7 +381,7 @@ func main() {
 
 		create = dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
 
-		res, err = exec(create)
+		res, err = executeDockCmd(create)
 		if err != nil {
 			panic(err)
 		}
@@ -392,7 +396,7 @@ func main() {
 
 		start = dock.NewContainerCommandByID("POST", "containers", "start", "")
 
-		res, err = exec(start)
+		res, err = executeDockCmd(start)
 		if err != nil {
 			panic(err)
 		}
@@ -459,7 +463,7 @@ func main() {
 		// 	panic(err)
 		// }
 
-		// buf, err := jsonutil.BufPretty(res.Body, "", "  ")
+		// buf, err := jsonutil.ExtractBufferFormatted(res.Body, "", "  ")
 		// if err != nil {
 		// 	panic(err)
 		// }

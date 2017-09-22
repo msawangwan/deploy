@@ -1,5 +1,24 @@
 package dock
 
+// ListResponse is a docker api json payload
+type ListResponse struct {
+	ID              string          `json:"Id"`
+	Names           []string        `json:"Names"`
+	Image           string          `json:"Image"`
+	ImageID         string          `json:"ImageID"`
+	Command         string          `json:"Command"`
+	Created         float64         `json:"Created"`
+	State           string          `json:"State"`
+	Status          string          `json:"Status"`
+	Ports           []Port          `json:"Ports"`
+	Labels          Labels          `json:"Labels"`
+	SizeRw          float64         `json:"SizeRw"`
+	SizeRootFS      float64         `json:"SizeRootFs"`
+	HostConfig      HostConfig      `json:"HostConfig"`
+	NetworkSettings NetworkSettings `json:"NetworkSettings"`
+	Mounts          []Mount         `json:"Mounts"`
+}
+
 // InspectResponse is the schema for docker api command 'inspect' on 200 ok
 type InspectResponse struct {
 	ID              string          `json:"Id"`
@@ -35,8 +54,22 @@ type CreateResponse struct {
 	Warnings []string `json:"Warnings"`
 }
 
-// Success204 is a no error success response
-type Success204 struct{}
+// EmptyResponse is a no error success response
+type EmptyResponse struct{}
+
+// Image is a docker api json payload
+type Image struct {
+	ID          string   `json:"Id"`
+	ParentID    string   `json:"ParentId"`
+	RepoTags    []string `json:"RepoTags"`
+	RepoDigests []string `json:"RepoDigests"`
+	Created     float64  `json:"Created"`
+	Size        float64  `json:"Size"`
+	VirtualSize float64  `json:"VirtualSize"`
+	SharedSize  float64  `json:"SharedSize"`
+	Labels      Labels   `json:"Labels"`
+	Containers  float64  `json:"Containers"`
+}
 
 // Error400 is a bad parameter error
 type Error400 struct {
@@ -265,39 +298,6 @@ type LogConfig struct {
 type DriverConfig struct {
 	Name    string  `json:"Name"`
 	Options Options `json:"Options"`
-}
-
-// ListResponse is a docker api json payload
-type ListResponse struct {
-	ID              string          `json:"Id"`
-	Names           []string        `json:"Names"`
-	Image           string          `json:"Image"`
-	ImageID         string          `json:"ImageID"`
-	Command         string          `json:"Command"`
-	Created         float64         `json:"Created"`
-	State           string          `json:"State"`
-	Status          string          `json:"Status"`
-	Ports           []Port          `json:"Ports"`
-	Labels          Labels          `json:"Labels"`
-	SizeRw          float64         `json:"SizeRw"`
-	SizeRootFS      float64         `json:"SizeRootFs"`
-	HostConfig      HostConfig      `json:"HostConfig"`
-	NetworkSettings NetworkSettings `json:"NetworkSettings"`
-	Mounts          []Mount         `json:"Mounts"`
-}
-
-// Image is a docker api json payload
-type Image struct {
-	ID          string   `json:"Id"`
-	ParentID    string   `json:"ParentId"`
-	RepoTags    []string `json:"RepoTags"`
-	RepoDigests []string `json:"RepoDigests"`
-	Created     float64  `json:"Created"`
-	Size        float64  `json:"Size"`
-	VirtualSize float64  `json:"VirtualSize"`
-	SharedSize  float64  `json:"SharedSize"`
-	Labels      Labels   `json:"Labels"`
-	Containers  float64  `json:"Containers"`
 }
 
 // ThrottleDevice is a json field in HostConfig

@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+const (
+	jsonFile = "../../test/mock/Object.mock.json"
+)
+
 var jsonReader io.Reader
 
 type jsonData struct {
@@ -37,14 +41,14 @@ func TestDecodeReader(t *testing.T) {
 func TestFromFilepath(t *testing.T) {
 	var data jsonData
 
-	if e := FromFilepath("../../test/Testfile.json", &data); e != nil {
+	if e := FromFilepath(jsonFile, &data); e != nil {
 		t.Errorf("%s", e)
 	}
 
 	t.Logf("%+v", data)
 }
 
-func TestBufPretty(t *testing.T) {
+func TestExtractBufferFormatted(t *testing.T) {
 	jsonReader = strings.NewReader(
 		`{ 
 			"k1": "v1",
@@ -54,7 +58,7 @@ func TestBufPretty(t *testing.T) {
 		}`,
 	)
 
-	buf, er := BufPretty(jsonReader, "", "  ")
+	buf, er := ExtractBufferFormatted(jsonReader, "", "  ")
 	if er != nil {
 		t.Error(er)
 	}
