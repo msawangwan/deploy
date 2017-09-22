@@ -1,35 +1,37 @@
 package dock
 
-// Success200 is a success response
+// Success200 is the schema for 'inspect' success response
+// TODO: rename to 'InspectResponse'
 type Success200 struct {
-	ID              string        `json:"Id"`
-	Created         string        `json:"Created"`
-	Path            string        `json:"Path"`
-	Args            []string      `json:"Args"`
-	State           State         `json:"State"`
-	Image           string        `json:"Image"`
-	ResolvConfPath  string        `json:"ResolvConfPath"`
-	HostnamePath    string        `json:"HostnamePath"`
-	HostsPath       string        `json:"HostsPath"`
-	LogPath         string        `json:"LogPath"`
-	Node            struct{}      `json:"Node"`
-	Name            string        `json:"Name"`
-	RestartCount    float64       `json:"RestartCount"`
-	Driver          string        `json:"Driver"`
-	MountLabel      string        `json:"MountLabel"`
-	ProcessLabel    string        `json:"ProcessLabel"`
-	AppArmorProfile string        `json:"AppArmorProfile"`
-	ExecIDs         string        `json:"ExecIDs"`
-	HostConfig      HostConfig    `json:"HostConfig"`
-	GraphDriver     GraphDriver   `json:"GraphDriver"`
-	SizeRW          float64       `json:"SizeRw"`
-	SizeRootFS      float64       `json:"SizeRootFs"`
-	Mounts          Mounts        `json:"Mounts"`
-	Config          Config        `json:"Config"`
-	NetworkSettings NetworkConfig `json:"NetworkSettings"`
+	ID              string          `json:"Id"`
+	Created         string          `json:"Created"`
+	Path            string          `json:"Path"`
+	Args            []string        `json:"Args"`
+	State           State           `json:"State"`
+	Image           string          `json:"Image"`
+	ResolvConfPath  string          `json:"ResolvConfPath"`
+	HostnamePath    string          `json:"HostnamePath"`
+	HostsPath       string          `json:"HostsPath"`
+	LogPath         string          `json:"LogPath"`
+	Node            struct{}        `json:"Node"`
+	Name            string          `json:"Name"`
+	RestartCount    float64         `json:"RestartCount"`
+	Driver          string          `json:"Driver"`
+	MountLabel      string          `json:"MountLabel"`
+	ProcessLabel    string          `json:"ProcessLabel"`
+	AppArmorProfile string          `json:"AppArmorProfile"`
+	ExecIDs         string          `json:"ExecIDs"`
+	HostConfig      HostConfig      `json:"HostConfig"`
+	GraphDriver     GraphDriverData `json:"GraphDriver"`
+	SizeRW          float64         `json:"SizeRw"`
+	SizeRootFS      float64         `json:"SizeRootFs"`
+	Mounts          []Mount         `json:"Mounts"`
+	Config          ContainerConfig `json:"Config"`
+	NetworkSettings NetworkConfig   `json:"NetworkSettings"`
 }
 
-// Success201 is the schema for docker response success
+// Success201 is the schema for 'create' response success
+// TODO: Rename To 'CreateResponse'
 type Success201 struct {
 	ID       string   `json:"Id"`
 	Warnings []string `json:"Warnings"`
@@ -73,11 +75,6 @@ type Labels struct {
 	ComExampleVersion string `json:"com.example.version"`
 }
 
-// HostConfig is a json field for the containers payload
-type HostConfig struct {
-	NetworkMode string `json:"NetworkMode"`
-}
-
 // Bridge is a json field for the containers payload
 type Bridge struct {
 	NetworkID           string  `json:"NetworkID"`
@@ -101,8 +98,8 @@ type NetworkSettings struct {
 	Networks Networks `json:"Networks"`
 }
 
-// Mounts is a json field for the containers payload
-type Mounts struct {
+// Mounts is a json field that represents a mountpoint
+type Mount struct {
 	Name        string `json:"Name"`
 	Source      string `json:"Source"`
 	Destination string `json:"Destination"`
@@ -128,22 +125,13 @@ type State struct {
 }
 
 // GraphDriver is a json field
-type GraphDriver struct {
+type GraphDriverData struct {
 	Name string   `json:"Name"`
 	Data struct{} `json:"Data"`
 }
 
-// HealthConfig is a json field
-type HealthConfig struct {
-	Test        []string `json:"Test"`
-	Interval    float64  `json:"Interval"`
-	Timeout     float64  `json:"Timeout"`
-	Retries     float64  `json:"Retries"`
-	StartPeriod float64  `json:"StartPeriod"`
-}
-
-// Config is a json field
-type Config struct {
+// ContainerConfig is a json field
+type ContainerConfig struct {
 	HostName        string       `json:"Hostname"`
 	DomainName      string       `json:"Domainname"`
 	User            string       `json:"User"`
@@ -171,6 +159,73 @@ type Config struct {
 	Shell           []string     `json:"Shell"`
 }
 
+// HostConfig is an payload object that represents the container config depending on the host
+type HostConfig struct {
+	CPUShares            float64
+	Memory               float64
+	CGroupParent         string
+	BLKIOWeight          float64
+	BLKIOWeightDevice    struct{}
+	BLKIODeviceReadBPS   struct{}
+	BLKIODeviceWriteBPS  struct{}
+	BLKIODeviceReadLOps  struct{}
+	BLKIODeviceWriteLOps struct{}
+	CPUPeriod            float64
+	CPUQuota             float64
+	CPURealtimePeriod    float64
+	CPURealtimeRuntime   float64
+	CPUSetCPUs           string
+	CPUSetMems           string
+	Devices              struct{}
+	DeviceCGroupRules    []string
+	DiskQuota            float64
+	KernelMemory         float64
+	MemoryReservation    float64
+	MemorySwap           float64
+	MemorySwappiness     float64
+	NanoCPUs             float64
+	OOMKillDisable       bool
+	PIDsLimit            float64
+	ULimits              struct{}
+	CPUCount             float64
+	CPUPercent           float64
+	IOMaximumBandwidth   float64
+	Binds                []string
+	ContainerIDFile      string
+	LogConfig            struct{}
+	NetworkMode          string
+	PortBindings         struct{}
+	AutoRemove           bool
+	VolumeDriver         string
+	VolumesFrom          []string
+	Mounts               []Mount
+	CapAdd               []string
+	CapDrop              []string
+	DNS                  []string
+	DNSOptions           []string
+	DNSSearch            []string
+	ExtraHosts           []string
+	GroupAdd             []string
+	IPCMode              string
+	CGroup               string
+	Links                []string
+	OOMScoreAdj          float64
+	PIDMode              string
+	Privileged           bool
+	PublishAllPorts      bool
+	ReadOnlyRootFS       bool
+	SecurityOpt          []string
+	StorageOpt           struct{}
+	TMPFS                struct{}
+	UTSMode              string
+	UserNSMode           string
+	SHMSize              float64
+	SYSCTLs              struct{}
+	Runtime              string
+	ConsoleSize          []float64
+	Isolation            string
+}
+
 // NetworkConfig is a json field
 type NetworkConfig struct {
 	Bridge      string  `json:"Bridge"`
@@ -182,7 +237,17 @@ type NetworkConfig struct {
 	Ports       Port    `json:"Ports"`
 }
 
+// HealthConfig is a json field
+type HealthConfig struct {
+	Test        []string `json:"Test"`
+	Interval    float64  `json:"Interval"`
+	Timeout     float64  `json:"Timeout"`
+	Retries     float64  `json:"Retries"`
+	StartPeriod float64  `json:"StartPeriod"`
+}
+
 // Container is a docker api json payload
+// TODO: Rename to 'ListResponse'
 type Container struct {
 	ID              string          `json:"Id"`
 	Names           []string        `json:"Names"`
@@ -198,7 +263,7 @@ type Container struct {
 	SizeRootFS      float64         `json:"SizeRootFs"`
 	HostConfig      HostConfig      `json:"HostConfig"`
 	NetworkSettings NetworkSettings `json:"NetworkSettings"`
-	Mounts          []Mounts        `json:"Mounts"`
+	Mounts          []Mount         `json:"Mounts"`
 }
 
 // Image is a docker api json payload
