@@ -15,7 +15,7 @@ type APIStringBuilder interface {
 // BuildAPIURLString builds an endpoint string
 func BuildAPIURLString(r APIStringBuilder) (s string, e error) {
 	helpers := template.FuncMap{
-		"concatEndpoint": func(c, o, id string) string {
+		"buildURLString": func(c, o, id string) string {
 			var s string
 
 			if id == "" {
@@ -26,7 +26,7 @@ func BuildAPIURLString(r APIStringBuilder) (s string, e error) {
 
 			return strings.TrimSuffix(s, "/")
 		},
-		"concatQueryParams": func(q map[string]string) string {
+		"buildQueryString": func(q map[string]string) string {
 			var s string
 
 			for k, v := range q {
@@ -77,10 +77,10 @@ func NewContainerCommand(m, c, o string) ContainerCommand {
 func (c ContainerCommand) Build() []byte {
 	return []byte(
 		`{{- with $c := .URLComponents -}}
-			{{- $e := concatEndpoint $c.Command $c.Option "" -}}
+			{{- $e := buildURLString $c.Command $c.Option "" -}}
 			{{- printf "%s" $e -}}
 			{{- if $c.Parameters -}}
-				{{- $q := concatQueryParams $c.Parameters -}}
+				{{- $q := buildQueryString $c.Parameters -}}
 				{{- printf "?%s" $q -}}
 			{{- end -}}
 		{{- end -}}`,
@@ -105,10 +105,10 @@ func NewContainerCommandByID(m, c, o, id string) ContainerCommandByID {
 func (c ContainerCommandByID) Build() []byte {
 	return []byte(
 		`{{- with . -}}
-			{{- $e := concatEndpoint .URLComponents.Command .URLComponents.Option .ID -}}
+			{{- $e := buildURLString .URLComponents.Command .URLComponents.Option .ID -}}
 			{{- printf "%s" $e -}}
 			{{- if .URLComponents.Parameters -}}
-				{{- $q := concatQueryParams .URLComponents.Parameters -}}
+				{{- $q := buildQueryString .URLComponents.Parameters -}}
 				{{- printf "?%s" $q -}}
 			{{- end -}}
 		{{- end -}}`,

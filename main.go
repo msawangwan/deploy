@@ -12,7 +12,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -160,6 +159,48 @@ func main() {
 		}
 	}
 
+	var exec = func(c dock.APIStringBuilder) (r *http.Response, e error) {
+		log.Printf("executing: %+v", c)
+
+		u, e := dock.BuildAPIURLString(c)
+		if e != nil {
+			return nil, e
+		}
+
+		log.Printf("cmd url: %s", u)
+
+		var (
+			method string
+		)
+
+		switch t := c.(type) {
+		case dock.ContainerCommand:
+			method = t.URLComponents.Method
+		case dock.ContainerCommandByID:
+			method = t.URLComponents.Method
+		}
+
+		a := route(dockerHostAddr, version, u)
+
+		switch method {
+		case "GET":
+			r, e = dockerClient.Get(a)
+		case "POST":
+			r, e = dockerClient.Post(a, mime, bytes.NewBuffer(c.Build()))
+		case "PUT":
+		case "PATCH":
+		case "DELETE":
+			req, e := http.NewRequest("DELETE", a, nil)
+			if req != nil {
+				return nil, e
+			}
+
+			r, e = dockerClient.Do(req)
+		}
+
+		return
+	}
+
 	http.HandleFunc(endpoint, panicHandler(func(w http.ResponseWriter, r *http.Request) {
 		step("stats", fmt.Sprintf("goroutine count: %d\n", runtime.NumGoroutine()))
 
@@ -272,61 +313,20 @@ func main() {
 
 		// TODO: finish from here
 		if cachedID, ok := containercache.m[containername]; ok {
-			exec := func(c dock.APIStringBuilder) (r *http.Response, e error) {
-				log.Printf("executing: %+v", c)
-
-				u, e := dock.BuildAPIURLString(c)
-				if e != nil {
-					return nil, e
-				}
-
-				log.Printf("cmd url: %s", u)
-
-				var (
-					method string
-				)
-
-				switch t := c.(type) {
-				case dock.ContainerCommand:
-					method = t.URLComponents.Method
-				case dock.ContainerCommandByID:
-					method = t.URLComponents.Method
-				}
-
-				a := route(dockerHostAddr, version, u)
-
-				switch method {
-				case "GET":
-					r, e = dockerClient.Get(a)
-				case "POST":
-					r, e = dockerClient.Post(a, mime, bytes.NewBuffer(c.Build()))
-				case "PUT":
-				case "PATCH":
-				case "DELETE":
-					req, e = http.NewRequest("DELETE", a, nil)
-					if req != nil {
-						return
-					}
-
-					r, e = dockerClient.Do(req)
-				}
-
-				return
-			}
-
 			var (
 				res     *http.Response
-				result  bytes.Buffer
 				inspect dock.ContainerCommandByID
 				stop    dock.ContainerCommandByID
 				remove  dock.ContainerCommandByID
 			)
 
 			printJSON := func(r io.Reader) {
-				r, e := jsonutil.BufPretty(r, "", "  ")
+				formatted, e := jsonutil.BufPretty(r, "", "  ")
 				if e != nil {
 					panic(e)
 				}
+
+				io.Copy(os.Stdout, &formatted)
 			}
 
 			inspect = dock.NewContainerCommandByID("GET", "containers", "inspect", cachedID)
@@ -347,11 +347,10 @@ func main() {
 			}
 
 			res.Body.Close()
-			log.Printf("%+v")
-			// printJSON(res.Body)
+			log.Printf("%+v", suc200)
 
 			if res.StatusCode != 200 {
-				panic(errors.New("expected 200 ok but got something else"))
+				panic(errors.New("expected 200 ok but got something else when inspecting a container"))
 			}
 
 			res, err = exec(stop)
@@ -374,10 +373,34 @@ func main() {
 		var (
 			create dock.ContainerCommand
 			start  dock.ContainerCommandByID
+			suc201 dock.Success201
 		)
 
 		create = dock.NewContainerCommand("POST", "containers", "create") // TODO: get id from this result
+
+		res, err = exec(create)
+		if err != nil {
+			panic(err)
+		}
+
+		if err = jsonutil.FromReader(res.Body, &suc201); err != nil {
+			panic(err)
+		}
+
+		id := suc201.ID
+
+		log.Printf("created new container with id: %s", id)
+
 		start = dock.NewContainerCommandByID("POST", "containers", "start", "")
+
+		res, err = exec(start)
+		if err != nil {
+			panic(err)
+		}
+
+		if res.StatusCode != 204 {
+			panic(errors.New("expected 204 but got something else when starting a container"))
+		}
 
 		/* create the container url TODO: replace with dock.ContainerCommand struct*/
 
@@ -426,7 +449,6 @@ func main() {
 
 		res, err = dockerClient.Post(
 			route(dockerHostAddr, version, tmplres),
-			//			"application/json; charset=utf-8",
 			mime,
 			bytes.NewBuffer(jsonbuf),
 		)
