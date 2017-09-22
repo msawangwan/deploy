@@ -333,7 +333,7 @@ func main() {
 			remove = dock.NewContainerCommandByID("DELETE", "containers", "", cachedID)
 
 			var (
-				suc200 dock.Success200
+				suc200 dock.InspectResponse
 			)
 
 			res, err = exec(inspect)
@@ -372,7 +372,7 @@ func main() {
 		var (
 			create dock.ContainerCommand
 			start  dock.ContainerCommandByID
-			suc201 dock.Success201
+			suc201 dock.CreateResponse
 		)
 
 		create = dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
