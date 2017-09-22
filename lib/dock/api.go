@@ -100,13 +100,20 @@ type NetworkSettings struct {
 
 // Mounts is a json field that represents a mountpoint
 type Mount struct {
-	Name        string `json:"Name"`
-	Source      string `json:"Source"`
-	Destination string `json:"Destination"`
-	Driver      string `json:"Driver"`
-	Mode        string `json:"Mode"`
-	RW          bool   `json:"RW"`
-	Propagation string `json:"Propagation"`
+	Name          string        `json:"Name"`
+	Target        string        `json:"Target"`
+	Source        string        `json:"Source"`
+	Type          string        `json:"Type"`
+	Destination   string        `json:"Destination"`
+	Driver        string        `json:"Driver"`
+	Mode          string        `json:"Mode"`
+	ReadOnly      bool          `json:"ReadOnly"`
+	RW            bool          `json:"RW"`
+	Propagation   string        `json:"Propagation"`
+	Consistency   string        `json:"Consistency"`
+	BindOptions   BindOptions   `json:"BindOptions"`
+	VolumeOptions VolumeOptions `json:"VolumeOptions"`
+	TMPFSOptions  TMPFSOptions  `json:"TmpfsOptions"`
 }
 
 // State is a json field
@@ -126,8 +133,10 @@ type State struct {
 
 // GraphDriver is a json field
 type GraphDriverData struct {
-	Name string   `json:"Name"`
-	Data struct{} `json:"Data"`
+	Name string `json:"Name"`
+	Data struct {
+		AdditionalProperties `json:"AdditionalProperties"`
+	} `json:"Data"`
 }
 
 // ContainerConfig is a json field
@@ -161,69 +170,69 @@ type ContainerConfig struct {
 
 // HostConfig is an payload object that represents the container config depending on the host
 type HostConfig struct {
-	CPUShares            float64
-	Memory               float64
-	CGroupParent         string
-	BLKIOWeight          float64
-	BLKIOWeightDevice    struct{}
-	BLKIODeviceReadBPS   struct{}
-	BLKIODeviceWriteBPS  struct{}
-	BLKIODeviceReadLOps  struct{}
-	BLKIODeviceWriteLOps struct{}
-	CPUPeriod            float64
-	CPUQuota             float64
-	CPURealtimePeriod    float64
-	CPURealtimeRuntime   float64
-	CPUSetCPUs           string
-	CPUSetMems           string
-	Devices              struct{}
-	DeviceCGroupRules    []string
-	DiskQuota            float64
-	KernelMemory         float64
-	MemoryReservation    float64
-	MemorySwap           float64
-	MemorySwappiness     float64
-	NanoCPUs             float64
-	OOMKillDisable       bool
-	PIDsLimit            float64
-	ULimits              struct{}
-	CPUCount             float64
-	CPUPercent           float64
-	IOMaximumBandwidth   float64
-	Binds                []string
-	ContainerIDFile      string
-	LogConfig            struct{}
-	NetworkMode          string
-	PortBindings         struct{}
-	AutoRemove           bool
-	VolumeDriver         string
-	VolumesFrom          []string
-	Mounts               []Mount
-	CapAdd               []string
-	CapDrop              []string
-	DNS                  []string
-	DNSOptions           []string
-	DNSSearch            []string
-	ExtraHosts           []string
-	GroupAdd             []string
-	IPCMode              string
-	CGroup               string
-	Links                []string
-	OOMScoreAdj          float64
-	PIDMode              string
-	Privileged           bool
-	PublishAllPorts      bool
-	ReadOnlyRootFS       bool
-	SecurityOpt          []string
-	StorageOpt           struct{}
-	TMPFS                struct{}
-	UTSMode              string
-	UserNSMode           string
-	SHMSize              float64
-	SYSCTLs              struct{}
-	Runtime              string
-	ConsoleSize          []float64
-	Isolation            string
+	CPUShares            float64        `json:"CpuShares"`
+	Memory               float64        `json:""`
+	CGroupParent         string         `json:""`
+	BLKIOWeight          float64        `json:""`
+	BLKIOWeightDevice    ThrottleDevice `json:""`
+	BLKIODeviceReadBPS   ThrottleDevice `json:""`
+	BLKIODeviceWriteBPS  ThrottleDevice `json:""`
+	BLKIODeviceReadLOps  ThrottleDevice `json:""`
+	BLKIODeviceWriteLOps ThrottleDevice `json:""`
+	CPUPeriod            float64        `json:""`
+	CPUQuota             float64        `json:""`
+	CPURealtimePeriod    float64        `json:""`
+	CPURealtimeRuntime   float64        `json:""`
+	CPUSetCPUs           string         `json:""`
+	CPUSetMems           string         `json:""`
+	Devices              struct{}       `json:""`
+	DeviceCGroupRules    []string       `json:""`
+	DiskQuota            float64        `json:""`
+	KernelMemory         float64        `json:""`
+	MemoryReservation    float64        `json:""`
+	MemorySwap           float64        `json:""`
+	MemorySwappiness     float64        `json:""`
+	NanoCPUs             float64        `json:""`
+	OOMKillDisable       bool           `json:""`
+	PIDsLimit            float64        `json:""`
+	ULimits              struct{}       `json:""`
+	CPUCount             float64        `json:""`
+	CPUPercent           float64        `json:""`
+	IOMaximumBandwidth   float64        `json:""`
+	Binds                []string       `json:""`
+	ContainerIDFile      string         `json:""`
+	LogConfig            struct{}       `json:""`
+	NetworkMode          string         `json:""`
+	PortBindings         struct{}       `json:""`
+	AutoRemove           bool           `json:""`
+	VolumeDriver         string         `json:""`
+	VolumesFrom          []string       `json:""`
+	Mounts               []Mount        `json:""`
+	CapAdd               []string       `json:""`
+	CapDrop              []string       `json:""`
+	DNS                  []string       `json:""`
+	DNSOptions           []string       `json:""`
+	DNSSearch            []string       `json:""`
+	ExtraHosts           []string       `json:""`
+	GroupAdd             []string       `json:""`
+	IPCMode              string         `json:""`
+	CGroup               string         `json:""`
+	Links                []string       `json:""`
+	OOMScoreAdj          float64        `json:""`
+	PIDMode              string         `json:""`
+	Privileged           bool           `json:""`
+	PublishAllPorts      bool           `json:""`
+	ReadOnlyRootFS       bool           `json:""`
+	SecurityOpt          []string       `json:""`
+	StorageOpt           struct{}       `json:""`
+	TMPFS                struct{}       `json:""`
+	UTSMode              string         `json:""`
+	UserNSMode           string         `json:""`
+	SHMSize              float64        `json:""`
+	SYSCTLs              struct{}       `json:""`
+	Runtime              string         `json:""`
+	ConsoleSize          []float64      `json:""`
+	Isolation            string         `json:""`
 }
 
 // NetworkConfig is a json field
@@ -244,6 +253,16 @@ type HealthConfig struct {
 	Timeout     float64  `json:"Timeout"`
 	Retries     float64  `json:"Retries"`
 	StartPeriod float64  `json:"StartPeriod"`
+}
+
+type LogConfig struct {
+	Type   string   `json:"Type"`
+	Config struct{} `json:"Config"`
+}
+
+type DriverConfig struct {
+	Name    string  `json:"Name"`
+	Options Options `json:"Options"`
 }
 
 // Container is a docker api json payload
@@ -279,3 +298,54 @@ type Image struct {
 	Labels      Labels   `json:"Labels"`
 	Containers  float64  `json:"Containers"`
 }
+
+type ThrottleDevice struct {
+	Path string  `json:"Path"`
+	Rate float64 `json:"Rate"`
+}
+
+type DeviceMapping struct {
+	PathOnHost        string `json:"PathOnHost"`
+	PathInContainer   string `json:"PathInContainer"`
+	CGroupPermissions string `json:"CgroupPermissions"`
+}
+
+type ULimits struct {
+	Name string  `json:"Name"`
+	Soft float64 `json:"Soft"`
+	Hard float64 `json:"Hard"`
+}
+
+type PortBindings struct {
+	HostIP   string `json:"HostIp"`
+	HostPort string `json:"HostPort"`
+}
+
+type RestartPolicy struct {
+	Name              string  `json:"Name"`
+	MaximumRetryCount float64 `json:"MaximumRetryCount"`
+}
+
+type Options struct {
+	AdditionalProperties AdditionalProperties `json:"AdditionalProperties"`
+}
+
+type BindOptions struct {
+	Propagation interface{} `json:"Propagation"`
+}
+
+type VolumeOptions struct {
+	NoCopy       bool         `json:"NoCopy"`
+	Labels       []Labels     `json:"Labels"`
+	DriverConfig DriverConfig `json:"DriverConfig"`
+}
+
+type TMPFSOptions struct {
+	SizeBytes float64 `json:"SizeBytes"`
+	Mode      float64 `json:"Mode"`
+}
+
+type StorageOpt string
+type TMPFS string
+type SYSCTLs string
+type AdditionalProperties string
