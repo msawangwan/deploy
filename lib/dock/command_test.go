@@ -9,13 +9,15 @@ type mockAPICommandURL struct {
 	MockParams   []string
 }
 
-func (m mockAPICommandURL) Build() string {
-	return `{{- with . -}}
-		mock endpoint: {{- .MockEndPoint -}} 
-		mock params: {{- range .MockParams -}}
-			{{- . -}}&
-		{{- end -}}
-	{{- end -}}`
+func (m mockAPICommandURL) Build() []byte {
+	return []byte(
+		`{{- with . -}}
+			mock endpoint: {{- .MockEndPoint -}} 
+			mock params: {{- range .MockParams -}}
+				{{- . -}}&
+			{{- end -}}
+		{{- end -}}`,
+	)
 }
 
 func TestBuildAPIURLStrings(t *testing.T) {
@@ -75,6 +77,7 @@ func TestBuildAPIURLs(t *testing.T) {
 			},
 			"1234598765abcdefg",
 		},
+		NewContainerCommandByID("POST", "DELETE", "", "1234567899k"),
 	}
 
 	for _, apiurl := range apiurls {

@@ -2,6 +2,8 @@ package dock
 
 import (
 	"bytes"
+	"fmt"
+	"strings"
 	"text/template"
 )
 
@@ -12,8 +14,30 @@ type APIStringBuilder interface {
 
 // BuildAPIURLString builds an endpoint string
 func BuildAPIURLString(r APIStringBuilder) (s string, e error) {
-	t, e := template.New("").Parse(string(r.Build()))
+	helpers := template.FuncMap{
+		"concatEndpoint": func(c, o, id string) string {
+			var s string
 
+			if id == "" {
+				s = fmt.Sprintf("%s/%s", c, o)
+			} else {
+				s = fmt.Sprintf("%s/%s/%s", c, id, o)
+			}
+
+			return strings.TrimSuffix(s, "/")
+		},
+		"concatQueryParams": func(q map[string]string) string {
+			var s string
+
+			for k, v := range q {
+				s += fmt.Sprintf("%s=%s&", k, v)
+			}
+
+			return strings.TrimSuffix(s, "&")
+		},
+	}
+
+	t, e := template.New("").Funcs(helpers).Parse(string(r.Build()))
 	if e != nil {
 		return
 	}
@@ -53,11 +77,11 @@ func NewContainerCommand(m, c, o string) ContainerCommand {
 func (c ContainerCommand) Build() []byte {
 	return []byte(
 		`{{- with $c := .URLComponents -}}
-			{{- $c.Command -}}/{{- $c.Option -}}
+			{{- $e := concatEndpoint $c.Command $c.Option "" -}}
+			{{- printf "%s" $e -}}
 			{{- if $c.Parameters -}}
-				?{{- range $k, $v := $c.Parameters -}}
-					{{- $k -}}={{- $v -}}&
-				{{- end -}}
+				{{- $q := concatQueryParams $c.Parameters -}}
+				{{- printf "?%s" $q -}}
 			{{- end -}}
 		{{- end -}}`,
 	)
@@ -81,11 +105,11 @@ func NewContainerCommandByID(m, c, o, id string) ContainerCommandByID {
 func (c ContainerCommandByID) Build() []byte {
 	return []byte(
 		`{{- with . -}}
-			{{- .URLComponents.Command -}}/{{- .ID -}}/{{- .URLComponents.Option -}}
+			{{- $e := concatEndpoint .URLComponents.Command .URLComponents.Option .ID -}}
+			{{- printf "%s" $e -}}
 			{{- if .URLComponents.Parameters -}}
-				?{{- range $k, $v := .URLComponents.Parameters -}}
-					{{- $k -}}={{- $v -}}&
-				{{- end -}}
+				{{- $q := concatQueryParams .URLComponents.Parameters -}}
+				{{- printf "?%s" $q -}}
 			{{- end -}}
 		{{- end -}}`,
 	)
