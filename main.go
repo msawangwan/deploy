@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -376,7 +375,7 @@ func main() {
 			suc201 dock.Success201
 		)
 
-		create = dock.NewContainerCommand("POST", "containers", "create") // TODO: get id from this result
+		create = dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
 
 		res, err = exec(create)
 		if err != nil {
@@ -402,71 +401,71 @@ func main() {
 			panic(errors.New("expected 204 but got something else when starting a container"))
 		}
 
-		/* create the container url TODO: replace with dock.ContainerCommand struct*/
+		/* create the container url */
 
-		var (
-			tmpl    *template.Template
-			tmplbuf bytes.Buffer
-			tmplres string
-			tmplurl string
-		)
+		// var (
+		// 	tmpl    *template.Template
+		// 	tmplbuf bytes.Buffer
+		// 	tmplres string
+		// 	tmplurl string
+		// )
 
-		tmpldata := struct {
-			Endpoint     string
-			QueryStrings map[string]string
-		}{
-			"containers/create",
-			map[string]string{
-				"name": containername,
-			},
-		}
+		// tmpldata := struct {
+		// 	Endpoint     string
+		// 	QueryStrings map[string]string
+		// }{
+		// 	"containers/create",
+		// 	map[string]string{
+		// 		"name": containername,
+		// 	},
+		// }
 
-		tmplurl = `{{ .Endpoint }}?{{ range $k, $v := .QueryStrings }}{{ $k }}={{ $v }}{{ end }}`
-		tmpl = template.New("docker_url")
+		// tmplurl = `{{ .Endpoint }}?{{ range $k, $v := .QueryStrings }}{{ $k }}={{ $v }}{{ end }}`
+		// tmpl = template.New("docker_url")
 
-		tmpl, err = tmpl.Parse(tmplurl)
-		if err != nil {
-			log.Printf("%s", err)
-		}
+		// tmpl, err = tmpl.Parse(tmplurl)
+		// if err != nil {
+		// 	log.Printf("%s", err)
+		// }
 
-		if err = tmpl.Execute(&tmplbuf, tmpldata); err != nil {
-			log.Printf("%s", err)
-		}
+		// if err = tmpl.Execute(&tmplbuf, tmpldata); err != nil {
+		// 	log.Printf("%s", err)
+		// }
 
-		tmplres = tmplbuf.String()
+		// tmplres = tmplbuf.String()
 
-		log.Printf("command: %s", tmplres)
+		// log.Printf("command: %s", tmplres)
 
-		/* query the docker host and create container from parameters */
+		// /* query the docker host and create container from parameters */
 
-		jsonbuf := []byte(
-			`{
-				"Image":"golang:1.9.0-alpine3.6",
-				"WorkingDir": "/app",
-				"Cmd": ["date"]
-			 }`,
-		)
+		// jsonbuf := []byte(
+		// 	`{
+		// 		"Image":"golang:1.9.0-alpine3.6",
+		// 		"WorkingDir": "/app",
+		// 		"Cmd": ["date"]
+		// 	 }`,
+		// )
 
-		res, err = dockerClient.Post(
-			route(dockerHostAddr, version, tmplres),
-			mime,
-			bytes.NewBuffer(jsonbuf),
-		)
+		// res, err = dockerClient.Post(
+		// 	route(dockerHostAddr, version, tmplres),
+		// 	mime,
+		// 	bytes.NewBuffer(jsonbuf),
+		// )
 
-		if err != nil {
-			if netutil.IsTimeOutError(err) {
-				log.Println("timeout error")
-			}
-			panic(err)
-		}
+		// if err != nil {
+		// 	if netutil.IsTimeOutError(err) {
+		// 		log.Println("timeout error")
+		// 	}
+		// 	panic(err)
+		// }
 
-		buf, err := jsonutil.BufPretty(res.Body, "", "  ")
-		if err != nil {
-			panic(err)
-		}
+		// buf, err := jsonutil.BufPretty(res.Body, "", "  ")
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		res.Body.Close()
-		io.Copy(os.Stdout, &buf)
+		// res.Body.Close()
+		// io.Copy(os.Stdout, &buf)
 	}))
 
 	log.Fatal(http.ListenAndServe(port, nil))
