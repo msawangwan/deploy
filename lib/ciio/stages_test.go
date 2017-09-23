@@ -10,7 +10,14 @@ const (
 	buildfileFilepath = "../../test/mock/Buildfile.mock.json"
 )
 
+var tests = map[string]string{
+	"loadBuildFile": "load_build_file",
+	"runStages":     "run_stages",
+}
+
 func TestLoadingBuildFile(t *testing.T) {
+	t.Logf("starting test: %s ..", tests.loadBuildFile)
+
 	var (
 		payload Buildfile
 	)
@@ -23,10 +30,12 @@ func TestLoadingBuildFile(t *testing.T) {
 		t.Fatalf("%s", e)
 	}
 
-	t.Logf("test completed with success")
+	t.Logf("completed test: %s ..", tests.loadBuildFile)
 }
 
-func TestExecuteStagesInBuildFile(t *testing.T) {
+func TestRunStagesInBuildFile(t *testing.T) {
+	t.Logf("starting test: %s ..", tests.runStages)
+
 	var (
 		payload Buildfile
 	)
@@ -36,10 +45,10 @@ func TestExecuteStagesInBuildFile(t *testing.T) {
 	}
 
 	for _, v := range payload.Stages {
-		if e := CompleteStage(v); e != nil {
+		if e := RunStage(v); e != nil {
 			t.Fatalf("%s", e)
 		}
 	}
 
-	t.Logf("test completed with success")
+	t.Logf("completed test: %s ..", tests.runStages)
 }

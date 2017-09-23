@@ -56,10 +56,23 @@ var (
 	errJSONParseErr        = errors.New("encountered an error while read/writing json")
 )
 
-//var cache = struct {
-//	sync.Mutex
-//	m map[string]string
-//}{m: make(map[string]string)}
+type cacher interface {
+	IsCached(s string) bool
+}
+
+type cache struct {
+	store map[string]string
+	sync.Mutex
+}
+
+func (c cache) IsCached(s string) bool {
+	c.Lock()
+	_, ok := c.store[s]
+	c.Unlock()
+	return ok
+}
+
+var dirCache = cache{store: make(map[string]string)}
 
 var containercache = struct {
 	sync.Mutex
@@ -125,6 +138,53 @@ func init() {
 
 	log.Printf("server container ip: %s\n", localip)
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
+}
+
+func printStats(logger io.Writer, debug bool) {
+	if debug {
+		logger.Write(runtime.NumGoroutine())
+	}
+}
+
+func isPushEvent(logger io.Writer, r *http.Request) bool {
+	eventname := r.Header.Get("x-github-event")
+
+	logger.Write("incoming webhook: %s\n", r.URL.Path)
+	logger.Write("payload event name: %s\n", eventname)
+
+	if eventname != "push" {
+		return false
+	}
+
+	return true
+}
+
+func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
+	if e = jsonutil.FromReader(r, payload); e != nil {
+		return
+	}
+
+	return
+}
+
+// TODO: use a reader lock here and create and cache else where?
+func getWorkspace(c cache, dirname string) (ws string, e error) {
+	c.Lock()
+
+	if found, ok := c.store[dirname]; ok {
+		ws = found
+	} else {
+		ws, e := ioutil.TempDir("./", dirname)
+		if e != nil {
+			return
+		}
+
+		c.store[dirname] = ws
+	}
+
+	c.Unlock()
+
+	return
 }
 
 func main() {
@@ -202,33 +262,42 @@ func main() {
 	}
 
 	http.HandleFunc(endpoint, panicHandler(func(w http.ResponseWriter, r *http.Request) {
-		step("stats", fmt.Sprintf("goroutine count: %d\n", runtime.NumGoroutine()))
+		printStats(os.Stdout, true)
 
-		var (
-			err error
-		)
-
-		step("parse headers")
-
-		eventname := r.Header.Get("x-github-event")
-
-		log.Printf("incoming webhook: %s\n", r.URL.Path)
-		log.Printf("payload event name: %s\n", eventname)
-
-		if eventname != "push" {
+		if !isPushEvent(os.Stdout, r) {
 			panic(errInvalidWebhookEvent)
 		}
 
-		step("parse webhook json payload")
-
-		var (
-			res     *http.Response
-			payload *github.PushEvent
-		)
-
-		if err = jsonutil.FromReader(r.Body, payload); err != nil {
-			panic(err)
+		payload, e := extractWebhookPayload(r.Body)
+		if e != nil {
+			panic(e)
 		}
+
+		//var (
+		//	err error
+		//)
+
+		//step("parse headers")
+
+		//eventname := r.Header.Get("x-github-event")
+
+		//log.Printf("incoming webhook: %s\n", r.URL.Path)
+		//log.Printf("payload event name: %s\n", eventname)
+
+		//if eventname != "push" {
+		//	panic(errInvalidWebhookEvent)
+		//}
+
+		//step("parse webhook json payload")
+
+		//var (
+		//	res     *http.Response
+		//	payload *github.PushEvent
+		//)
+
+		//if err = jsonutil.FromReader(r.Body, payload); err != nil {
+		//	panic(err)
+		//}
 
 		step("extract project name from webhook payload")
 
@@ -242,27 +311,32 @@ func main() {
 
 		step("fetch workspace from cache or create if none")
 
-		var (
-			tmpdir string
-		)
-
-		dircache.Lock()
-
-		if cachedDir, ok := dircache.m[projname]; ok {
-			log.Printf("already exists in cache %s", projname)
-			tmpdir = cachedDir
-		} else {
-			log.Printf("creating a cache entry for: %s", projname)
-
-			tmpdir, err = ioutil.TempDir("./", projname)
-			if err != nil {
-				log.Printf("%s", err)
-			}
-
-			dircache.m[projname] = tmpdir
+		ws, e := getWorkspace(dirCache, projname)
+		if e != nil {
+			panic(e)
 		}
 
-		dircache.Unlock()
+		//var (
+		//	tmpdir string
+		//)
+
+		//dircache.Lock()
+
+		//if cachedDir, ok := dircache.m[projname]; ok {
+		//	log.Printf("already exists in cache %s", projname)
+		//	tmpdir = cachedDir
+		//} else {
+		//	log.Printf("creating a cache entry for: %s", projname)
+
+		//	tmpdir, err = ioutil.TempDir("./", projname)
+		//	if err != nil {
+		//		log.Printf("%s", err)
+		//	}
+
+		//	dircache.m[projname] = tmpdir
+		//}
+
+		//dircache.Unlock()
 
 		step("fetch remote repository into tmp workspace", fmt.Sprintf("workspace: %s", tmpdir))
 		pwd("working dir")
