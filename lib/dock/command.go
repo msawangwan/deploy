@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+
+	"github.com/msawangwan/ci.io/lib/dock"
 )
 
 // APIStringBuilder returns an api endpoint string
@@ -114,6 +116,20 @@ func (c ContainerCommandByID) Build() []byte {
 		{{- end -}}`,
 	)
 }
+
+// NewCommand returns a docker api command
+// func NewCommand(c, id string) []byte {
+// 	switch c {
+// 	case "inspect":
+// 		return NewContainerCommandByID("GET", "containers", c, id).Build()
+// 	case "stop":
+// 		return dock.NewContainerCommandByID("POST", "containers", c, id).Build()
+// 	case "remove":
+// 		return dock.NewContainerCommandByID("DELETE", "containers", "", id).Build()
+// 	}
+
+// 	return nil
+// }
 
 func newURLComponents(m, c, o string) URLComponents {
 	return URLComponents{Method: m, Command: c, Option: o}

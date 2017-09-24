@@ -167,7 +167,7 @@ func executeDockCmd(c dock.APIStringBuilder) (r *http.Response, e error) {
 	case "GET":
 		r, e = dockerClient.Get(a)
 	case "POST":
-		r, e = dockerClient.Post(a, mime, bytes.NewBuffer(c.Build()))
+		r, e = dockerClient.Post(a, mime, "") // TODO: THIS IS MISSING THE PAYLOAD
 	case "PUT":
 	case "PATCH":
 	case "DELETE":
@@ -190,6 +190,15 @@ func printStats(logger io.Writer, debug bool) {
 			),
 		)
 	}
+}
+
+func printJSON(l io.Writer, r io.Reader) {
+	formatted, e := jsonutil.ExtractBufferFormatted(r, "", "  ")
+	if e != nil {
+		panic(e)
+	}
+
+	io.Copy(l, &formatted)
 }
 
 func isPushEvent(logger io.Writer, r *http.Request) bool {
@@ -289,9 +298,9 @@ func findPreviousContainer(c *cache, contname string) (id string, e error) {
 }
 
 func verifyPreviousContainer(id string) error {
-	inspect := dock.NewContainerCommandByID("GET", "containers", "inspect", id)
+	cmd := NewContainerCommandByID("GET", "containers", c, id)
 
-	r, e := executeDockCmd(inspect)
+	r, e := executeDockCmd(cmd)
 	if e != nil {
 		return e
 	}
@@ -318,47 +327,64 @@ func verifyPreviousContainer(id string) error {
 }
 
 func removePreviousContainer(id string) error {
-	stop := dock.NewContainerCommandByID("POST", "containers", "stop", id)
-	remove := dock.NewContainerCommandByID("DELETE", "containers", "", id)
-
-	printJSON := func(r io.Reader) {
-		formatted, e := jsonutil.ExtractBufferFormatted(r, "", "  ")
-		if e != nil {
-			panic(e)
-		}
-
-		io.Copy(os.Stdout, &formatted)
-	}
-
 	var (
-		r *http.Response
-		e error
+		cmd dock.ContainerCommandByID
+		r   *http.Response
+		e   error
 	)
 
-	r, e = executeDockCmd(stop)
+	cmd = dock.NewContainerCommandByID("POST", "containers", c, id)
+
+	r, e = executeDockCmd(cmd)
 	if e != nil {
 		return e
 	}
 
-	printJSON(r.Body)
+	printJSON(os.Stdout, r.Body)
 	r.Body.Close()
 
-	r, e = executeDockCmd(remove)
+	cmd = dock.NewContainerCommandByID("DELETE", "containers", "", id)
+
+	r, e = executeDockCmd(cmd)
 	if e != nil {
 		return e
 	}
 
-	printJSON(r.Body)
+	printJSON(os.Stdout, r.Body)
 	r.Body.Close()
 
 	return nil
 }
 
-func createNewContainer() error {
-	return nil
+func createNewContainer() (p dock.CreateResponse, e error) {
+	cmd := dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
+
+	r, e := executeDockCmd(cmd)
+	if e != nil {
+		return e
+	}
+
+	if e = jsonutil.FromReader(r.Body, &p); e != nil {
+		return e
+	}
+
+	log.Printf("created new container with id: %s", p.ID)
+
+	return
 }
 
-func startNewContainer() error {
+func startNewContainer(id string) error {
+	cmd := dock.NewContainerCommandByID("POST", "containers", "start", id)
+
+	r, e = executeDockCmd(cmd)
+	if e != nil {
+		return e
+	}
+
+	if r.StatusCode != 204 {
+		return errors.New("expected 204 but got something else when starting a container")
+	}
+
 	return nil
 }
 
@@ -433,36 +459,17 @@ func main() {
 			}
 		}
 
-		var (
-			create dock.ContainerCommand
-			start  dock.ContainerCommandByID
-			suc201 dock.CreateResponse
-		)
+		// TODO: CANT WE JUST RUN THE DOCKER FILE?
+		// VIA A FUCKING BASH SCRIPT
+		// THAT WE START HERE
 
-		create = dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
-
-		res, err := executeDockCmd(create)
-		if err != nil {
-			panic(err)
+		container, e := createNewContainer() // TODO: need to pass in query params AND json payload we got info from buildfile!!!!
+		if e != nil {
+			panic(e)
 		}
 
-		if err = jsonutil.FromReader(res.Body, &suc201); err != nil {
-			panic(err)
-		}
-
-		id := suc201.ID
-
-		log.Printf("created new container with id: %s", id)
-
-		start = dock.NewContainerCommandByID("POST", "containers", "start", "")
-
-		res, err = executeDockCmd(start)
-		if err != nil {
-			panic(err)
-		}
-
-		if res.StatusCode != 204 {
-			panic(errors.New("expected 204 but got something else when starting a container"))
+		if e = startNewContainer(container.ID); e != nil {
+			panic(e)
 		}
 
 		/* create the container url */
