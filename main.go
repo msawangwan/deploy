@@ -18,18 +18,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/msawangwan/ci.io/api/ciio"
 	"github.com/msawangwan/ci.io/api/github"
+	"github.com/msawangwan/ci.io/lib/ciio"
 	"github.com/msawangwan/ci.io/lib/dock"
 	"github.com/msawangwan/ci.io/lib/jsonutil"
 	"github.com/msawangwan/ci.io/lib/netutil"
 	"github.com/msawangwan/ci.io/types/cred"
 )
-
-type cache struct {
-	sync.Mutex
-	m map[string]string
-}
 
 const (
 	version       = "1.30"
@@ -44,7 +39,7 @@ const (
 )
 
 var (
-	credential     *cred.Github
+	credential     cred.Github
 	dockerClient   *http.Client
 	dockerHostAddr string
 	localip        string
@@ -62,7 +57,11 @@ type cacher interface {
 
 type cache struct {
 	store map[string]string
-	sync.Mutex
+	*sync.Mutex
+}
+
+func newCache() *cache {
+	return &cache{store: make(map[string]string)}
 }
 
 func (c cache) IsCached(s string) bool {
@@ -72,7 +71,8 @@ func (c cache) IsCached(s string) bool {
 	return ok
 }
 
-var dirCache = cache{store: make(map[string]string)}
+var dirCache = newCache()
+var containerCache = newCache()
 
 var containercache = struct {
 	sync.Mutex
@@ -140,17 +140,71 @@ func init() {
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
 }
 
+func executeDockCmd(c dock.APIStringBuilder) (r *http.Response, e error) {
+	log.Printf("executing: %+v", c)
+
+	u, e := dock.BuildAPIURLString(c)
+	if e != nil {
+		return nil, e
+	}
+
+	log.Printf("cmd url: %s", u)
+
+	var (
+		method string
+	)
+
+	switch t := c.(type) {
+	case dock.ContainerCommand:
+		method = t.URLComponents.Method
+	case dock.ContainerCommandByID:
+		method = t.URLComponents.Method
+	}
+
+	a := route(dockerHostAddr, version, u)
+
+	switch method {
+	case "GET":
+		r, e = dockerClient.Get(a)
+	case "POST":
+		r, e = dockerClient.Post(a, mime, bytes.NewBuffer(c.Build()))
+	case "PUT":
+	case "PATCH":
+	case "DELETE":
+		req, e := http.NewRequest("DELETE", a, nil)
+		if req != nil {
+			return nil, e
+		}
+
+		r, e = dockerClient.Do(req)
+	}
+
+	return
+}
+
 func printStats(logger io.Writer, debug bool) {
 	if debug {
-		logger.Write(runtime.NumGoroutine())
+		logger.Write(
+			[]byte(
+				fmt.Sprintf("%d", runtime.NumGoroutine()),
+			),
+		)
 	}
 }
 
 func isPushEvent(logger io.Writer, r *http.Request) bool {
 	eventname := r.Header.Get("x-github-event")
 
-	logger.Write("incoming webhook: %s\n", r.URL.Path)
-	logger.Write("payload event name: %s\n", eventname)
+	logger.Write(
+		[]byte(
+			fmt.Sprintf("incoming webhook: %s\n", r.URL.Path),
+		),
+	)
+	logger.Write(
+		[]byte(
+			fmt.Sprintf("payload event name: %s\n", eventname),
+		),
+	)
 
 	if eventname != "push" {
 		return false
@@ -167,14 +221,13 @@ func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
 	return
 }
 
-// TODO: use a reader lock here and create and cache else where?
-func getWorkspace(c cache, dirname string) (ws string, e error) {
+func getWorkspace(c *cache, dirname string) (ws string, e error) {
 	c.Lock()
 
 	if found, ok := c.store[dirname]; ok {
 		ws = found
 	} else {
-		ws, e := ioutil.TempDir("./", dirname)
+		ws, e = ioutil.TempDir("./", dirname)
 		if e != nil {
 			return
 		}
@@ -187,13 +240,129 @@ func getWorkspace(c cache, dirname string) (ws string, e error) {
 	return
 }
 
-func main() {
-	var step = func(ms ...string) {
-		for _, s := range ms {
-			log.Printf("%s", s)
-		}
+func pullRepository(c cred.Github, dir, name string) error {
+	var (
+		cmdout bytes.Buffer
+		cmderr bytes.Buffer
+	)
+
+	args := []string{c.User, c.OAuth, dir, name}
+
+	clone := exec.Command("clrep", args...)
+	clone.Dir = dir
+	clone.Stdout = &cmdout
+	clone.Stderr = &cmderr
+
+	if err := clone.Run(); err != nil {
+		log.Printf("err: %s", cmderr.String())
+
+		return err
 	}
 
+	log.Printf("succ: %s", cmdout.String())
+
+	return nil
+}
+
+func loadBuildfile(dirpath, filename string) (b ciio.Buildfile, e error) {
+	p := filepath.Join(dirpath, filename)
+
+	if e = jsonutil.FromFilepath(p, &b); e != nil {
+		return
+	}
+
+	return
+}
+
+func findPreviousContainer(c *cache, contname string) (id string, e error) {
+	c.Lock()
+
+	id = ""
+
+	if found, ok := c.store[contname]; ok {
+		id = found
+	}
+
+	c.Unlock()
+
+	return
+}
+
+func verifyPreviousContainer(id string) error {
+	inspect := dock.NewContainerCommandByID("GET", "containers", "inspect", id)
+
+	r, e := executeDockCmd(inspect)
+	if e != nil {
+		return e
+	}
+
+	var (
+		p dock.InspectResponse
+	)
+
+	if e = jsonutil.FromReader(r.Body, &p); e != nil {
+		return e
+	}
+
+	r.Body.Close()
+
+	if r.StatusCode != 200 {
+		return fmt.Errorf("expected 200 ok but got something else when inspecting a container")
+	}
+
+	if p.ID != id {
+		return fmt.Errorf("expected id %s but got id %s", p.ID, id)
+	}
+
+	return nil
+}
+
+func removePreviousContainer(id string) error {
+	stop := dock.NewContainerCommandByID("POST", "containers", "stop", id)
+	remove := dock.NewContainerCommandByID("DELETE", "containers", "", id)
+
+	printJSON := func(r io.Reader) {
+		formatted, e := jsonutil.ExtractBufferFormatted(r, "", "  ")
+		if e != nil {
+			panic(e)
+		}
+
+		io.Copy(os.Stdout, &formatted)
+	}
+
+	var (
+		r *http.Response
+		e error
+	)
+
+	r, e = executeDockCmd(stop)
+	if e != nil {
+		return e
+	}
+
+	printJSON(r.Body)
+	r.Body.Close()
+
+	r, e = executeDockCmd(remove)
+	if e != nil {
+		return e
+	}
+
+	printJSON(r.Body)
+	r.Body.Close()
+
+	return nil
+}
+
+func createNewContainer() error {
+	return nil
+}
+
+func startNewContainer() error {
+	return nil
+}
+
+func main() {
 	var panicHandler = func(h http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			var e error
@@ -219,48 +388,6 @@ func main() {
 		}
 	}
 
-	var executeDockCmd = func(c dock.APIStringBuilder) (r *http.Response, e error) {
-		log.Printf("executing: %+v", c)
-
-		u, e := dock.BuildAPIURLString(c)
-		if e != nil {
-			return nil, e
-		}
-
-		log.Printf("cmd url: %s", u)
-
-		var (
-			method string
-		)
-
-		switch t := c.(type) {
-		case dock.ContainerCommand:
-			method = t.URLComponents.Method
-		case dock.ContainerCommandByID:
-			method = t.URLComponents.Method
-		}
-
-		a := route(dockerHostAddr, version, u)
-
-		switch method {
-		case "GET":
-			r, e = dockerClient.Get(a)
-		case "POST":
-			r, e = dockerClient.Post(a, mime, bytes.NewBuffer(c.Build()))
-		case "PUT":
-		case "PATCH":
-		case "DELETE":
-			req, e := http.NewRequest("DELETE", a, nil)
-			if req != nil {
-				return nil, e
-			}
-
-			r, e = dockerClient.Do(req)
-		}
-
-		return
-	}
-
 	http.HandleFunc(endpoint, panicHandler(func(w http.ResponseWriter, r *http.Request) {
 		printStats(os.Stdout, true)
 
@@ -268,183 +395,42 @@ func main() {
 			panic(errInvalidWebhookEvent)
 		}
 
-		payload, e := extractWebhookPayload(r.Body)
+		webhook, e := extractWebhookPayload(r.Body)
 		if e != nil {
 			panic(e)
 		}
 
-		//var (
-		//	err error
-		//)
+		reponame := webhook.Repository.Name
 
-		//step("parse headers")
-
-		//eventname := r.Header.Get("x-github-event")
-
-		//log.Printf("incoming webhook: %s\n", r.URL.Path)
-		//log.Printf("payload event name: %s\n", eventname)
-
-		//if eventname != "push" {
-		//	panic(errInvalidWebhookEvent)
-		//}
-
-		//step("parse webhook json payload")
-
-		//var (
-		//	res     *http.Response
-		//	payload *github.PushEvent
-		//)
-
-		//if err = jsonutil.FromReader(r.Body, payload); err != nil {
-		//	panic(err)
-		//}
-
-		step("extract project name from webhook payload")
-
-		var (
-			projname string
-		)
-
-		projname = payload.Repository.Name
-
-		log.Printf("project name: %s", projname)
-
-		step("fetch workspace from cache or create if none")
-
-		ws, e := getWorkspace(dirCache, projname)
+		ws, e := getWorkspace(dirCache, reponame)
 		if e != nil {
 			panic(e)
 		}
 
-		//var (
-		//	tmpdir string
-		//)
-
-		//dircache.Lock()
-
-		//if cachedDir, ok := dircache.m[projname]; ok {
-		//	log.Printf("already exists in cache %s", projname)
-		//	tmpdir = cachedDir
-		//} else {
-		//	log.Printf("creating a cache entry for: %s", projname)
-
-		//	tmpdir, err = ioutil.TempDir("./", projname)
-		//	if err != nil {
-		//		log.Printf("%s", err)
-		//	}
-
-		//	dircache.m[projname] = tmpdir
-		//}
-
-		//dircache.Unlock()
-
-		step("fetch remote repository into tmp workspace", fmt.Sprintf("workspace: %s", tmpdir))
-		pwd("working dir")
-
-		var (
-			cmdout bytes.Buffer
-			cmderr bytes.Buffer
-		)
-
-		clone := exec.Command(
-			commands.cloneRemoteRepo,
-			credential.User,
-			credential.OAuth,
-			tmpdir,
-			projname,
-		)
-
-		clone.Dir = tmpdir
-		clone.Stdout = &cmdout
-		clone.Stderr = &cmderr
-
-		if err = clone.Run(); err != nil {
-			log.Printf("err: %s", cmderr.String())
-		} else {
-			log.Printf("succ: %s", cmdout.String())
+		if e := pullRepository(credential, ws, reponame); e != nil {
+			panic(e)
 		}
 
-		step("find the project buildfile")
-
-		var (
-			buildfilepath    string
-			buildfilepayload ciio.Buildfile
-		)
-
-		buildfilepath = filepath.Join(tmpdir, strings.ToLower(buildfilename))
-
-		if err = jsonutil.FromFilepath(buildfilepath, buildfilepayload); err != nil {
-			panic(err)
+		buildfile, e := loadBuildfile(ws, strings.ToLower(buildfilename))
+		if e != nil {
+			panic(e)
 		}
 
-		log.Printf("project build params: %+v", buildfilepayload)
+		containername := buildfile.ContainerName
 
-		var (
-			containername = buildfilepayload.ContainerName
-		)
+		cid, e := findPreviousContainer(containerCache, containername)
+		if e != nil {
+			panic(e)
+		}
 
-		step("find previous container instances and remove and replace")
-
-		if cachedID, ok := containercache.m[containername]; ok {
-			var (
-				res     *http.Response
-				inspect dock.ContainerCommandByID
-				stop    dock.ContainerCommandByID
-				remove  dock.ContainerCommandByID
-			)
-
-			printJSON := func(r io.Reader) {
-				formatted, e := jsonutil.ExtractBufferFormatted(r, "", "  ")
-				if e != nil {
-					panic(e)
-				}
-
-				io.Copy(os.Stdout, &formatted)
+		if cid != "" {
+			if e = verifyPreviousContainer(cid); e != nil {
+				panic(e)
 			}
 
-			inspect = dock.NewContainerCommandByID("GET", "containers", "inspect", cachedID)
-			stop = dock.NewContainerCommandByID("POST", "containers", "stop", cachedID)
-			remove = dock.NewContainerCommandByID("DELETE", "containers", "", cachedID)
-
-			var (
-				inspectPayload dock.InspectResponse
-			)
-
-			res, err = executeDockCmd(inspect)
-			if err != nil {
-				panic(err)
+			if e = removePreviousContainer(cid); e != nil {
+				panic(e)
 			}
-
-			if err = jsonutil.FromReader(res.Body, &inspectPayload); err != nil {
-				panic(err)
-			}
-
-			res.Body.Close()
-			log.Printf("%+v", inspectPayload)
-
-			if res.StatusCode != 200 {
-				panic(fmt.Errorf("expected 200 ok but got something else when inspecting a container"))
-			}
-
-			if inspectPayload.ID != cachedID {
-				panic(fmt.Errorf("expected id %s but got id %s", inspectPayload.ID, cachedID))
-			}
-
-			res, err = executeDockCmd(stop)
-			if err != nil {
-				panic(err)
-			}
-
-			printJSON(res.Body)
-			res.Body.Close()
-
-			res, err = executeDockCmd(remove)
-			if err != nil {
-				panic(err)
-			}
-
-			printJSON(res.Body)
-			res.Body.Close()
 		}
 
 		var (
@@ -455,7 +441,7 @@ func main() {
 
 		create = dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
 
-		res, err = executeDockCmd(create)
+		res, err := executeDockCmd(create)
 		if err != nil {
 			panic(err)
 		}
