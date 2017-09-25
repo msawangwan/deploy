@@ -368,7 +368,8 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	r, e := c.Post(
 		route(dockerHostAddr, version, url),
 		mime,
-		bytes.NewReader(payload),
+		payload,
+		// bytes.NewReader(payload),
 	)
 	if e != nil {
 		return
