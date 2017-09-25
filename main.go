@@ -294,6 +294,8 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
+	log.Printf("calling: %s", u)
+
 	r, e = c.Post(route(dockerHostAddr, version, u), mime, nil)
 	if e != nil {
 		return e
@@ -307,6 +309,8 @@ func removePreviousContainer(id string, c *http.Client) error {
 	if e != nil {
 		return e
 	}
+
+	log.Printf("calling: %s", u)
 
 	rq, e := http.NewRequest("DELETE", u, nil)
 	if e != nil {
@@ -350,6 +354,8 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
+	log.Printf("calling: %s", url)
+
 	r, e := c.Post(
 		route(dockerHostAddr, version, url),
 		mime,
@@ -373,6 +379,8 @@ func startNewContainer(id string, c *http.Client) error {
 	if e != nil {
 		return e
 	}
+
+	log.Printf("calling: %s", url)
 
 	r, e := c.Post(
 		route(dockerHostAddr, version, url),
