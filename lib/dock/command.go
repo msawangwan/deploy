@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
-
-	"github.com/msawangwan/ci.io/lib/dock"
 )
 
 // APIStringBuilder returns an api endpoint string

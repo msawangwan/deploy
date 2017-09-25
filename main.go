@@ -74,20 +74,6 @@ func (c cache) IsCached(s string) bool {
 var dirCache = newCache()
 var containerCache = newCache()
 
-var containercache = struct {
-	sync.Mutex
-	m map[string]string
-}{m: make(map[string]string)}
-
-var dircache = struct {
-	sync.Mutex
-	m map[string]string
-}{m: make(map[string]string)}
-
-var commands = struct {
-	cloneRemoteRepo string
-}{"clrep"}
-
 var pwd = func(s string) { d, _ := os.Getwd(); log.Printf("[current working dir %s] %s", d, s) }
 var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
 
@@ -138,48 +124,6 @@ func init() {
 
 	log.Printf("server container ip: %s\n", localip)
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
-}
-
-func executeDockCmd(c dock.APIStringBuilder) (r *http.Response, e error) {
-	log.Printf("executing: %+v", c)
-
-	u, e := dock.BuildAPIURLString(c)
-	if e != nil {
-		return nil, e
-	}
-
-	log.Printf("cmd url: %s", u)
-
-	var (
-		method string
-	)
-
-	switch t := c.(type) {
-	case dock.ContainerCommand:
-		method = t.URLComponents.Method
-	case dock.ContainerCommandByID:
-		method = t.URLComponents.Method
-	}
-
-	a := route(dockerHostAddr, version, u)
-
-	switch method {
-	case "GET":
-		r, e = dockerClient.Get(a)
-	case "POST":
-		r, e = dockerClient.Post(a, mime, "") // TODO: THIS IS MISSING THE PAYLOAD
-	case "PUT":
-	case "PATCH":
-	case "DELETE":
-		req, e := http.NewRequest("DELETE", a, nil)
-		if req != nil {
-			return nil, e
-		}
-
-		r, e = dockerClient.Do(req)
-	}
-
-	return
 }
 
 func printStats(logger io.Writer, debug bool) {
@@ -297,10 +241,14 @@ func findPreviousContainer(c *cache, contname string) (id string, e error) {
 	return
 }
 
-func verifyPreviousContainer(id string) error {
-	cmd := NewContainerCommandByID("GET", "containers", c, id)
+func verifyPreviousContainer(id string, c *http.Client) error {
+	cmd := dock.NewContainerCommandByID("GET", "containers", "inspect", id)
+	u, e := dock.BuildAPIURLString(cmd)
+	if e != nil {
+		return e
+	}
 
-	r, e := executeDockCmd(cmd)
+	r, e := c.Get(u)
 	if e != nil {
 		return e
 	}
@@ -326,16 +274,21 @@ func verifyPreviousContainer(id string) error {
 	return nil
 }
 
-func removePreviousContainer(id string) error {
+func removePreviousContainer(id string, c *http.Client) error {
 	var (
 		cmd dock.ContainerCommandByID
 		r   *http.Response
+		u   string
 		e   error
 	)
 
-	cmd = dock.NewContainerCommandByID("POST", "containers", c, id)
+	cmd = dock.NewContainerCommandByID("POST", "containers", "stop", id)
+	u, e = dock.BuildAPIURLString(cmd)
+	if e != nil {
+		return e
+	}
 
-	r, e = executeDockCmd(cmd)
+	r, e = c.Post(route(dockerHostAddr, version, u), mime, nil)
 	if e != nil {
 		return e
 	}
@@ -344,8 +297,17 @@ func removePreviousContainer(id string) error {
 	r.Body.Close()
 
 	cmd = dock.NewContainerCommandByID("DELETE", "containers", "", id)
+	u, e = dock.BuildAPIURLString(cmd)
+	if e != nil {
+		return e
+	}
 
-	r, e = executeDockCmd(cmd)
+	rq, e := http.NewRequest("DELETE", u, nil)
+	if e != nil {
+		return e
+	}
+
+	r, e = c.Do(rq)
 	if e != nil {
 		return e
 	}
@@ -356,27 +318,61 @@ func removePreviousContainer(id string) error {
 	return nil
 }
 
-func createNewContainer(b ciio.Buildfile) (p dock.CreateResponse, e error) {
-	cmd := dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
+func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse, e error) {
+	var postdata dock.CreateRequest
 
-	r, e := executeDockCmd(cmd)
+	postdata.Image = b.Image
+	postdata.WorkingDir = b.WorkingDir
+	postdata.Cmd = []string{b.Cmd.Exec}
+
+	for _, v := range b.Cmd.Args {
+		postdata.Cmd = append(postdata.Cmd, v)
+	}
+
+	payload, e := jsonutil.ToReader(postdata)
 	if e != nil {
-		return e
+		return
+	}
+
+	cmd := dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
+	cmd.URLComponents.Parameters = map[string]string{
+		"name": b.ContainerName,
+	}
+
+	url, e := dock.BuildAPIURLString(cmd)
+	if e != nil {
+		return
+	}
+
+	r, e := c.Post(
+		route(dockerHostAddr, version, url),
+		mime,
+		payload,
+	)
+	if e != nil {
+		return
 	}
 
 	if e = jsonutil.FromReader(r.Body, &p); e != nil {
-		return e
+		return
 	}
-
-	log.Printf("created new container with id: %s", p.ID)
 
 	return
 }
 
-func startNewContainer(id string) error {
+func startNewContainer(id string, c *http.Client) error {
 	cmd := dock.NewContainerCommandByID("POST", "containers", "start", id)
 
-	r, e = executeDockCmd(cmd)
+	url, e := dock.BuildAPIURLString(cmd)
+	if e != nil {
+		return e
+	}
+
+	r, e := c.Post(
+		route(dockerHostAddr, version, url),
+		mime,
+		nil,
+	)
 	if e != nil {
 		return e
 	}
@@ -426,14 +422,14 @@ func main() {
 			panic(e)
 		}
 
-		reponame := webhook.Repository.Name
+		repoName := webhook.Repository.Name
 
-		ws, e := getWorkspace(dirCache, reponame)
+		ws, e := getWorkspace(dirCache, repoName)
 		if e != nil {
 			panic(e)
 		}
 
-		if e := pullRepository(credential, ws, reponame); e != nil {
+		if e := pullRepository(credential, ws, repoName); e != nil {
 			panic(e)
 		}
 
@@ -442,97 +438,31 @@ func main() {
 			panic(e)
 		}
 
-		containername := buildfile.ContainerName
+		containerName := buildfile.ContainerName
 
-		cid, e := findPreviousContainer(containerCache, containername)
+		cid, e := findPreviousContainer(containerCache, containerName)
 		if e != nil {
 			panic(e)
 		}
 
 		if cid != "" {
-			if e = verifyPreviousContainer(cid); e != nil {
+			if e = verifyPreviousContainer(cid, dockerClient); e != nil {
 				panic(e)
 			}
 
-			if e = removePreviousContainer(cid); e != nil {
+			if e = removePreviousContainer(cid, dockerClient); e != nil {
 				panic(e)
 			}
 		}
 
-		container, e := createNewContainer(buildfile) // TODO: need to pass in query params AND json payload we got info from buildfile!!!!
+		container, e := createNewContainer(buildfile, dockerClient)
 		if e != nil {
 			panic(e)
 		}
 
-		if e = startNewContainer(container.ID); e != nil {
+		if e = startNewContainer(container.ID, dockerClient); e != nil {
 			panic(e)
 		}
-
-		/* create the container url */
-
-		// var (
-		// 	tmpl    *template.Template
-		// 	tmplbuf bytes.Buffer
-		// 	tmplres string
-		// 	tmplurl string
-		// )
-
-		// tmpldata := struct {
-		// 	Endpoint     string
-		// 	QueryStrings map[string]string
-		// }{
-		// 	"containers/create",
-		// 	map[string]string{
-		// 		"name": containername,
-		// 	},
-		// }
-
-		// tmplurl = `{{ .Endpoint }}?{{ range $k, $v := .QueryStrings }}{{ $k }}={{ $v }}{{ end }}`
-		// tmpl = template.New("docker_url")
-
-		// tmpl, err = tmpl.Parse(tmplurl)
-		// if err != nil {
-		// 	log.Printf("%s", err)
-		// }
-
-		// if err = tmpl.Execute(&tmplbuf, tmpldata); err != nil {
-		// 	log.Printf("%s", err)
-		// }
-
-		// tmplres = tmplbuf.String()
-
-		// log.Printf("command: %s", tmplres)
-
-		// /* query the docker host and create container from parameters */
-
-		// jsonbuf := []byte(
-		// 	`{
-		// 		"Image":"golang:1.9.0-alpine3.6",
-		// 		"WorkingDir": "/app",
-		// 		"Cmd": ["date"]
-		// 	 }`,
-		// )
-
-		// res, err = dockerClient.Post(
-		// 	route(dockerHostAddr, version, tmplres),
-		// 	mime,
-		// 	bytes.NewBuffer(jsonbuf),
-		// )
-
-		// if err != nil {
-		// 	if netutil.IsTimeOutError(err) {
-		// 		log.Println("timeout error")
-		// 	}
-		// 	panic(err)
-		// }
-
-		// buf, err := jsonutil.ExtractBufferFormatted(res.Body, "", "  ")
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		// res.Body.Close()
-		// io.Copy(os.Stdout, &buf)
 	}))
 
 	log.Fatal(http.ListenAndServe(port, nil))

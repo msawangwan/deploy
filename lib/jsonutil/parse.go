@@ -23,6 +23,18 @@ func FromFilepath(p string, v interface{}) error {
 	return FromReader(r, v)
 }
 
+// ToReader takes a json struct and retruns it as a bytes.Buffer that implements reader
+func ToReader(v interface{}) (r io.Reader, e error) {
+	b, e := json.Marshal(v)
+	if e != nil {
+		return
+	}
+
+	r = bytes.NewBuffer(b)
+
+	return
+}
+
 // ExtractBufferFormatted extracts a formatted json byte buffer from a reader
 func ExtractBufferFormatted(r io.Reader, delim, indent string) (out bytes.Buffer, e error) {
 	src, e := ioutil.ReadAll(r)

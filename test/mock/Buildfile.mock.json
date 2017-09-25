@@ -1,11 +1,19 @@
 {
     "containerName": "buildfile_test",
     "image": "golang:alpine",
+    "workingDir": "/test_dir",
     "networkParameters": {
         "ip": "127.0.0.1",
         "portOut": "8080",
         "portIn": "8080"
     },
+    "cmd": {
+        "exec": "echo",
+        "args": [
+            "some arg"
+        ]
+    },
+    "entryPoint": {},
     "stages": [
         {
             "label": "init_stage_label",
