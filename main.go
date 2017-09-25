@@ -49,11 +49,8 @@ var (
 var (
 	errInvalidWebhookEvent = errors.New("not a valid webhook event, expected: push")
 	errJSONParseErr        = errors.New("encountered an error while read/writing json")
+	errDoesNotExistInCache = errors.New("does not exist in cache")
 )
-
-type cacher interface {
-	IsCached(s string) bool
-}
 
 type cache struct {
 	store map[string]string
@@ -62,13 +59,6 @@ type cache struct {
 
 func newCache() *cache {
 	return &cache{store: make(map[string]string)}
-}
-
-func (c cache) IsCached(s string) bool {
-	c.Lock()
-	_, ok := c.store[s]
-	c.Unlock()
-	return ok
 }
 
 var dirCache = newCache()
@@ -175,19 +165,31 @@ func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
 }
 
 func getWorkspace(c *cache, dirname string) (ws string, e error) {
+	ws = ""
+
 	c.Lock()
-
-	if found, ok := c.store[dirname]; ok {
-		ws = found
-	} else {
-		ws, e = ioutil.TempDir("./", dirname)
-		if e != nil {
-			return
+	{
+		if dir, found := c.store[dirname]; found {
+			ws = dir
+		} else {
+			e = errDoesNotExistInCache
 		}
+	}
+	c.Unlock()
 
-		c.store[dirname] = ws
+	return
+}
+
+func createTmpWorkspace(c *cache, dirname string) (ws string, e error) {
+	ws, e = ioutil.TempDir("./", dirname)
+	if e != nil {
+		return
 	}
 
+	c.Lock()
+	{
+		c.store[dirname] = ws
+	}
 	c.Unlock()
 
 	return
@@ -433,9 +435,16 @@ func main() {
 		log.Printf("payload extracted, repo name: [%s]", repoName)
 		log.Printf("fetching workspace")
 
-		ws, e := getWorkspace(dirCache, repoName)
+		ws, e := getWorkspace(&dirCache, repoName)
 		if e != nil {
-			panic(e)
+			if e != errDoesNotExistInCache {
+				panic(e)
+			} else {
+				ws, e := createTmpWorkspace(&dirCache, repoName)
+				if e != nil {
+					panic(e)
+				}
+			}
 		}
 
 		log.Printf("found workspace, pulling repository latest into workspace")
