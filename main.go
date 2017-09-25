@@ -47,9 +47,10 @@ var (
 )
 
 var (
-	errInvalidWebhookEvent = errors.New("not a valid webhook event, expected: push")
-	errJSONParseErr        = errors.New("encountered an error while read/writing json")
-	errDoesNotExistInCache = errors.New("does not exist in cache")
+	errInvalidWebhookEvent  = errors.New("not a valid webhook event, expected: push")
+	errDoesNotExistInCache  = errors.New("does not exist in cache")
+	errResponseCodeMismatch = errors.New("expected response code success but got fail")
+	errIDMismatch           = errors.New("expected id doesnt match id")
 )
 
 type cache struct {
@@ -116,6 +117,15 @@ func init() {
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
 }
 
+func printJSON(l io.Writer, r io.Reader) {
+	formatted, e := jsonutil.ExtractBufferFormatted(r, "", "  ")
+	if e != nil {
+		panic(e)
+	}
+
+	io.Copy(l, &formatted)
+}
+
 func printStats(logger io.Writer, debug bool) {
 	if debug {
 		logger.Write(
@@ -126,28 +136,8 @@ func printStats(logger io.Writer, debug bool) {
 	}
 }
 
-func printJSON(l io.Writer, r io.Reader) {
-	formatted, e := jsonutil.ExtractBufferFormatted(r, "", "  ")
-	if e != nil {
-		panic(e)
-	}
-
-	io.Copy(l, &formatted)
-}
-
 func isPushEvent(logger io.Writer, r *http.Request) bool {
 	eventname := r.Header.Get("x-github-event")
-
-	logger.Write(
-		[]byte(
-			fmt.Sprintf("incoming webhook: %s\n", r.URL.Path),
-		),
-	)
-	logger.Write(
-		[]byte(
-			fmt.Sprintf("payload event name: %s\n", eventname),
-		),
-	)
 
 	if eventname != "push" {
 		return false
@@ -168,6 +158,7 @@ func getWorkspace(c *cache, dirname string) (ws string, e error) {
 	ws = ""
 
 	c.Lock()
+	defer c.Unlock()
 	{
 		if dir, found := c.store[dirname]; found {
 			ws = dir
@@ -175,7 +166,6 @@ func getWorkspace(c *cache, dirname string) (ws string, e error) {
 			e = errDoesNotExistInCache
 		}
 	}
-	c.Unlock()
 
 	return
 }
@@ -187,10 +177,10 @@ func createTmpWorkspace(c *cache, dirname string) (ws string, e error) {
 	}
 
 	c.Lock()
+	defer c.Unlock()
 	{
 		c.store[dirname] = ws
 	}
-	c.Unlock()
 
 	return
 }
@@ -266,11 +256,11 @@ func verifyPreviousContainer(id string, c *http.Client) error {
 	r.Body.Close()
 
 	if r.StatusCode != 200 {
-		return fmt.Errorf("expected 200 ok but got something else when inspecting a container")
+		return errResponseCodeMismatch
 	}
 
 	if p.ID != id {
-		return fmt.Errorf("expected id %s but got id %s", p.ID, id)
+		return errIDMismatch
 	}
 
 	return nil
@@ -336,7 +326,7 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
-	cmd := dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
+	cmd := dock.NewContainerCommand("POST", "containers", "create")
 	cmd.URLComponents.Parameters = map[string]string{
 		"name": b.ContainerName,
 	}
@@ -380,7 +370,7 @@ func startNewContainer(id string, c *http.Client) error {
 	}
 
 	if r.StatusCode != 204 {
-		return errors.New("expected 204 but got something else when starting a container")
+		return errResponseCodeMismatch
 	}
 
 	return nil
@@ -406,7 +396,7 @@ func main() {
 
 					http.Error(w, e.Error(), http.StatusInternalServerError)
 
-					log.Printf("%s", e)
+					log.Printf("panic handler: %s", e)
 				}
 			}()
 
@@ -497,7 +487,7 @@ func main() {
 			panic(e)
 		}
 
-		log.Printf("handler complete")
+		log.Printf("webhook event, handled")
 	}))
 
 	log.Fatal(http.ListenAndServe(port, nil))
