@@ -344,10 +344,11 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	// 	return
 	// }
 
-	payload := []byte(`
-		"Image": "alpine",
-		"Cmd": ["echo", "HELLO, WORLD"]
-		`,
+	payload := []byte(
+		`{
+			"Image": "alpine",
+			"Cmd": ["echo", "HELLO, WORLD"]
+		}`,
 	)
 
 	log.Printf("%s", payload)
@@ -370,6 +371,11 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		bytes.NewReader(payload),
 	)
 	if e != nil {
+		return
+	}
+
+	if r.StatusCode != 200 {
+		e = responseCodeMismatchError{200, r.StatusCode}
 		return
 	}
 
