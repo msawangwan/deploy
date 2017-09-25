@@ -1,49 +1,23 @@
 #!/bin/sh
 
-# build
-#
+echo `basename ${0}`; echo
 
-echo "build"; echo
+if [ $# != 4 ]; then
+    echo "err: missing args"
+    echo "usage: `basename ${0}` <dockerfile_path> <img_prefix> <img_name> <img_tag>"
+    exit 1
+fi
 
-CONTAINER_PREFIX="ci.io"
-CONTAINER_NAME="srv"
-CONTAINER_TAG="dev"
-CONTAINER_VERSION="0.0.1"
-CONTAINER_IMAGE_NAME="$CONTAINER_PREFIX.$CONTAINER_NAME:$CONTAINER_TAG-$CONTAINER_VERSION"
+DOCK_DOCKFILE_PATH=$1
+DOCK_IMG_PREFIX=$2
+DOCK_IMG_NAME=$3
+DOCK_IMG_TAG=$4
+DOCK_CONTAINER_LABEL="${DOCK_IMG_PREFIX}.${DOCK_IMG_NAME}:${DOCK_IMG_TAG}"
 
-DOCKERFILE_DIR="build"
-DOCKERFILE_FILENAME="serve.Dockerfile"
-DOCKERFILE_PATH="$DOCKERFILE_DIR/$DOCKERFILE_FILENAME"
-
-DOCKERMOUNT_SOCK="/var/run/docker.sock:/var/run/docker.sock"
-
-CIIO_ROOT_IPADDR="$(./bin/parseip)"
-
-export CIIO_ROOT_IPADDR
-export DOCKERFILE_DIR
-
-echo "master container addr: $CIIO_ROOT_IPADDR"; echo
-echo "pwd: $(pwd)"; echo
-
-ls -al
-
-CHECKENV="$(env | grep -o $CIIO_ROOT_IPADDR)"
-
-if [ "$CHECKENV" == "$CIIO_ROOT_IPADDR" ]; then
-    echo "successfully exported master container addr: $CHECKENV"; echo
-else
-    echo "failed to export master container addr: $CHECKENV"; echo
+if [ ! -z ${DOCK_MOUNT_SOCK} ]; then
+    DOCK_MOUNT_SOCK="/var/run/docker.sock:/var/run/docker.sock"
+    export DOCK_MOUNT_SOCK
 fi
 
 docker system prune -f
-docker build -f "$DOCKERFILE_PATH" -t "$CONTAINER_IMAGE_NAME" .
-
-docker run \
---name "$CONTAINER_PREFIX.$CONTAINER_NAME" \
---rm \
--it \
--e CIIO_ROOT_IPADDR \
--p 9001:80 \
--v "${DOCKERMOUNT_SOCK}" \
-"$CONTAINER_IMAGE_NAME"
-
+docker build

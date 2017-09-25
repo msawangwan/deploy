@@ -18,9 +18,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/msawangwan/ci.io/api/github"
 	"github.com/msawangwan/ci.io/lib/ciio"
 	"github.com/msawangwan/ci.io/lib/dock"
+	"github.com/msawangwan/ci.io/lib/github"
 	"github.com/msawangwan/ci.io/lib/jsonutil"
 	"github.com/msawangwan/ci.io/lib/netutil"
 	"github.com/msawangwan/ci.io/types/cred"
@@ -458,10 +458,6 @@ func main() {
 				panic(e)
 			}
 		}
-
-		// TODO: CANT WE JUST RUN THE DOCKER FILE?
-		// VIA A FUCKING BASH SCRIPT
-		// THAT WE START HERE
 
 		container, e := createNewContainer() // TODO: need to pass in query params AND json payload we got info from buildfile!!!!
 		if e != nil {

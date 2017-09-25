@@ -2,56 +2,87 @@ package dock
 
 // ListResponse is a docker api json payload
 type ListResponse struct {
-	ID              string          `json:"Id"`
-	Names           []string        `json:"Names"`
-	Image           string          `json:"Image"`
-	ImageID         string          `json:"ImageID"`
-	Command         string          `json:"Command"`
-	Created         float64         `json:"Created"`
-	State           string          `json:"State"`
-	Status          string          `json:"Status"`
-	Ports           []Port          `json:"Ports"`
-	Labels          Labels          `json:"Labels"`
-	SizeRw          float64         `json:"SizeRw"`
-	SizeRootFS      float64         `json:"SizeRootFs"`
-	HostConfig      HostConfig      `json:"HostConfig"`
-	NetworkSettings NetworkSettings `json:"NetworkSettings"`
-	Mounts          []Mount         `json:"Mounts"`
+	ID              string          `json:"Id,omitempty"`
+	Names           []string        `json:"Names,omitempty"`
+	Image           string          `json:"Image,omitempty"`
+	ImageID         string          `json:"ImageID,omitempty"`
+	Command         string          `json:"Command,omitempty"`
+	Created         float64         `json:"Created,omitempty"`
+	State           string          `json:"State,omitempty"`
+	Status          string          `json:"Status,omitempty"`
+	Ports           []Port          `json:"Ports,omitempty"`
+	Labels          Labels          `json:"Labels,omitempty"`
+	SizeRw          float64         `json:"SizeRw,omitempty"`
+	SizeRootFS      float64         `json:"SizeRootFs,omitempty"`
+	HostConfig      HostConfig      `json:"HostConfig,omitempty"`
+	NetworkSettings NetworkSettings `json:"NetworkSettings,omitempty"`
+	Mounts          []Mount         `json:"Mounts,omitempty"`
 }
 
 // InspectResponse is the schema for docker api command 'inspect' on 200 ok
 type InspectResponse struct {
-	ID              string          `json:"Id"`
-	Created         string          `json:"Created"`
-	Path            string          `json:"Path"`
-	Args            []string        `json:"Args"`
-	State           State           `json:"State"`
-	Image           string          `json:"Image"`
-	ResolvConfPath  string          `json:"ResolvConfPath"`
-	HostnamePath    string          `json:"HostnamePath"`
-	HostsPath       string          `json:"HostsPath"`
-	LogPath         string          `json:"LogPath"`
-	Node            struct{}        `json:"Node"`
-	Name            string          `json:"Name"`
-	RestartCount    float64         `json:"RestartCount"`
-	Driver          string          `json:"Driver"`
-	MountLabel      string          `json:"MountLabel"`
-	ProcessLabel    string          `json:"ProcessLabel"`
-	AppArmorProfile string          `json:"AppArmorProfile"`
-	ExecIDs         string          `json:"ExecIDs"`
-	HostConfig      HostConfig      `json:"HostConfig"`
-	GraphDriver     GraphDriverData `json:"GraphDriver"`
-	SizeRW          float64         `json:"SizeRw"`
-	SizeRootFS      float64         `json:"SizeRootFs"`
-	Mounts          []Mount         `json:"Mounts"`
-	Config          ContainerConfig `json:"Config"`
-	NetworkSettings NetworkConfig   `json:"NetworkSettings"`
+	ID              string          `json:"Id,omitempty"`
+	Created         string          `json:"Created,omitempty"`
+	Path            string          `json:"Path,omitempty"`
+	Args            []string        `json:"Args,omitempty"`
+	State           State           `json:"State,omitempty"`
+	Image           string          `json:"Image,omitempty"`
+	ResolvConfPath  string          `json:"ResolvConfPath,omitempty"`
+	HostnamePath    string          `json:"HostnamePath,omitempty"`
+	HostsPath       string          `json:"HostsPath,omitempty"`
+	LogPath         string          `json:"LogPath,omitempty"`
+	Node            struct{}        `json:"Node,omitempty"`
+	Name            string          `json:"Name,omitempty"`
+	RestartCount    float64         `json:"RestartCount,omitempty"`
+	Driver          string          `json:"Driver,omitempty"`
+	MountLabel      string          `json:"MountLabel,omitempty"`
+	ProcessLabel    string          `json:"ProcessLabel,omitempty"`
+	AppArmorProfile string          `json:"AppArmorProfile,omitempty"`
+	ExecIDs         string          `json:"ExecIDs,omitempty"`
+	HostConfig      HostConfig      `json:"HostConfig,omitempty"`
+	GraphDriver     GraphDriverData `json:"GraphDriver,omitempty"`
+	SizeRW          float64         `json:"SizeRw,omitempty"`
+	SizeRootFS      float64         `json:"SizeRootFs,omitempty"`
+	Mounts          []Mount         `json:"Mounts,omitempty"`
+	Config          ContainerConfig `json:"Config,omitempty"`
+	NetworkSettings NetworkConfig   `json:"NetworkSettings,omitempty"`
+}
+
+// CreateRequest is the request body to create a container
+type CreateRequest struct {
+	HostName         string           `json:"Hostname,omitempty"`
+	DomainName       string           `json:"Domainname,omitempty"`
+	User             string           `json:"User,omitempty"`
+	AttachStdin      bool             `json:"AttachStdin,omitempty"`
+	AttachStdout     bool             `json:"AttachStdout,omitempty"`
+	AttachStderr     bool             `json:"AttachStderr,omitempty"`
+	ExposedPorts     struct{}         `json:"ExposedPorts,omitempty"`
+	TTY              bool             `json:"Tty,omitempty"`
+	OpenStdin        bool             `json:"OpenStdin,omitempty"`
+	StdinOnce        bool             `json:"StdinOnce,omitempty"`
+	Env              []string         `json:"Env,omitempty"`
+	Cmd              []string         `json:"Cmd,omitempty"`
+	HealthCheck      HealthConfig     `json:"HealthCheck,omitempty"`
+	ArgsEscaped      bool             `json:"ArgsEscaped,omitempty"`
+	Image            string           `json:"Image,omitempty"`
+	Volumes          struct{}         `json:"Volumes,omitempty"`
+	WorkingDir       string           `json:"WorkingDir,omitempty"`
+	EntryPoint       []string         `json:"Entrypoint,omitempty"`
+	NetworkDisabled  bool             `json:"NetworkDisabled,omitempty"`
+	MacAddress       string           `json:"MacAddress,omitempty"`
+	OnBuild          []string         `json:"OnBuild,omitempty"`
+	Labels           struct{}         `json:"Labels,omitempty"`
+	StopSignal       string           `json:"StopSignal,omitempty"`
+	StopTimeout      float64          `json:"StopTimeout,omitempty"`
+	Shell            []string         `json:"Shell,omitempty"`
+	HostConfig       HostConfig       `json:"HostConfig,omitempty"`
+	NetworkingConfig NetworkingConfig `json:"NetworkingConfig,omitempty"`
 }
 
 // CreateResponse is the schema for 'create' response success
 type CreateResponse struct {
-	ID       string   `json:"Id"`
-	Warnings []string `json:"Warnings"`
+	ID       string   `json:"Id,omitempty"`
+	Warnings []string `json:"Warnings,omitempty"`
 }
 
 // EmptyResponse is a no error success response
@@ -59,16 +90,16 @@ type EmptyResponse struct{}
 
 // Image is a docker api json payload
 type Image struct {
-	ID          string   `json:"Id"`
-	ParentID    string   `json:"ParentId"`
-	RepoTags    []string `json:"RepoTags"`
-	RepoDigests []string `json:"RepoDigests"`
-	Created     float64  `json:"Created"`
-	Size        float64  `json:"Size"`
-	VirtualSize float64  `json:"VirtualSize"`
-	SharedSize  float64  `json:"SharedSize"`
-	Labels      Labels   `json:"Labels"`
-	Containers  float64  `json:"Containers"`
+	ID          string   `json:"Id,omitempty"`
+	ParentID    string   `json:"ParentId,omitempty"`
+	RepoTags    []string `json:"RepoTags,omitempty"`
+	RepoDigests []string `json:"RepoDigests,omitempty"`
+	Created     float64  `json:"Created,omitempty"`
+	Size        float64  `json:"Size,omitempty"`
+	VirtualSize float64  `json:"VirtualSize,omitempty"`
+	SharedSize  float64  `json:"SharedSize,omitempty"`
+	Labels      Labels   `json:"Labels,omitempty"`
+	Containers  float64  `json:"Containers,omitempty"`
 }
 
 // Error400 is a bad parameter error
@@ -121,45 +152,61 @@ type Bridge struct {
 
 // Networks is a json field for the containers payload
 type Networks struct {
-	Bridge Bridge `json:"bridge"`
+	Bridge Bridge `json:"bridge,omitempty"`
 }
 
 // NetworkSettings is a json field for the containers payload
 type NetworkSettings struct {
-	Networks Networks `json:"Networks"`
+	Networks Networks `json:"Networks,omitempty"`
+}
+
+// EndpointSettings is a json field
+type EndpointSettings struct {
+	IPAMConfig          IPAMConfig `json:"IPAMConfig,omitempty"`
+	Links               []string   `json:"Links,omitempty"`
+	Aliases             []string   `json:"Aliases,omitempty"`
+	NetworkID           string     `json:"NetworkID,omitempty"`
+	EndpointID          string     `json:"EndpointID,omitempty"`
+	Gateway             string     `json:"Gateway,omitempty"`
+	IPAddress           string     `json:"IpAddress,omitempty"`
+	IPPrefixLen         float64    `json:"IpPrefixLen,omitempty"`
+	IPv6Gateway         string     `json:"IPv6Gateway,omitempty"`
+	GlobalIPv6Address   string     `json:"GlobalIPv6Address,omitempty"`
+	GlobalIPv6PrefixLen float64    `json:"GlobalIPv6PrefixLen,omitempty"`
+	MacAddress          string     `json:"MacAddress,omitempty"`
 }
 
 // Mount is a json field that represents a mountpoint
 type Mount struct {
-	Name          string        `json:"Name"`
-	Target        string        `json:"Target"`
-	Source        string        `json:"Source"`
-	Type          string        `json:"Type"`
-	Destination   string        `json:"Destination"`
-	Driver        string        `json:"Driver"`
-	Mode          string        `json:"Mode"`
-	ReadOnly      bool          `json:"ReadOnly"`
-	RW            bool          `json:"RW"`
-	Propagation   string        `json:"Propagation"`
-	Consistency   string        `json:"Consistency"`
-	BindOptions   BindOptions   `json:"BindOptions"`
-	VolumeOptions VolumeOptions `json:"VolumeOptions"`
-	TMPFSOptions  TMPFSOptions  `json:"TmpfsOptions"`
+	Name          string        `json:"Name,omitempty"`
+	Target        string        `json:"Target,omitempty"`
+	Source        string        `json:"Source,omitempty"`
+	Type          string        `json:"Type,omitempty"`
+	Destination   string        `json:"Destination,omitempty"`
+	Driver        string        `json:"Driver,omitempty"`
+	Mode          string        `json:"Mode,omitempty"`
+	ReadOnly      bool          `json:"ReadOnly,omitempty"`
+	RW            bool          `json:"RW,omitempty"`
+	Propagation   string        `json:"Propagation,omitempty"`
+	Consistency   string        `json:"Consistency,omitempty"`
+	BindOptions   BindOptions   `json:"BindOptions,omitempty"`
+	VolumeOptions VolumeOptions `json:"VolumeOptions,omitempty"`
+	TMPFSOptions  TMPFSOptions  `json:"TmpfsOptions,omitempty"`
 }
 
 // State is a json field
 type State struct {
-	Status     string  `json:"Status"`
-	Running    bool    `json:"Running"`
-	Paused     bool    `json:"Paused"`
-	Restarting bool    `json:"Restarting"`
-	OOMKilled  bool    `json:"OOMKilled"`
-	Dead       bool    `json:"Dead"`
-	PID        float64 `json:"Pid"`
-	ExitCode   float64 `json:"ExitCode"`
-	Error      string  `json:"Error"`
-	StartedAt  string  `json:"StartedAt"`
-	FinishedAt string  `json:"FinishedAt"`
+	Status     string  `json:"Status,omitempty"`
+	Running    bool    `json:"Running,omitempty"`
+	Paused     bool    `json:"Paused,omitempty"`
+	Restarting bool    `json:"Restarting,omitempty"`
+	OOMKilled  bool    `json:"OOMKilled,omitempty"`
+	Dead       bool    `json:"Dead,omitempty"`
+	PID        float64 `json:"Pid,omitempty"`
+	ExitCode   float64 `json:"ExitCode,omitempty"`
+	Error      string  `json:"Error,omitempty"`
+	StartedAt  string  `json:"StartedAt,omitempty"`
+	FinishedAt string  `json:"FinishedAt,omitempty"`
 }
 
 // GraphDriverData is a json field
@@ -270,89 +317,106 @@ type HostConfig struct {
 
 // NetworkConfig is a json field
 type NetworkConfig struct {
-	Bridge      string  `json:"Bridge"`
-	Gateway     string  `json:"Gateway"`
-	Address     string  `json:"Address"`
-	IPPrefixLen float64 `json:"IPPrefixLen"`
-	MacAddress  string  `json:"MacAddress"`
-	PortMapping string  `json:"PortMapping"`
-	Ports       Port    `json:"Ports"`
+	Bridge      string  `json:"Bridge,omitempty"`
+	Gateway     string  `json:"Gateway,omitempty"`
+	Address     string  `json:"Address,omitempty"`
+	IPPrefixLen float64 `json:"IPPrefixLen,omitempty"`
+	MacAddress  string  `json:"MacAddress,omitempty"`
+	PortMapping string  `json:"PortMapping,omitempty"`
+	Ports       Port    `json:"Ports,omitempty"`
+}
+
+// NetworkingConfig is a json field
+type NetworkingConfig struct {
+	EndpointsConfig EndpointsConfig `json:"EndpointsConfig,omitempty"`
+}
+
+// EndpointsConfig is a json field
+type EndpointsConfig struct {
+	AdditionalProperties EndpointSettings `json:"additionalProperties,omitempty"`
+}
+
+// IPAMConfig is a json field
+type IPAMConfig struct {
+	IPv4Address  string   `json:"IPv4Address,omitempty"`
+	IPv6Address  string   `json:"IPv6Address,omitempty"`
+	LinkLocalIPs []string `json:"LinkLocalIPs,omitempty"`
 }
 
 // HealthConfig is a json field in ContainerConfig
 type HealthConfig struct {
-	Test        []string `json:"Test"`
-	Interval    float64  `json:"Interval"`
-	Timeout     float64  `json:"Timeout"`
-	Retries     float64  `json:"Retries"`
-	StartPeriod float64  `json:"StartPeriod"`
+	Test        []string `json:"Test,omitempty"`
+	Interval    float64  `json:"Interval,omitempty"`
+	Timeout     float64  `json:"Timeout,omitempty"`
+	Retries     float64  `json:"Retries,omitempty"`
+	StartPeriod float64  `json:"StartPeriod,omitempty"`
 }
 
 // LogConfig is a json field in HostConfig
 type LogConfig struct {
-	Type   string   `json:"Type"`
-	Config struct{} `json:"Config"`
+	Type   string   `json:"Type,omitempty"`
+	Config struct{} `json:"Config,omitempty"`
 }
 
 // DriverConfig is a json field in DriverOptions
 type DriverConfig struct {
-	Name    string  `json:"Name"`
-	Options Options `json:"Options"`
+	Name    string  `json:"Name,omitempty"`
+	Options Options `json:"Options,omitempty"`
 }
 
 // ThrottleDevice is a json field in HostConfig
 type ThrottleDevice struct {
-	Path string  `json:"Path"`
-	Rate float64 `json:"Rate"`
+	Path string  `json:"Path,omitempty"`
+	Rate float64 `json:"Rate,omitempty"`
 }
 
 // DeviceMapping is a json field in HostConfig
 type DeviceMapping struct {
-	PathOnHost        string `json:"PathOnHost"`
-	PathInContainer   string `json:"PathInContainer"`
-	CGroupPermissions string `json:"CgroupPermissions"`
+	PathOnHost        string `json:"PathOnHost,omitempty"`
+	PathInContainer   string `json:"PathInContainer,omitempty"`
+	CGroupPermissions string `json:"CgroupPermissions,omitempty"`
 }
 
 // ULimits is a json field in HostConfig
 type ULimits struct {
-	Name string  `json:"Name"`
-	Soft float64 `json:"Soft"`
-	Hard float64 `json:"Hard"`
+	Name string  `json:"Name,omitempty"`
+	Soft float64 `json:"Soft,omitempty"`
+	Hard float64 `json:"Hard,omitempty"`
 }
 
 // PortBindings is a json field in HostConfig
 type PortBindings struct {
-	HostIP   string `json:"HostIp"`
-	HostPort string `json:"HostPort"`
+	HostIP   string `json:"HostIp,omitempty"`
+	HostPort string `json:"HostPort,omitempty"`
 }
 
 // RestartPolicy is a json field in HostConfig
 type RestartPolicy struct {
-	Name              string  `json:"Name"`
-	MaximumRetryCount float64 `json:"MaximumRetryCount"`
+	Name              string  `json:"Name,omitempty"`
+	MaximumRetryCount float64 `json:"MaximumRetryCount,omitempty"`
 }
 
 // Options is a json field in HostConfig
 type Options struct {
-	AdditionalProperties AdditionalProperties `json:"AdditionalProperties"`
+	AdditionalProperties AdditionalProperties `json:"AdditionalProperties,omitempty"`
 }
 
 // BindOptions is a json field in HostConfig
 type BindOptions struct {
-	Propagation interface{} `json:"Propagation"`
+	Propagation interface{} `json:"Propagation,omitempty"`
 }
 
 // VolumeOptions is a json field in HostConfig
 type VolumeOptions struct {
-	NoCopy       bool         `json:"NoCopy"`
-	Labels       []Labels     `json:"Labels"`
-	DriverConfig DriverConfig `json:"DriverConfig"`
+	NoCopy       bool         `json:"NoCopy,omitempty"`
+	Labels       []Labels     `json:"Labels,omitempty"`
+	DriverConfig DriverConfig `json:"DriverConfig,omitempty"`
 }
 
 // TMPFSOptions is a json field in HostConfig
 type TMPFSOptions struct {
-	SizeBytes float64 `json:"SizeBytes"`
-	Mode      float64 `json:"Mode"`
+	SizeBytes float64 `json:"SizeBytes,omitempty"`
+	Mode      float64 `json:"Mode,omitempty"`
 }
 
 // StorageOpt is a json field in HostConfig

@@ -7,7 +7,6 @@
 # $ cont <flags> <container_name>
 #
 
-
 CONT_DIR="containers.local"
 CONT_TYPE=".cont"
 
@@ -28,7 +27,6 @@ fi
 CONT_NAME="$1"; shift
 
 while [ ! "$#" -eq 0 ]; do
-    
     case "$1" in
         --prefix | -p)
             CONT_PREFIX="$2"

@@ -1,0 +1,50 @@
+#!/bin/sh
+
+# build
+#
+
+echo `basename ${0}`; echo
+
+CONTAINER_PREFIX="ci.io"
+CONTAINER_NAME="srv"
+CONTAINER_TAG="dev"
+CONTAINER_VERSION="0.0.1"
+CONTAINER_IMAGE_NAME="$CONTAINER_PREFIX.$CONTAINER_NAME:$CONTAINER_TAG-$CONTAINER_VERSION"
+
+DOCK_DOCKERFILE_DIR="build"
+DOCKERFILE_FILENAME="serve.Dockerfile"
+DOCKERFILE_PATH="$DOCK_DOCKERFILE_DIR/$DOCKERFILE_FILENAME"
+
+DOCK_MOUNT_SOCK="/var/run/docker.sock:/var/run/docker.sock"
+
+DOCK_MASTERCONTAINER_IPADDR="$(./bin/parseip)"
+
+export DOCK_MASTERCONTAINER_IPADDR
+export DOCK_DOCKERFILE_DIR
+export DOCK_MOUNT_SOCK
+
+echo "master container addr: $DOCK_MASTERCONTAINER_IPADDR"; echo
+echo "pwd: $(pwd)"; echo
+
+ls -al
+
+CHECKENV="$(env | grep -o $DOCK_MASTERCONTAINER_IPADDR)"
+
+if [ "$CHECKENV" == "$DOCK_MASTERCONTAINER_IPADDR" ]; then
+    echo "successfully exported master container addr: $CHECKENV"; echo
+else
+    echo "failed to export master container addr: $CHECKENV"; echo
+fi
+
+docker system prune -f
+docker build -f "$DOCKERFILE_PATH" -t "$CONTAINER_IMAGE_NAME" .
+
+docker run \
+--name "$CONTAINER_PREFIX.$CONTAINER_NAME" \
+--rm \
+-it \
+-e DOCK_MASTERCONTAINER_IPADDR \
+-p 9001:80 \
+-v "${DOCK_MOUNT_SOCK}" \
+"$CONTAINER_IMAGE_NAME"
+
