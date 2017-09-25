@@ -63,8 +63,8 @@ func newCache() *cache {
 }
 
 var (
-	dirCache       cache
-	containerCache cache
+	dirCache       *cache
+	containerCache *cache
 )
 
 var pwd = func(s string) { d, _ := os.Getwd(); log.Printf("[current working dir %s] %s", d, s) }
