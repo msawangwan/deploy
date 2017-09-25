@@ -425,12 +425,12 @@ func main() {
 		log.Printf("payload extracted, repo name: [%s]", repoName)
 		log.Printf("fetching workspace")
 
-		ws, e := getWorkspace(&dirCache, repoName)
+		ws, e := getWorkspace(dirCache, repoName)
 		if e != nil {
 			if e != errDoesNotExistInCache {
 				panic(e)
 			} else {
-				ws, e := createTmpWorkspace(&dirCache, repoName)
+				ws, e = createTmpWorkspace(dirCache, repoName)
 				if e != nil {
 					panic(e)
 				}
