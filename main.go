@@ -369,6 +369,8 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
+	jsonutil.PrettyPrintStruct(&p)
+
 	return
 }
 
