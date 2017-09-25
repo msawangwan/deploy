@@ -167,7 +167,7 @@ func isPushEvent(logger io.Writer, r *http.Request) bool {
 }
 
 func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
-	if e = jsonutil.FromReader(r, payload); e != nil {
+	if e = jsonutil.FromReader(r, &payload); e != nil {
 		return
 	}
 
