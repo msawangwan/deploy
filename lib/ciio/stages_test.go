@@ -16,7 +16,7 @@ var tests = map[string]string{
 }
 
 func TestLoadingBuildFile(t *testing.T) {
-	t.Logf("starting test: %s ..", tests.loadBuildFile)
+	t.Logf("starting test: %s ..", tests["loadBuildFile"])
 
 	var (
 		payload Buildfile
@@ -30,11 +30,11 @@ func TestLoadingBuildFile(t *testing.T) {
 		t.Fatalf("%s", e)
 	}
 
-	t.Logf("completed test: %s ..", tests.loadBuildFile)
+	t.Logf("completed test: %s ..", tests["loadBuildFile"])
 }
 
 func TestRunStagesInBuildFile(t *testing.T) {
-	t.Logf("starting test: %s ..", tests.runStages)
+	t.Logf("starting test: %s ..", tests["runStages"])
 
 	var (
 		payload Buildfile
@@ -50,5 +50,5 @@ func TestRunStagesInBuildFile(t *testing.T) {
 		}
 	}
 
-	t.Logf("completed test: %s ..", tests.runStages)
+	t.Logf("completed test: %s ..", tests["runStages"])
 }
