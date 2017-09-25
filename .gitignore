@@ -29,3 +29,6 @@ run/*
 *.run
 *.swp
 *.local
+
+__ws/
+__ws/*
