@@ -1,3 +1,5 @@
+// https://docs.docker.com/engine/api/v1.31/swagger.yaml
+
 package dock
 
 // ListResponse is a docker api json payload
@@ -110,26 +112,6 @@ type Image struct {
 	Containers  float64  `json:"Containers,omitempty"`
 }
 
-// // Error400 is a bad parameter error
-// type Error400 struct {
-// 	Message string `json:"message"`
-// }
-
-// // Error404 is a no such container error
-// type Error404 struct {
-// 	Message string `json:"message"`
-// }
-
-// // Error409 is a conflict error
-// type Error409 struct {
-// 	Message string `json:"message"`
-// }
-
-// // Error500 is an internal server error
-// type Error500 struct {
-// 	Message string `json:"message"`
-// }
-
 // Port is a json field for the containers payload
 type Port struct {
 	IP          string  `json:"IP,omitempty"`
@@ -140,9 +122,9 @@ type Port struct {
 
 // Labels is a json field for the containers payload
 type Labels struct {
-	ComExampleVendor  string `json:"com.example.vendor"`
-	ComExampleLicense string `json:"com.example.license"`
-	ComExampleVersion string `json:"com.example.version"`
+	ComExampleVendor  string `json:"com.example.vendor,omitempty"`
+	ComExampleLicense string `json:"com.example.license,omitempty"`
+	ComExampleVersion string `json:"com.example.version,omitempty"`
 }
 
 // Bridge is a json field for the containers payload

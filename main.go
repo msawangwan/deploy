@@ -399,13 +399,12 @@ func startNewContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	p := dock.StartResponse{}
-
-	if e = jsonutil.FromReader(r.Body, &p); e != nil {
-		return e
-	}
-
 	if r.StatusCode != 204 {
+		p := dock.StartResponse{}
+
+		if e = jsonutil.FromReader(r.Body, &p); e != nil {
+			return e
+		}
 		return responseCodeMismatchError{204, r.StatusCode, p.Message}
 	}
 
