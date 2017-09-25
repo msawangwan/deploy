@@ -344,6 +344,8 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
+	log.Printf("%s", payload)
+
 	cmd := dock.NewContainerCommand("POST", "containers", "create")
 	cmd.URLComponents.Parameters = map[string]string{
 		"name": b.ContainerName,
