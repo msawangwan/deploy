@@ -32,7 +32,7 @@ const (
 	mime          = "application/json; charset=utf-8"
 	endpoint      = "/webhooks/payload"
 	mountpoint    = "/var/run/docker.sock"
-	envipaddr     = "CIIO_ROOT_IPADDR"
+	envipaddr     = "DOCK_MASTERCONTAINER_IPADDR"
 	socktype      = "unix"
 	scratchdir    = "__ws"
 	buildfilename = "buildfile.json"
@@ -356,7 +356,7 @@ func removePreviousContainer(id string) error {
 	return nil
 }
 
-func createNewContainer() (p dock.CreateResponse, e error) {
+func createNewContainer(b ciio.Buildfile) (p dock.CreateResponse, e error) {
 	cmd := dock.NewContainerCommand("POST", "containers", "create") // TODO: need to pass in query params?
 
 	r, e := executeDockCmd(cmd)
@@ -459,7 +459,7 @@ func main() {
 			}
 		}
 
-		container, e := createNewContainer() // TODO: need to pass in query params AND json payload we got info from buildfile!!!!
+		container, e := createNewContainer(buildfile) // TODO: need to pass in query params AND json payload we got info from buildfile!!!!
 		if e != nil {
 			panic(e)
 		}

@@ -29,7 +29,7 @@ type Command struct {
 	Args []string `json:"args,omitempty"`
 }
 
-// Outputter is made to take two buffer streams for easy returns
-type Outputter interface {
-	Store(out, err bytes.Buffer) error
-}
+// // Outputter is made to take two buffer streams for easy returns
+// type Outputter interface {
+// 	Store(out, err bytes.Buffer) error
+// }
