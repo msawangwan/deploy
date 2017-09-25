@@ -115,20 +115,6 @@ func (c ContainerCommandByID) Build() []byte {
 	)
 }
 
-// NewCommand returns a docker api command
-// func NewCommand(c, id string) []byte {
-// 	switch c {
-// 	case "inspect":
-// 		return NewContainerCommandByID("GET", "containers", c, id).Build()
-// 	case "stop":
-// 		return dock.NewContainerCommandByID("POST", "containers", c, id).Build()
-// 	case "remove":
-// 		return dock.NewContainerCommandByID("DELETE", "containers", "", id).Build()
-// 	}
-
-// 	return nil
-// }
-
 func newURLComponents(m, c, o string) URLComponents {
 	return URLComponents{Method: m, Command: c, Option: o}
 }

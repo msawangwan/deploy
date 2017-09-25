@@ -504,7 +504,7 @@ func main() {
 			panic(e)
 		}
 
-		log.Printf("starting new container")
+		log.Printf("starting new container: %s", container.ID)
 
 		if e = startNewContainer(container.ID, dockerClient); e != nil {
 			panic(e)
