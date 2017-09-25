@@ -62,8 +62,10 @@ func newCache() *cache {
 	return &cache{store: make(map[string]string)}
 }
 
-var dirCache = newCache()
-var containerCache = newCache()
+var (
+	dirCache       cache
+	containerCache cache
+)
 
 var pwd = func(s string) { d, _ := os.Getwd(); log.Printf("[current working dir %s] %s", d, s) }
 var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
@@ -112,6 +114,9 @@ func init() {
 	if err != nil {
 		log.Printf("%s", err)
 	}
+
+	dirCache = newCache()
+	containerCache = newCache()
 
 	log.Printf("server container ip: %s\n", localip)
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
@@ -430,6 +435,7 @@ func main() {
 			if e != errDoesNotExistInCache {
 				panic(e)
 			} else {
+				log.Printf("workspace not found, creating")
 				ws, e = createTmpWorkspace(dirCache, repoName)
 				if e != nil {
 					panic(e)
