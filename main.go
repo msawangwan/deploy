@@ -56,10 +56,11 @@ var (
 type responseCodeMismatchError struct {
 	Expected int
 	Actual   int
+	Message  string
 }
 
 func (rcme responseCodeMismatchError) Error() string {
-	return fmt.Sprintf("mismatch response code, expected %d but got %d", rcme.Expected, rcme.Actual)
+	return fmt.Sprintf("[MISMATCH RESPONSE CODE ERR][expected: %d][actual: %d] %s", rcme.Expected, rcme.Actual, rcme.Message)
 }
 
 type cache struct {
@@ -270,7 +271,7 @@ func verifyPreviousContainer(id string, c *http.Client) error {
 	r.Body.Close()
 
 	if r.StatusCode != 200 {
-		return responseCodeMismatchError{200, r.StatusCode}
+		return responseCodeMismatchError{200, r.StatusCode, p.Message}
 	}
 
 	if p.ID != id {
@@ -375,12 +376,12 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
-	if r.StatusCode != 201 {
-		e = responseCodeMismatchError{201, r.StatusCode}
+	if e = jsonutil.FromReader(r.Body, &p); e != nil {
 		return
 	}
 
-	if e = jsonutil.FromReader(r.Body, &p); e != nil {
+	if r.StatusCode != 201 {
+		e = responseCodeMismatchError{201, r.StatusCode, p.Message}
 		return
 	}
 
@@ -408,8 +409,14 @@ func startNewContainer(id string, c *http.Client) error {
 		return e
 	}
 
+	p := dock.StartResponse{}
+
+	if e = jsonutil.FromReader(r.Body, &p); e != nil {
+		return e
+	}
+
 	if r.StatusCode != 204 {
-		return responseCodeMismatchError{204, r.StatusCode}
+		return responseCodeMismatchError{204, r.StatusCode, p.Message}
 	}
 
 	return nil

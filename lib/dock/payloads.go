@@ -17,6 +17,7 @@ type ListResponse struct {
 	HostConfig      HostConfig      `json:"HostConfig,omitempty"`
 	NetworkSettings NetworkSettings `json:"NetworkSettings,omitempty"`
 	Mounts          []Mount         `json:"Mounts,omitempty"`
+	Message         string          `json:"message,omitempty"`
 }
 
 // InspectResponse is the schema for docker api command 'inspect' on 200 ok
@@ -46,6 +47,7 @@ type InspectResponse struct {
 	Mounts          []Mount         `json:"Mounts,omitempty"`
 	Config          ContainerConfig `json:"Config,omitempty"`
 	NetworkSettings NetworkConfig   `json:"NetworkSettings,omitempty"`
+	Message         string          `json:"message,omitempty"`
 }
 
 // CreateRequest is the request body to create a container
@@ -83,6 +85,12 @@ type CreateRequest struct {
 type CreateResponse struct {
 	ID       string   `json:"Id,omitempty"`
 	Warnings []string `json:"Warnings,omitempty"`
+	Message  string   `json:"message,omitempty"`
+}
+
+// StartResponse is for creating container
+type StartResponse struct {
+	Message string `json:"message,omitempty"`
 }
 
 // EmptyResponse is a no error success response
