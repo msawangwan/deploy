@@ -374,8 +374,8 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
-	if r.StatusCode != 200 {
-		e = responseCodeMismatchError{200, r.StatusCode}
+	if r.StatusCode != 201 {
+		e = responseCodeMismatchError{201, r.StatusCode}
 		return
 	}
 
