@@ -403,6 +403,8 @@ func main() {
 					}
 
 					http.Error(w, e.Error(), http.StatusInternalServerError)
+
+					log.Printf("%s", e)
 				}
 			}()
 
@@ -411,11 +413,15 @@ func main() {
 	}
 
 	http.HandleFunc(endpoint, panicHandler(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("handling webhook")
+
 		printStats(os.Stdout, true)
 
 		if !isPushEvent(os.Stdout, r) {
 			panic(errInvalidWebhookEvent)
 		}
+
+		log.Printf("webhook is a valid push event, extracting payload")
 
 		webhook, e := extractWebhookPayload(r.Body)
 		if e != nil {
@@ -424,21 +430,33 @@ func main() {
 
 		repoName := webhook.Repository.Name
 
+		log.Printf("payload extracted, repo name: [%s]", repoName)
+		log.Printf("fetching workspace")
+
 		ws, e := getWorkspace(dirCache, repoName)
 		if e != nil {
 			panic(e)
 		}
 
+		log.Printf("found workspace, pulling repository latest into workspace")
+
 		if e := pullRepository(credential, ws, repoName); e != nil {
 			panic(e)
 		}
+
+		log.Printf("pull successful, locating and loading buildfile")
 
 		buildfile, e := loadBuildfile(ws, strings.ToLower(buildfilename))
 		if e != nil {
 			panic(e)
 		}
 
+		log.Printf("buildfile loaded")
+
 		containerName := buildfile.ContainerName
+
+		log.Printf("container name: [%s]", containerName)
+		log.Printf("looking for previous containers")
 
 		cid, e := findPreviousContainer(containerCache, containerName)
 		if e != nil {
@@ -446,6 +464,8 @@ func main() {
 		}
 
 		if cid != "" {
+			log.Printf("found previous container")
+
 			if e = verifyPreviousContainer(cid, dockerClient); e != nil {
 				panic(e)
 			}
@@ -455,14 +475,20 @@ func main() {
 			}
 		}
 
+		log.Printf("creating latest container")
+
 		container, e := createNewContainer(buildfile, dockerClient)
 		if e != nil {
 			panic(e)
 		}
 
+		log.Printf("starting new container")
+
 		if e = startNewContainer(container.ID, dockerClient); e != nil {
 			panic(e)
 		}
+
+		log.Printf("handler complete")
 	}))
 
 	log.Fatal(http.ListenAndServe(port, nil))
