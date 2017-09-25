@@ -53,6 +53,15 @@ var (
 	errIDMismatch           = errors.New("expected id doesnt match id")
 )
 
+type responseCodeMismatchError struct {
+	Expected int
+	Actual   int
+}
+
+func (rcme responseCodeMismatchError) Error() string {
+	return fmt.Sprintf("mismatch response code, expected %d but got %d", rcme.Expected, rcme.Actual)
+}
+
 type cache struct {
 	store map[string]string
 	sync.Mutex
@@ -261,7 +270,7 @@ func verifyPreviousContainer(id string, c *http.Client) error {
 	r.Body.Close()
 
 	if r.StatusCode != 200 {
-		return errResponseCodeMismatch
+		return responseCodeMismatchError{200, r.StatusCode}
 	}
 
 	if p.ID != id {
@@ -375,7 +384,7 @@ func startNewContainer(id string, c *http.Client) error {
 	}
 
 	if r.StatusCode != 204 {
-		return errResponseCodeMismatch
+		return responseCodeMismatchError{204, r.StatusCode}
 	}
 
 	return nil
