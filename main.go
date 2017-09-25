@@ -55,7 +55,7 @@ var (
 
 type cache struct {
 	store map[string]string
-	*sync.Mutex
+	sync.Mutex
 }
 
 func newCache() *cache {
