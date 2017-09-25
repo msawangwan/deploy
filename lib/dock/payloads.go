@@ -271,7 +271,7 @@ type HostConfig struct {
 	CPURealtimeRuntime   float64          `json:"CpuRealtimeRuntime,omitempty"`
 	CPUSetCPUs           string           `json:"CpusetCPUs,omitempty"`
 	CPUSetMems           string           `json:"CpuSetMems,omitempty"`
-	Devices              struct{}         `json:"Devices,omitempty"`
+	Devices              []DeviceMapping  `json:"Devices,omitempty"`
 	DeviceCGroupRules    []string         `json:"DeviceCgroupRules,omitempty"`
 	DiskQuota            float64          `json:"DiskQuota,omitempty"`
 	KernelMemory         float64          `json:"KernelMemory,omitempty"`
@@ -281,16 +281,16 @@ type HostConfig struct {
 	NanoCPUs             float64          `json:"NanoCPUs,omitempty"`
 	OOMKillDisable       bool             `json:"OomKillDisable,omitempty"`
 	PIDsLimit            float64          `json:"PidsLimit,omitempty"`
-	ULimits              struct{}         `json:"Ulimits,omitempty"`
+	ULimits              []ULimits        `json:"Ulimits,omitempty"`
 	CPUCount             float64          `json:"CpuCount,omitempty"`
 	CPUPercent           float64          `json:"CpuPercent,omitempty"`
 	IOMaximumIOps        float64          `json:"IOMaximumIops,omitempty"`
 	IOMaximumBandwidth   float64          `json:"IOMaximumBandwidth,omitempty"`
 	Binds                []string         `json:"Binds,omitempty"`
 	ContainerIDFile      string           `json:"ContainerIDFile,omitempty"`
-	LogConfig            struct{}         `json:"LogConfig,omitempty"`
+	LogConfig            LogConfig        `json:"LogConfig,omitempty"`
 	NetworkMode          string           `json:"NetworkMode,omitempty"`
-	PortBindings         struct{}         `json:"PortBindings,omitempty"`
+	PortBindings         PortBindings     `json:"PortBindings,omitempty"`
 	RestartPolicy        RestartPolicy    `json:"RestartPolicy,omitempty"`
 	AutoRemove           bool             `json:"AutoRemove,omitempty"`
 	VolumeDriver         string           `json:"VolumeDriver,omitempty"`
@@ -312,12 +312,12 @@ type HostConfig struct {
 	PublishAllPorts      bool             `json:"PublishAllPorts,omitempty"`
 	ReadOnlyRootFS       bool             `json:"ReadOnlyRootFS,omitempty"`
 	SecurityOpt          []string         `json:"SecurityOpt,omitempty"`
-	StorageOpt           struct{}         `json:"StorageOpt,omitempty"`
-	TMPFS                struct{}         `json:"Tmpfs,omitempty"`
+	StorageOpt           StorageOpt       `json:"StorageOpt,omitempty"`
+	TMPFS                TMPFS            `json:"Tmpfs,omitempty"`
 	UTSMode              string           `json:"UTSMode,omitempty"`
 	UserNSMode           string           `json:"UsernsMode,omitempty"`
 	SHMSize              float64          `json:"ShmSize,omitempty"`
-	SYSCTLs              struct{}         `json:"Sysctls,omitempty"`
+	SYSCTLs              SYSCTLs          `json:"Sysctls,omitempty"`
 	Runtime              string           `json:"Runtime,omitempty"`
 	ConsoleSize          []float64        `json:"ConsoleSize,omitempty"`
 	Isolation            string           `json:"Isolation,omitempty"`
