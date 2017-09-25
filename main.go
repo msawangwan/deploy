@@ -60,7 +60,7 @@ type responseCodeMismatchError struct {
 }
 
 func (rcme responseCodeMismatchError) Error() string {
-	return fmt.Sprintf("[MISMATCH RESPONSE CODE ERR][expected: %d][actual: %d] %s", rcme.Expected, rcme.Actual, rcme.Message)
+	return fmt.Sprintf("[RESPONSE_CODE_ERR][expected: %d][actual: %d] %s", rcme.Expected, rcme.Actual, rcme.Message)
 }
 
 type cache struct {
@@ -295,8 +295,6 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	log.Printf("calling: %s", u)
-
 	r, e = c.Post(route(dockerHostAddr, version, u), mime, nil)
 	if e != nil {
 		return e
@@ -310,8 +308,6 @@ func removePreviousContainer(id string, c *http.Client) error {
 	if e != nil {
 		return e
 	}
-
-	log.Printf("calling: %s", u)
 
 	rq, e := http.NewRequest("DELETE", u, nil)
 	if e != nil {
@@ -352,8 +348,6 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	// 	}`,
 	// )
 
-	log.Printf("%s", payload)
-
 	cmd := dock.NewContainerCommand("POST", "containers", "create")
 	cmd.URLComponents.Parameters = map[string]string{
 		"name": b.ContainerName,
@@ -363,8 +357,6 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	if e != nil {
 		return
 	}
-
-	log.Printf("calling: %s", url)
 
 	r, e := c.Post(
 		route(dockerHostAddr, version, url),
@@ -397,8 +389,6 @@ func startNewContainer(id string, c *http.Client) error {
 	if e != nil {
 		return e
 	}
-
-	log.Printf("calling: %s", url)
 
 	r, e := c.Post(
 		route(dockerHostAddr, version, url),
