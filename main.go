@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	version       = "1.31"
+	version       = "1.30"
 	port          = ":80"
 	mime          = "application/json; charset=utf-8"
 	endpoint      = "/webhooks/payload"
@@ -377,6 +377,8 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	if e != nil {
 		return
 	}
+
+	r.Body.Close()
 
 	if e = jsonutil.FromReader(r.Body, &p); e != nil {
 		return
