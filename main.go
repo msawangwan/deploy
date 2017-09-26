@@ -329,26 +329,26 @@ func removePreviousContainer(id string, c *http.Client) error {
 func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse, e error) {
 	log.Printf("-- create payload")
 
-	// var postdata dock.CreateRequest
+	var postdata dock.CreateRequest
 
-	// postdata.Image = b.Image
-	// postdata.WorkingDir = b.WorkingDir
-	// postdata.Cmd = []string{b.Cmd.Exec}
+	postdata.Image = b.Image
+	postdata.WorkingDir = b.WorkingDir
+	postdata.Cmd = []string{b.Cmd.Exec}
 
-	// for _, v := range b.Cmd.Args {
-	// 	postdata.Cmd = append(postdata.Cmd, v)
-	// }
+	for _, v := range b.Cmd.Args {
+		postdata.Cmd = append(postdata.Cmd, v)
+	}
 
-	// payload, e := jsonutil.ToReader(postdata)
-	// if e != nil {
-	// 	return
-	// }
+	payload, e := jsonutil.ToReader(postdata)
+	if e != nil {
+		return
+	}
 
-	var bb bytes.Buffer
-	bb.Write([]byte(`{
-			"Image": "alpine",
-			"Cmd": ["echo", "HELLO, WORLD"]
-		}`))
+	// var payload bytes.Buffer
+	// payload.Write([]byte(`{
+	// 		"Image": "alpine",
+	// 		"Cmd": ["echo", "HELLO, WORLD"]
+	// 	}`))
 
 	// j := []byte(
 	// 	`{
@@ -379,7 +379,7 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	u := route(dockerHostAddr, version, url)
 	log.Printf("-- post payload: %s", u)
 
-	r, e := c.Post(u, mime, &bb)
+	r, e := c.Post(u, mime, payload)
 	if e != nil {
 		return
 	}
