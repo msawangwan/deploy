@@ -342,12 +342,14 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	// 	return
 	// }
 
-	payload := []byte(
+	j := []byte(
 		`{
 			"Image": "alpine",
 			"Cmd": ["echo", "HELLO, WORLD"]
 		}`,
 	)
+
+	payload := bytes.NewReader(j)
 
 	o, e := jsonutil.ExtractBufferFormatted(payload, "", "  ")
 	if e != nil {
@@ -369,8 +371,7 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	r, e := c.Post(
 		route(dockerHostAddr, version, url),
 		mime,
-		// payload,
-		bytes.NewReader(payload),
+		payload,
 	)
 	if e != nil {
 		return
