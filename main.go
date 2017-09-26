@@ -327,29 +327,29 @@ func removePreviousContainer(id string, c *http.Client) error {
 }
 
 func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse, e error) {
-	// var postdata dock.CreateRequest
+	var postdata dock.CreateRequest
 
-	// postdata.Image = b.Image
-	// postdata.WorkingDir = b.WorkingDir
-	// postdata.Cmd = []string{b.Cmd.Exec}
+	postdata.Image = b.Image
+	postdata.WorkingDir = b.WorkingDir
+	postdata.Cmd = []string{b.Cmd.Exec}
 
-	// for _, v := range b.Cmd.Args {
-	// 	postdata.Cmd = append(postdata.Cmd, v)
-	// }
+	for _, v := range b.Cmd.Args {
+		postdata.Cmd = append(postdata.Cmd, v)
+	}
 
-	// payload, e := jsonutil.ToReader(postdata)
-	// if e != nil {
-	// 	return
-	// }
+	payload, e := jsonutil.ToReader(postdata)
+	if e != nil {
+		return
+	}
 
-	j := []byte(
-		`{
-			"Image": "alpine",
-			"Cmd": ["echo", "HELLO, WORLD"]
-		}`,
-	)
+	// j := []byte(
+	// 	`{
+	// 		"Image": "alpine",
+	// 		"Cmd": ["echo", "HELLO, WORLD"]
+	// 	}`,
+	// )
 
-	payload := bytes.NewReader(j)
+	// payload := bytes.NewReader(j)
 
 	o, e := jsonutil.ExtractBufferFormatted(payload, "", "  ")
 	if e != nil {
