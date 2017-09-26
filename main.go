@@ -342,6 +342,13 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
+	o, e := jsonutil.ExtractBufferFormatted(payload, "", "  ")
+	if e != nil {
+		return
+	}
+
+	io.Copy(os.Stdout, &o)
+
 	// payload := []byte(
 	// 	`{
 	// 		"Image": "alpine",
