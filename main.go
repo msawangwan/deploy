@@ -60,7 +60,12 @@ type responseCodeMismatchError struct {
 }
 
 func (rcme responseCodeMismatchError) Error() string {
-	return fmt.Sprintf("[RESPONSE_CODE_ERR][expected: %d][actual: %d] %s", rcme.Expected, rcme.Actual, rcme.Message)
+	return fmt.Sprintf(
+		"[response_code_err][expected: %d][actual: %d] %s",
+		rcme.Expected,
+		rcme.Actual,
+		rcme.Message,
+	)
 }
 
 type cache struct {
@@ -110,7 +115,7 @@ func init() {
 	}
 
 	dockerClient = &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 60,
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 				return net.Dial(socktype, mountpoint)
@@ -141,17 +146,13 @@ func printJSON(l io.Writer, r io.Reader) {
 	io.Copy(l, &formatted)
 }
 
-func printStats(logger io.Writer, debug bool) {
+func printStats(debug bool) {
 	if debug {
-		logger.Write(
-			[]byte(
-				fmt.Sprintf("%d", runtime.NumGoroutine()),
-			),
-		)
+		log.Printf("%d", runtime.NumGoroutine())
 	}
 }
 
-func isPushEvent(logger io.Writer, r *http.Request) bool {
+func isPushEvent(r *http.Request) bool {
 	eventname := r.Header.Get("x-github-event")
 
 	if eventname != "push" {
@@ -431,7 +432,7 @@ func main() {
 
 					http.Error(w, e.Error(), http.StatusInternalServerError)
 
-					log.Printf("panic handler: %s", e)
+					log.Printf("[panic_handler] %s", e)
 				}
 			}()
 
@@ -440,11 +441,11 @@ func main() {
 	}
 
 	http.HandleFunc(endpoint, panicHandler(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("handling webhook")
+		log.Printf("handling incoming webhook")
 
-		printStats(os.Stdout, true)
+		printStats(true)
 
-		if !isPushEvent(os.Stdout, r) {
+		if !isPushEvent(r) {
 			panic(errInvalidWebhookEvent)
 		}
 
@@ -473,13 +474,15 @@ func main() {
 			}
 		}
 
-		log.Printf("found workspace, pulling repository latest into workspace")
+		log.Printf("workspace: %s", ws)
+		log.Printf("pulling repository latest into workspace")
 
 		if e := pullRepository(credential, ws, repoName); e != nil {
 			panic(e)
 		}
 
-		log.Printf("pull successful, locating and loading buildfile")
+		log.Printf("pull successful")
+		log.Printf("locating and loading buildfile")
 
 		buildfile, e := loadBuildfile(ws, strings.ToLower(buildfilename))
 		if e != nil {
@@ -490,7 +493,7 @@ func main() {
 
 		containerName := buildfile.ContainerName
 
-		log.Printf("container name: [%s]", containerName)
+		log.Printf("container name: %s", containerName)
 		log.Printf("looking for previous containers")
 
 		cid, e := findPreviousContainer(containerCache, containerName)
@@ -499,7 +502,7 @@ func main() {
 		}
 
 		if cid != "" {
-			log.Printf("found previous container")
+			log.Printf("found previous container: %s", cid)
 
 			if e = verifyPreviousContainer(cid, dockerClient); e != nil {
 				panic(e)
@@ -510,10 +513,16 @@ func main() {
 			}
 		}
 
-		log.Printf("creating latest container")
+		log.Printf("creating new container")
 
 		container, e := createNewContainer(buildfile, dockerClient)
 		if e != nil {
+			panic(e)
+		}
+
+		log.Printf("created a new container: %s", container.ID)
+
+		if e = jsonutil.PrettyPrintStruct(container); e != nil {
 			panic(e)
 		}
 
@@ -523,6 +532,7 @@ func main() {
 			panic(e)
 		}
 
+		log.Printf("container running: %s", container.ID)
 		log.Printf("webhook event, handled")
 	}))
 
