@@ -344,21 +344,27 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	// 	return
 	// }
 
-	j := []byte(
-		`{
+	var bb bytes.Buffer
+	bb.Write([]byte(`{
 			"Image": "alpine",
 			"Cmd": ["echo", "HELLO, WORLD"]
-		}`,
-	)
+		}`))
 
-	payload := bytes.NewReader(j)
+	// j := []byte(
+	// 	`{
+	// 		"Image": "alpine",
+	// 		"Cmd": ["echo", "HELLO, WORLD"]
+	// 	}`,
+	// )
 
-	o, e := jsonutil.ExtractBufferFormatted(payload, "", "  ")
-	if e != nil {
-		return
-	}
+	// payload := bytes.NewReader(j)
 
-	io.Copy(os.Stdout, &o)
+	// o, e := jsonutil.ExtractBufferFormatted(payload, "", "  ")
+	// if e != nil {
+	// 	return
+	// }
+
+	// io.Copy(os.Stdout, &o)
 
 	cmd := dock.NewContainerCommand("POST", "containers", "create")
 	cmd.URLComponents.Parameters = map[string]string{
@@ -373,7 +379,7 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	u := route(dockerHostAddr, version, url)
 	log.Printf("-- post payload: %s", u)
 
-	r, e := c.Post(u, mime, payload)
+	r, e := c.Post(u, mime, &bb)
 	if e != nil {
 		return
 	}
