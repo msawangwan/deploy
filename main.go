@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	version       = "1.30"
+	version       = "1.31"
 	port          = ":80"
 	mime          = "application/json; charset=utf-8"
 	endpoint      = "/webhooks/payload"
