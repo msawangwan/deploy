@@ -327,20 +327,27 @@ func removePreviousContainer(id string, c *http.Client) error {
 }
 
 func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse, e error) {
-	var postdata dock.CreateRequest
+	// var postdata dock.CreateRequest
 
-	postdata.Image = b.Image
-	postdata.WorkingDir = b.WorkingDir
-	postdata.Cmd = []string{b.Cmd.Exec}
+	// postdata.Image = b.Image
+	// postdata.WorkingDir = b.WorkingDir
+	// postdata.Cmd = []string{b.Cmd.Exec}
 
-	for _, v := range b.Cmd.Args {
-		postdata.Cmd = append(postdata.Cmd, v)
-	}
+	// for _, v := range b.Cmd.Args {
+	// 	postdata.Cmd = append(postdata.Cmd, v)
+	// }
 
-	payload, e := jsonutil.ToReader(postdata)
-	if e != nil {
-		return
-	}
+	// payload, e := jsonutil.ToReader(postdata)
+	// if e != nil {
+	// 	return
+	// }
+
+	payload := []byte(
+		`{
+			"Image": "alpine",
+			"Cmd": ["echo", "HELLO, WORLD"]
+		}`,
+	)
 
 	o, e := jsonutil.ExtractBufferFormatted(payload, "", "  ")
 	if e != nil {
@@ -348,13 +355,6 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	}
 
 	io.Copy(os.Stdout, &o)
-
-	// payload := []byte(
-	// 	`{
-	// 		"Image": "alpine",
-	// 		"Cmd": ["echo", "HELLO, WORLD"]
-	// 	}`,
-	// )
 
 	cmd := dock.NewContainerCommand("POST", "containers", "create")
 	cmd.URLComponents.Parameters = map[string]string{
@@ -369,8 +369,8 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	r, e := c.Post(
 		route(dockerHostAddr, version, url),
 		mime,
-		payload,
-		// bytes.NewReader(payload),
+		// payload,
+		bytes.NewReader(payload),
 	)
 	if e != nil {
 		return
