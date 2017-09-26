@@ -327,6 +327,8 @@ func removePreviousContainer(id string, c *http.Client) error {
 }
 
 func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse, e error) {
+	log.Printf("-- create payload")
+
 	var postdata dock.CreateRequest
 
 	postdata.Image = b.Image
@@ -358,6 +360,8 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 
 	io.Copy(os.Stdout, &o)
 
+	log.Printf("-- post payload")
+
 	cmd := dock.NewContainerCommand("POST", "containers", "create")
 	cmd.URLComponents.Parameters = map[string]string{
 		"name": b.ContainerName,
@@ -381,12 +385,12 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
+	jsonutil.PrettyPrintStruct(&p)
+
 	if r.StatusCode != 201 {
 		e = responseCodeMismatchError{201, r.StatusCode, p.Message}
 		return
 	}
-
-	jsonutil.PrettyPrintStruct(&p)
 
 	return
 }
