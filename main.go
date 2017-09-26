@@ -360,8 +360,6 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 
 	io.Copy(os.Stdout, &o)
 
-	log.Printf("-- post payload")
-
 	cmd := dock.NewContainerCommand("POST", "containers", "create")
 	cmd.URLComponents.Parameters = map[string]string{
 		"name": b.ContainerName,
@@ -372,11 +370,10 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
-	r, e := c.Post(
-		route(dockerHostAddr, version, url),
-		mime,
-		payload,
-	)
+	u := route(dockerHostAddr, version, url)
+	log.Printf("-- post payload: %s", u)
+
+	r, e := c.Post(u, mime, payload)
 	if e != nil {
 		return
 	}
