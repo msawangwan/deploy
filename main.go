@@ -378,7 +378,7 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
-	r.Body.Close()
+	defer r.Body.Close()
 
 	if e = jsonutil.FromReader(r.Body, &p); e != nil {
 		return
@@ -410,6 +410,8 @@ func startNewContainer(id string, c *http.Client) error {
 	if e != nil {
 		return e
 	}
+
+	defer r.Body.Close()
 
 	if r.StatusCode != 204 {
 		p := dock.StartResponse{}
