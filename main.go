@@ -235,13 +235,23 @@ func loadBuildfile(dirpath, filename string) (b ciio.Buildfile, e error) {
 	return
 }
 
-func findPreviousContainer(c *cache, contname string) (id string, e error) {
+func cacheNewContainer(c *cache, id, name string) error {
+	c.Lock()
+	defer c.Unlock()
+	{
+		c.store[name] = id
+	}
+
+	return nil
+}
+
+func findPreviousContainer(c *cache, name string) (id string, e error) {
 	id = ""
 
 	c.Lock()
 	defer c.Unlock()
 	{
-		if found, ok := c.store[contname]; ok {
+		if found, ok := c.store[name]; ok {
 			id = found
 		}
 	}
@@ -398,16 +408,6 @@ func startNewContainer(id string, c *http.Client) error {
 	return nil
 }
 
-func cacheNewContainer(c *cache, id, name string) error {
-	c.Lock()
-	defer c.Unlock()
-	{
-		c.store[name] = id
-	}
-
-	return nil
-}
-
 func main() {
 	var panicHandler = func(h http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -539,8 +539,14 @@ func main() {
 
 		log.Printf("caching new container")
 
-		if e = cacheNewContainer(containerCache, containerName, c.ID); e != nil {
-			panic(e)
+		// if e = cacheNewContainer(containerCache, containerName, c.ID); e != nil {
+		// 	panic(e)
+		// }
+
+		containerCache.Lock()
+		defer containerCache.Unlock()
+		{
+			containerCache.store[containerName] = c.ID
 		}
 
 		log.Printf("container running: %s", c.ID)
