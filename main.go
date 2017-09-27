@@ -271,6 +271,8 @@ func verifyPreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
+	defer r.Body.Close()
+
 	var (
 		p dock.InspectResponse
 	)
@@ -278,8 +280,6 @@ func verifyPreviousContainer(id string, c *http.Client) error {
 	if e = jsonutil.FromReader(r.Body, &p); e != nil {
 		return e
 	}
-
-	r.Body.Close()
 
 	if r.StatusCode != 200 {
 		return responseCodeMismatchError{200, r.StatusCode, p.Message}
@@ -289,6 +289,10 @@ func verifyPreviousContainer(id string, c *http.Client) error {
 		return errIDMismatch
 	}
 
+	return nil
+}
+
+func stopPreviousContainer(id string, c *http.Client) error {
 	return nil
 }
 
@@ -306,16 +310,11 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	log.Printf("stop url string: %s", u)
-
 	r, e = c.Post(apiurl(u), mime, io.Reader(nil))
 	if e != nil {
 		return e
 	}
 
-	log.Printf("post url")
-
-	// printJSON(os.Stdout, r.Body)
 	r.Body.Close()
 
 	cmd = dock.NewContainerCommandByID("DELETE", "containers", "", id)
@@ -324,21 +323,16 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	log.Printf("deleting: %s", u)
-
 	rq, e := http.NewRequest("DELETE", apiurl(u), nil)
 	if e != nil {
 		return e
 	}
-
-	log.Printf("executing delete")
 
 	r, e = c.Do(rq)
 	if e != nil {
 		return e
 	}
 
-	// printJSON(os.Stdout, r.Body)
 	r.Body.Close()
 
 	return nil
