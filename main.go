@@ -315,7 +315,7 @@ func removePreviousContainer(id string, c *http.Client) error {
 
 	log.Printf("post url")
 
-	printJSON(os.Stdout, r.Body)
+	// printJSON(os.Stdout, r.Body)
 	r.Body.Close()
 
 	cmd = dock.NewContainerCommandByID("DELETE", "containers", "", id)
@@ -338,7 +338,7 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	printJSON(os.Stdout, r.Body)
+	// printJSON(os.Stdout, r.Body)
 	r.Body.Close()
 
 	return nil
