@@ -497,6 +497,8 @@ func main() {
 			panic(e)
 		}
 
+		log.Printf("result from search (container id): %s", cid)
+
 		if cid != "" {
 			log.Printf("found previous container: %s", cid)
 
