@@ -81,11 +81,6 @@ var (
 	containerCache *cache
 )
 
-type container struct {
-	name string
-	id   string
-}
-
 var pwd = func(s string) { d, _ := os.Getwd(); log.Printf("[current working dir %s] %s", d, s) }
 var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
 
@@ -301,7 +296,6 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	// r, e = c.Post(route(dockerHostAddr, version, u), mime, nil)
 	r, e = c.Post(apiurl(u), mime, nil)
 	if e != nil {
 		return e
@@ -358,9 +352,6 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
-	// u := route(dockerHostAddr, version, url)
-	// u := apiurl(u)
-
 	r, e := c.Post(apiurl(url), mime, payload)
 	if e != nil {
 		return
@@ -407,11 +398,11 @@ func startNewContainer(id string, c *http.Client) error {
 	return nil
 }
 
-func cacheNewContainer(c *cache, cont container) error {
+func cacheNewContainer(c *cache, id, name string) error {
 	c.Lock()
 	defer c.Unlock()
 	{
-		c.store[cont.name] = cont.id
+		c.store[name] = id
 	}
 
 	return nil
@@ -541,9 +532,7 @@ func main() {
 
 		log.Printf("caching new container")
 
-		cont := container{containerName, c.ID}
-
-		if e = cacheNewContainer(containerCache, cont); e != nil {
+		if e = cacheNewContainer(containerCache, containerName, c.ID); e != nil {
 			panic(e)
 		}
 
