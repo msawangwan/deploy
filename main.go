@@ -501,10 +501,15 @@ func main() {
 			log.Printf("found previous container: %s", cid)
 
 			if e = verifyPreviousContainer(cid, dockerClient); e != nil {
-				panic(e)
+				if e != errIDMismatch {
+					panic(e)
+				} else {
+					log.Printf("id mismatch")
+				}
 			}
 
-			log.Printf("container cached")
+			log.Printf("container verified")
+			log.Printf("removing container: %s", cid)
 
 			if e = removePreviousContainer(cid, dockerClient); e != nil {
 				panic(e)
