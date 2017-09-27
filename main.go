@@ -306,10 +306,14 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
+	log.Printf("stop url string: %s", u)
+
 	r, e = c.Post(apiurl(u), mime, io.Reader(nil))
 	if e != nil {
 		return e
 	}
+
+	log.Printf("post url")
 
 	printJSON(os.Stdout, r.Body)
 	r.Body.Close()
@@ -320,10 +324,14 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
+	log.Printf("deleting: %s", u)
+
 	rq, e := http.NewRequest("DELETE", apiurl(u), nil)
 	if e != nil {
 		return e
 	}
+
+	log.Printf("executing delete")
 
 	r, e = c.Do(rq)
 	if e != nil {
