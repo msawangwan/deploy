@@ -327,8 +327,6 @@ func removePreviousContainer(id string, c *http.Client) error {
 }
 
 func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse, e error) {
-	log.Printf("-- create payload")
-
 	var postdata dock.CreateRequest
 
 	postdata.Image = b.Image
@@ -344,28 +342,6 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
-	// var payload bytes.Buffer
-	// payload.Write([]byte(`{
-	// 		"Image": "alpine",
-	// 		"Cmd": ["echo", "HELLO, WORLD"]
-	// 	}`))
-
-	// j := []byte(
-	// 	`{
-	// 		"Image": "alpine",
-	// 		"Cmd": ["echo", "HELLO, WORLD"]
-	// 	}`,
-	// )
-
-	// payload := bytes.NewReader(j)
-
-	// o, e := jsonutil.ExtractBufferFormatted(payload, "", "  ")
-	// if e != nil {
-	// 	return
-	// }
-
-	// io.Copy(os.Stdout, &o)
-
 	cmd := dock.NewContainerCommand("POST", "containers", "create")
 	cmd.URLComponents.Parameters = map[string]string{
 		"name": b.ContainerName,
@@ -377,7 +353,6 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	}
 
 	u := route(dockerHostAddr, version, url)
-	log.Printf("-- post payload: %s", u)
 
 	r, e := c.Post(u, mime, payload)
 	if e != nil {
@@ -389,8 +364,6 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	if e = jsonutil.FromReader(r.Body, &p); e != nil {
 		return
 	}
-
-	jsonutil.PrettyPrintStruct(&p)
 
 	if r.StatusCode != 201 {
 		e = responseCodeMismatchError{201, r.StatusCode, p.Message}

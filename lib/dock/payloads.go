@@ -324,7 +324,6 @@ type NetworkingConfig struct {
 // EndpointsConfig is a json field
 type EndpointsConfig struct {
 	AdditionalProperties EndpointSettings `json:"-"`
-	// AdditionalProperties EndpointSettings `json:"additionalProperties,omitempty"`
 }
 
 // IPAMConfig is a json field
