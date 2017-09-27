@@ -137,6 +137,7 @@ func init() {
 }
 
 func apiurl(resource string) string { return route(dockerHostAddr, version, resource) }
+
 func printJSON(l io.Writer, r io.Reader) {
 	formatted, e := jsonutil.ExtractBufferFormatted(r, "", "  ")
 	if e != nil {
@@ -235,7 +236,7 @@ func loadBuildfile(dirpath, filename string) (b ciio.Buildfile, e error) {
 	return
 }
 
-func cacheNewContainer(c *cache, id, name string) error {
+func cacheContainer(c *cache, id, name string) error {
 	c.Lock()
 	defer c.Unlock()
 	{
@@ -245,7 +246,7 @@ func cacheNewContainer(c *cache, id, name string) error {
 	return nil
 }
 
-func findPreviousContainer(c *cache, name string) (id string, e error) {
+func findContainerByName(c *cache, name string) (id string, e error) {
 	id = ""
 
 	c.Lock()
@@ -259,7 +260,7 @@ func findPreviousContainer(c *cache, name string) (id string, e error) {
 	return
 }
 
-func verifyPreviousContainer(id string, c *http.Client) error {
+func inspectContainer(id string, c *http.Client) error {
 	cmd := dock.NewContainerCommandByID("GET", "containers", "json", id)
 	u, e := dock.BuildAPIURLString(cmd)
 	if e != nil {
@@ -292,7 +293,7 @@ func verifyPreviousContainer(id string, c *http.Client) error {
 	return nil
 }
 
-func stopPreviousContainer(id string, c *http.Client) error {
+func stopContainer(id string, c *http.Client) error {
 	cmd := dock.NewContainerCommandByID("POST", "containers", "stop", id)
 	u, e := dock.BuildAPIURLString(cmd)
 	if e != nil {
@@ -309,27 +310,7 @@ func stopPreviousContainer(id string, c *http.Client) error {
 	return nil
 }
 
-func removePreviousContainer(id string, c *http.Client) error {
-	// var (
-	// 	cmd dock.ContainerCommandByID
-	// 	r   *http.Response
-	// 	u   string
-	// 	e   error
-	// )
-
-	// cmd = dock.NewContainerCommandByID("POST", "containers", "stop", id)
-	// u, e = dock.BuildAPIURLString(cmd)
-	// if e != nil {
-	// 	return e
-	// }
-
-	// r, e = c.Post(apiurl(u), mime, io.Reader(nil))
-	// if e != nil {
-	// 	return e
-	// }
-
-	// r.Body.Close()
-
+func removeContainer(id string, c *http.Client) error {
 	cmd := dock.NewContainerCommandByID("DELETE", "containers", "", id)
 	u, e := dock.BuildAPIURLString(cmd)
 	if e != nil {
@@ -351,7 +332,7 @@ func removePreviousContainer(id string, c *http.Client) error {
 	return nil
 }
 
-func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse, e error) {
+func createContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse, e error) {
 	var postdata dock.CreateRequest
 
 	postdata.Image = b.Image
@@ -396,7 +377,7 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 	return
 }
 
-func startNewContainer(id string, c *http.Client) error {
+func startContainer(id string, c *http.Client) error {
 	cmd := dock.NewContainerCommandByID("POST", "containers", "start", id)
 
 	url, e := dock.BuildAPIURLString(cmd)
@@ -507,7 +488,7 @@ func main() {
 		log.Printf("container name: %s", containerName)
 		log.Printf("looking for previous containers")
 
-		cid, e := findPreviousContainer(containerCache, containerName)
+		cid, e := findContainerByName(containerCache, containerName)
 		if e != nil {
 			panic(e)
 		}
@@ -517,7 +498,7 @@ func main() {
 		if cid != "" {
 			log.Printf("found previous container: %s", cid)
 
-			if e = verifyPreviousContainer(cid, dockerClient); e != nil {
+			if e = inspectContainer(cid, dockerClient); e != nil {
 				if e != errIDMismatch {
 					panic(e)
 				} else {
@@ -528,20 +509,20 @@ func main() {
 			log.Printf("container verified")
 			log.Printf("stop previous")
 
-			if e = stopPreviousContainer(cid, dockerClient); e != nil {
+			if e = stopContainer(cid, dockerClient); e != nil {
 				panic(e)
 			}
 
 			log.Printf("removing container: %s", cid)
 
-			if e = removePreviousContainer(cid, dockerClient); e != nil {
+			if e = removeContainer(cid, dockerClient); e != nil {
 				panic(e)
 			}
 		}
 
 		log.Printf("creating new container")
 
-		c, e := createNewContainer(buildfile, dockerClient)
+		c, e := createContainer(buildfile, dockerClient)
 		if e != nil {
 			panic(e)
 		}
@@ -554,13 +535,13 @@ func main() {
 
 		log.Printf("starting new container: %s", c.ID)
 
-		if e = startNewContainer(c.ID, dockerClient); e != nil {
+		if e = startContainer(c.ID, dockerClient); e != nil {
 			panic(e)
 		}
 
 		log.Printf("caching new container")
 
-		// if e = cacheNewContainer(containerCache, containerName, c.ID); e != nil {
+		// if e = cacheContainer(containerCache, containerName, c.ID); e != nil {
 		// 	panic(e)
 		// }
 
@@ -573,6 +554,38 @@ func main() {
 		log.Printf("container running: %s", c.ID)
 		log.Printf("webhook event, handled")
 	}))
+
+	defer func() {
+		killContainer := func(id string, c *http.Client) error {
+			var e error
+
+			if e = stopContainer(id, c); e != nil {
+				return e
+			}
+
+			if e = removeContainer(id, c); e != nil {
+				return e
+			}
+
+			return nil
+		}
+
+		log.Printf("kill all running containers")
+
+		containerCache.Lock()
+		defer containerCache.Unlock()
+		{
+			for k, v := range containerCache.store {
+				log.Printf("killing container: %s", k)
+
+				if e := killContainer(v, dockerClient); e != nil {
+					panic(e)
+				}
+			}
+		}
+
+		log.Printf("cleanup complete")
+	}()
 
 	log.Fatal(http.ListenAndServe(port, nil))
 }
