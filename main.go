@@ -293,32 +293,45 @@ func verifyPreviousContainer(id string, c *http.Client) error {
 }
 
 func stopPreviousContainer(id string, c *http.Client) error {
+	cmd := dock.NewContainerCommandByID("POST", "containers", "stop", id)
+	u, e := dock.BuildAPIURLString(cmd)
+	if e != nil {
+		return e
+	}
+
+	r, e := c.Post(apiurl(u), mime, io.Reader(nil))
+	if e != nil {
+		return e
+	}
+
+	defer r.Body.Close()
+
 	return nil
 }
 
 func removePreviousContainer(id string, c *http.Client) error {
-	var (
-		cmd dock.ContainerCommandByID
-		r   *http.Response
-		u   string
-		e   error
-	)
+	// var (
+	// 	cmd dock.ContainerCommandByID
+	// 	r   *http.Response
+	// 	u   string
+	// 	e   error
+	// )
 
-	cmd = dock.NewContainerCommandByID("POST", "containers", "stop", id)
-	u, e = dock.BuildAPIURLString(cmd)
-	if e != nil {
-		return e
-	}
+	// cmd = dock.NewContainerCommandByID("POST", "containers", "stop", id)
+	// u, e = dock.BuildAPIURLString(cmd)
+	// if e != nil {
+	// 	return e
+	// }
 
-	r, e = c.Post(apiurl(u), mime, io.Reader(nil))
-	if e != nil {
-		return e
-	}
+	// r, e = c.Post(apiurl(u), mime, io.Reader(nil))
+	// if e != nil {
+	// 	return e
+	// }
 
-	r.Body.Close()
+	// r.Body.Close()
 
-	cmd = dock.NewContainerCommandByID("DELETE", "containers", "", id)
-	u, e = dock.BuildAPIURLString(cmd)
+	cmd := dock.NewContainerCommandByID("DELETE", "containers", "", id)
+	u, e := dock.BuildAPIURLString(cmd)
 	if e != nil {
 		return e
 	}
@@ -328,12 +341,12 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	r, e = c.Do(rq)
+	r, e := c.Do(rq)
 	if e != nil {
 		return e
 	}
 
-	r.Body.Close()
+	defer r.Body.Close()
 
 	return nil
 }
@@ -513,6 +526,12 @@ func main() {
 			}
 
 			log.Printf("container verified")
+			log.Printf("stop previous")
+
+			if e = stopPreviousContainer(cid, dockerClient); e != nil {
+				panic(e)
+			}
+
 			log.Printf("removing container: %s", cid)
 
 			if e = removePreviousContainer(cid, dockerClient); e != nil {
