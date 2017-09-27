@@ -236,15 +236,15 @@ func loadBuildfile(dirpath, filename string) (b ciio.Buildfile, e error) {
 }
 
 func findPreviousContainer(c *cache, contname string) (id string, e error) {
-	c.Lock()
-
 	id = ""
 
-	if found, ok := c.store[contname]; ok {
-		id = found
+	c.Lock()
+	defer c.Unlock()
+	{
+		if found, ok := c.store[contname]; ok {
+			id = found
+		}
 	}
-
-	c.Unlock()
 
 	return
 }
@@ -513,6 +513,7 @@ func main() {
 		}
 
 		log.Printf("created a new container: %s", container.ID)
+		// TODO: cache it
 
 		if e = jsonutil.PrettyPrintStruct(container); e != nil {
 			panic(e)
