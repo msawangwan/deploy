@@ -47,10 +47,9 @@ var (
 )
 
 var (
-	errInvalidWebhookEvent  = errors.New("not a valid webhook event, expected: push")
-	errDoesNotExistInCache  = errors.New("does not exist in cache")
-	errResponseCodeMismatch = errors.New("expected response code success but got fail")
-	errIDMismatch           = errors.New("expected id doesnt match id")
+	errInvalidWebhookEvent = errors.New("not a valid webhook event, expected: push")
+	errDoesNotExistInCache = errors.New("does not exist in cache")
+	errIDMismatch          = errors.New("expected id doesnt match id")
 )
 
 type responseCodeMismatchError struct {
@@ -81,6 +80,11 @@ var (
 	dirCache       *cache
 	containerCache *cache
 )
+
+type container struct {
+	name string
+	id   string
+}
 
 var pwd = func(s string) { d, _ := os.Getwd(); log.Printf("[current working dir %s] %s", d, s) }
 var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
@@ -404,6 +408,16 @@ func startNewContainer(id string, c *http.Client) error {
 	return nil
 }
 
+func cacheNewContainer(c *cache, cont container) error {
+	c.Lock()
+	defer c.Unlock()
+	{
+		c.store[cont.name] = cont.id
+	}
+
+	return nil
+}
+
 func main() {
 	var panicHandler = func(h http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -500,6 +514,8 @@ func main() {
 				panic(e)
 			}
 
+			log.Printf("container cached")
+
 			if e = removePreviousContainer(cid, dockerClient); e != nil {
 				panic(e)
 			}
@@ -507,25 +523,30 @@ func main() {
 
 		log.Printf("creating new container")
 
-		container, e := createNewContainer(buildfile, dockerClient)
+		c, e := createNewContainer(buildfile, dockerClient)
 		if e != nil {
 			panic(e)
 		}
 
-		log.Printf("created a new container: %s", container.ID)
-		// TODO: cache it
+		log.Printf("created a new container: %s", c.ID)
 
-		if e = jsonutil.PrettyPrintStruct(container); e != nil {
+		if e = jsonutil.PrettyPrintStruct(c); e != nil {
 			panic(e)
 		}
 
-		log.Printf("starting new container: %s", container.ID)
+		log.Printf("starting new container: %s", c.ID)
 
-		if e = startNewContainer(container.ID, dockerClient); e != nil {
+		if e = startNewContainer(c.ID, dockerClient); e != nil {
 			panic(e)
 		}
 
-		log.Printf("container running: %s", container.ID)
+		cont := container{containerName, c.ID}
+
+		if e = cacheNewContainer(containerCache, cont); e != nil {
+			panic(e)
+		}
+
+		log.Printf("container running: %s", c.ID)
 		log.Printf("webhook event, handled")
 	}))
 
