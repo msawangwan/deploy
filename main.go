@@ -141,6 +141,7 @@ func init() {
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
 }
 
+func apiurl(resource string) string { return route(dockerHostAddr, version, resource) }
 func printJSON(l io.Writer, r io.Reader) {
 	formatted, e := jsonutil.ExtractBufferFormatted(r, "", "  ")
 	if e != nil {
@@ -260,7 +261,7 @@ func verifyPreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	r, e := c.Get(u)
+	r, e := c.Get(apiurl(u))
 	if e != nil {
 		return e
 	}
@@ -300,7 +301,8 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	r, e = c.Post(route(dockerHostAddr, version, u), mime, nil)
+	// r, e = c.Post(route(dockerHostAddr, version, u), mime, nil)
+	r, e = c.Post(apiurl(u), mime, nil)
 	if e != nil {
 		return e
 	}
@@ -314,7 +316,7 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	rq, e := http.NewRequest("DELETE", u, nil)
+	rq, e := http.NewRequest("DELETE", apiurl(u), nil)
 	if e != nil {
 		return e
 	}
@@ -356,9 +358,10 @@ func createNewContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse
 		return
 	}
 
-	u := route(dockerHostAddr, version, url)
+	// u := route(dockerHostAddr, version, url)
+	// u := apiurl(u)
 
-	r, e := c.Post(u, mime, payload)
+	r, e := c.Post(apiurl(url), mime, payload)
 	if e != nil {
 		return
 	}
@@ -385,11 +388,7 @@ func startNewContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	r, e := c.Post(
-		route(dockerHostAddr, version, url),
-		mime,
-		nil,
-	)
+	r, e := c.Post(apiurl(url), mime, nil)
 	if e != nil {
 		return e
 	}
