@@ -254,7 +254,7 @@ func findPreviousContainer(c *cache, contname string) (id string, e error) {
 }
 
 func verifyPreviousContainer(id string, c *http.Client) error {
-	cmd := dock.NewContainerCommandByID("GET", "containers", "inspect", id)
+	cmd := dock.NewContainerCommandByID("GET", "containers", "json", id)
 	u, e := dock.BuildAPIURLString(cmd)
 	if e != nil {
 		return e
@@ -539,6 +539,8 @@ func main() {
 		if e = startNewContainer(c.ID, dockerClient); e != nil {
 			panic(e)
 		}
+
+		log.Printf("caching new container")
 
 		cont := container{containerName, c.ID}
 
