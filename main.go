@@ -306,7 +306,7 @@ func removePreviousContainer(id string, c *http.Client) error {
 		return e
 	}
 
-	r, e = c.Post(apiurl(u), mime, nil)
+	r, e = c.Post(apiurl(u), mime, io.Reader(nil))
 	if e != nil {
 		return e
 	}
