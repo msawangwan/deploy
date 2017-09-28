@@ -2,16 +2,36 @@ package collection
 
 type Cache interface {
 	Valid() bool
-	Contains(k string) bool
-	Store(k string, v interface{}) bool
-	Fetch(k string) (v interface{}, e error)
+	Contains(k int) bool
+	Store(v interface{}) int
+	Fetch(k int) (v interface{}, e error)
 }
 
-type BasicCache map[string]string
+type BasicCache struct {
+	store map[int]string
+	key   int
+}
 
-func newBasicCache() Cache { return BasicCache(make(map[string]string)) }
+func newBasicCache() Cache {
+	return &BasicCache{
+		store: make(map[int]string),
+		key:   0,
+	}
+}
 
-func (c BasicCache) Valid() bool                             { return true }
-func (c BasicCache) Contains(k string) bool                  { return true }
-func (c BasicCache) Store(k string, v interface{}) bool      { return true }
-func (c BasicCache) Fetch(k string) (v interface{}, e error) { return }
+func (c *BasicCache) Valid() bool { return true }
+
+func (c *BasicCache) Contains(k int) bool {
+	if _, contains := c.store[k]; contains {
+		return true
+	}
+	return false
+}
+
+func (c *BasicCache) Store(v interface{}) int {
+	c.key++
+	c.store[c.key] = v.(string)
+	return c.key
+}
+
+func (c *BasicCache) Fetch(k int) (v interface{}, e error) { return }
