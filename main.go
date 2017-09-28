@@ -29,15 +29,16 @@ import (
 )
 
 const (
-	version       = "1.30"
-	port          = ":80"
-	mime          = "application/json; charset=utf-8"
-	endpoint      = "/webhooks/payload"
-	mountpoint    = "/var/run/docker.sock"
-	envipaddr     = "DOCK_MASTERCONTAINER_IPADDR"
-	socktype      = "unix"
-	scratchdir    = "__ws"
-	buildfilename = "buildfile.json"
+	version        = "1.30"
+	port           = ":80"
+	mime           = "application/json; charset=utf-8"
+	endpoint       = "/webhooks/payload"
+	mountpoint     = "/var/run/docker.sock"
+	envipaddr      = "DOCK_MASTERCONTAINER_IPADDR"
+	socktype       = "unix"
+	scratchdir     = "__ws"
+	buildfilename  = "buildfile.json"
+	dockerfilepath = "Dockerfile"
 )
 
 var (
