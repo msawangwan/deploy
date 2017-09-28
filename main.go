@@ -89,8 +89,6 @@ var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%
 var killsig = make(chan os.Signal, 1)
 
 func init() {
-	// killsig = make(chan os.Signal, 1)
-
 	signal.Notify(killsig, syscall.SIGINT, syscall.SIGTERM)
 
 	rootdir, _ := os.Getwd()
@@ -584,7 +582,6 @@ func main() {
 			log.Printf("kill all running containers")
 
 			containerCache.Lock()
-			defer containerCache.Unlock()
 			{
 				for k, v := range containerCache.store {
 					log.Printf("killing container: %s", k)
@@ -594,8 +591,11 @@ func main() {
 					}
 				}
 			}
+			containerCache.Unlock()
 
 			log.Printf("cleanup complete")
+
+			// os.Exit(0)
 		}()
 	}()
 
