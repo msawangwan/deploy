@@ -15,7 +15,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -231,6 +230,25 @@ func pullRepository(c cred.Github, dir, name string) error {
 	log.Printf("succ: %s", cmdout.String())
 
 	return nil
+}
+
+func buildImageFromDockerfile(filename string, client *http.Client) error {
+	params := map[string]string{
+		"dockerfile": filename,
+		"t":          "tyrantindex:test",
+		"rm":         "true",
+	}
+
+	url := dock.NewBuildDockerfileCommand(params)
+	cmd, er := dock.BuildAPIURLString(url)
+	if er != nil {
+		return er
+	}
+
+	req, er := client.Post(cmd, mime, io.Reader(nil))
+	if er != nil {
+		return er
+	}
 }
 
 func loadBuildfile(dirpath, filename string) (b ciio.Buildfile, e error) {
@@ -488,80 +506,84 @@ func main() {
 		}
 
 		log.Printf("pull successful")
-		log.Printf("locating and loading buildfile")
+		log.Printf("building from dockerfile")
 
-		buildfile, e := loadBuildfile(ws, strings.ToLower(buildfilename))
-		if e != nil {
+		if e := buildImageFromDockerfile(dockerfilepath, dockerClient); e != nil {
 			panic(e)
 		}
 
-		log.Printf("buildfile loaded")
+		// buildfile, e := loadBuildfile(ws, strings.ToLower(buildfilename))
+		// if e != nil {
+		// 	panic(e)
+		// }
 
-		containerName := buildfile.ContainerName
+		// log.Printf("buildfile loaded")
 
-		log.Printf("container name: %s", containerName)
-		log.Printf("looking for previous containers")
+		// containerName := buildfile.ContainerName
 
-		cid, e := findContainerByName(containerCache, containerName)
-		if e != nil {
-			panic(e)
-		}
+		// log.Printf("container name: %s", containerName)
+		// log.Printf("looking for previous containers")
 
-		log.Printf("result from search (container id): %s", cid)
+		// cid, e := findContainerByName(containerCache, containerName)
+		// if e != nil {
+		// 	panic(e)
+		// }
 
-		if cid != "" {
-			log.Printf("found previous container: %s", cid)
+		// log.Printf("result from search (container id): %s", cid)
 
-			if e = inspectContainer(cid, dockerClient); e != nil {
-				if e != errIDMismatch {
-					panic(e)
-				} else {
-					log.Printf("id mismatch")
-				}
-			}
+		// if cid != "" {
+		// 	log.Printf("found previous container: %s", cid)
 
-			log.Printf("container verified")
-			log.Printf("stop previous")
+		// 	if e = inspectContainer(cid, dockerClient); e != nil {
+		// 		if e != errIDMismatch {
+		// 			panic(e)
+		// 		} else {
+		// 			log.Printf("id mismatch")
+		// 		}
+		// 	}
 
-			if e = stopContainer(cid, dockerClient); e != nil {
-				panic(e)
-			}
+		// 	log.Printf("container verified")
+		// 	log.Printf("stop previous")
 
-			log.Printf("removing container: %s", cid)
+		// 	if e = stopContainer(cid, dockerClient); e != nil {
+		// 		panic(e)
+		// 	}
 
-			if e = removeContainer(cid, dockerClient); e != nil {
-				panic(e)
-			}
-		}
+		// 	log.Printf("removing container: %s", cid)
 
-		log.Printf("creating new container")
+		// 	if e = removeContainer(cid, dockerClient); e != nil {
+		// 		panic(e)
+		// 	}
+		// }
 
-		c, e := createContainer(buildfile, dockerClient)
-		if e != nil {
-			panic(e)
-		}
+		// log.Printf("creating new container")
 
-		log.Printf("created a new container: %s", c.ID)
+		// c, e := createContainer(buildfile, dockerClient)
+		// if e != nil {
+		// 	panic(e)
+		// }
 
-		if e = jsonutil.PrettyPrintStruct(c); e != nil {
-			panic(e)
-		}
+		// log.Printf("created a new container: %s", c.ID)
 
-		log.Printf("starting new container: %s", c.ID)
+		// if e = jsonutil.PrettyPrintStruct(c); e != nil {
+		// 	panic(e)
+		// }
 
-		if e = startContainer(c.ID, dockerClient); e != nil {
-			panic(e)
-		}
+		// log.Printf("starting new container: %s", c.ID)
 
-		log.Printf("caching new container")
+		// if e = startContainer(c.ID, dockerClient); e != nil {
+		// 	panic(e)
+		// }
 
-		containerCache.Lock()
-		defer containerCache.Unlock()
-		{
-			containerCache.store[containerName] = c.ID
-		}
+		// log.Printf("caching new container")
 
-		log.Printf("container running: %s", c.ID)
+		// containerCache.Lock()
+		// defer containerCache.Unlock()
+		// {
+		// 	containerCache.store[containerName] = c.ID
+		// }
+
+		// log.Printf("container running: %s", c.ID)
 		log.Printf("webhook event, handled")
 	}))
 

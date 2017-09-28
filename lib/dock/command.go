@@ -18,9 +18,12 @@ func BuildAPIURLString(r APIStringBuilder) (s string, e error) {
 		"buildURLString": func(c, o, id string) string {
 			var s string
 
-			if id == "" {
+			switch {
+			case o == "" && id == "":
+				s = fmt.Sprintf("%s", c)
+			case id == "":
 				s = fmt.Sprintf("%s/%s", c, o)
-			} else {
+			default:
 				s = fmt.Sprintf("%s/%s/%s", c, id, o)
 			}
 
@@ -66,13 +69,6 @@ type ContainerCommand struct {
 	URLComponents URLComponents
 }
 
-// NewContainerCommand returns a container command given the command and option
-func NewContainerCommand(m, c, o string) ContainerCommand {
-	return ContainerCommand{
-		newURLComponents(m, c, o),
-	}
-}
-
 // Build satisfies the APIEndpointResolver interface
 func (c ContainerCommand) Build() []byte {
 	return []byte(
@@ -93,14 +89,6 @@ type ContainerCommandByID struct {
 	ID            string
 }
 
-// NewContainerCommandByID returns a container command given the command and option and id
-func NewContainerCommandByID(m, c, o, id string) ContainerCommandByID {
-	return ContainerCommandByID{
-		URLComponents: newURLComponents(m, c, o),
-		ID:            id,
-	}
-}
-
 // Build satisfies the APIEndpointResolver interface
 func (c ContainerCommandByID) Build() []byte {
 	return []byte(
@@ -113,6 +101,42 @@ func (c ContainerCommandByID) Build() []byte {
 			{{- end -}}
 		{{- end -}}`,
 	)
+}
+
+// BuildCommand is used to build an image from a dockerfile
+type BuildCommand struct {
+	QueryStrings map[string]string
+}
+
+// Build satisfies the APIEndpointResolver interface
+func (c BuildCommand) Build() []byte {
+	return []byte(
+		`{{- with . -}}
+			{{- printf "/build" -}}
+			{{- $q := buildQueryString .QueryStrings -}}
+			{{- printf "?%s" $q -}}
+		{{- end -}}`,
+	)
+}
+
+// NewContainerCommand returns a container command given the command and option
+func NewContainerCommand(m, c, o string) ContainerCommand {
+	return ContainerCommand{
+		newURLComponents(m, c, o),
+	}
+}
+
+// NewContainerCommandByID returns a container command given the command and option and id
+func NewContainerCommandByID(m, c, o, id string) ContainerCommandByID {
+	return ContainerCommandByID{
+		URLComponents: newURLComponents(m, c, o),
+		ID:            id,
+	}
+}
+
+// NewBuildDockerfileCommand returns a formatted url to build a dockerfile
+func NewBuildDockerfileCommand(q map[string]string) BuildCommand {
+	return BuildCommand{q}
 }
 
 func newURLComponents(m, c, o string) URLComponents {

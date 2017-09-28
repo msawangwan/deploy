@@ -77,7 +77,16 @@ func TestBuildAPIURLs(t *testing.T) {
 			},
 			"1234598765abcdefg",
 		},
-		NewContainerCommandByID("POST", "DELETE", "", "1234567899k"),
+		&BuildCommand{
+			QueryStrings: map[string]string{
+				"somekey":    "someval",
+				"anotherkey": "anotherval",
+				"finalkey":   "finalval",
+				"somebool":   "true",
+			},
+		},
+		NewBuildDockerfileCommand(map[string]string{"a": "b", "c": "d"}),
+		NewContainerCommandByID("DELETE", "containers", "", "1234567899k"),
 	}
 
 	for _, apiurl := range apiurls {
