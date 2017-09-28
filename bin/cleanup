@@ -2,8 +2,12 @@
 
 echo "`basename ${0}`"; echo
 
-if [[ -z "${CIIO_INIT_COMPLETE}" ]]; then
-    echo "APP INIT DETECTED"
+if [[ -z "${CIIO_MASTER_CONTAINER_RUNNING}" ]]; then
+    if [[ "${CIIO_MASTER_CONTAINER_RUNNING}" == 0 ]]; then
+        echo "terminate process: ${PPID}"; echo
+        CIIO_MASTER_CONTAINER_RUNNING=1
+        kill -9 "${PPID}"
+    fi
 else
-    echo "APP WAS NOT INIT YO"
+    echo "no process to terminate"
 fi

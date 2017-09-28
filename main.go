@@ -602,11 +602,6 @@ func main() {
 
 		log.Printf("cleanp cmd: %s", string(o))
 
-		// if e := exec.Command(cmd).Run(); e != nil {
-		// 	fmt.Fprintln(os.Stderr, e)
-		// 	os.Exit(1)
-		// }
-
 		os.Exit(0)
 	}()
 
