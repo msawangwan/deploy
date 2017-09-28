@@ -594,12 +594,18 @@ func main() {
 
 		log.Printf("cleanup complete")
 
-		cmd := "cleanup"
-
-		if e := exec.Command(cmd).Run(); e != nil {
-			fmt.Fprintln(os.Stderr, e)
+		o, e := exec.Command("cleanup").Output()
+		if e != nil {
+			log.Printf("%s", e)
 			os.Exit(1)
 		}
+
+		log.Printf("cleanp cmd: %s", string(o))
+
+		// if e := exec.Command(cmd).Run(); e != nil {
+		// 	fmt.Fprintln(os.Stderr, e)
+		// 	os.Exit(1)
+		// }
 
 		os.Exit(0)
 	}()
