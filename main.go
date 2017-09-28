@@ -564,39 +564,37 @@ func main() {
 	go func() {
 		<-killsig
 
-		func() {
-			killContainer := func(id string, c *http.Client) error {
-				var e error
+		killContainer := func(id string, c *http.Client) error {
+			var e error
 
-				if e = stopContainer(id, c); e != nil {
-					return e
-				}
-
-				if e = removeContainer(id, c); e != nil {
-					return e
-				}
-
-				return nil
+			if e = stopContainer(id, c); e != nil {
+				return e
 			}
 
-			log.Printf("kill all running containers")
+			if e = removeContainer(id, c); e != nil {
+				return e
+			}
 
-			containerCache.Lock()
-			{
-				for k, v := range containerCache.store {
-					log.Printf("killing container: %s", k)
+			return nil
+		}
 
-					if e := killContainer(v, dockerClient); e != nil {
-						panic(e)
-					}
+		log.Printf("kill all running containers")
+
+		containerCache.Lock()
+		{
+			for k, v := range containerCache.store {
+				log.Printf("killing container: %s", k)
+
+				if e := killContainer(v, dockerClient); e != nil {
+					panic(e)
 				}
 			}
-			containerCache.Unlock()
+		}
+		containerCache.Unlock()
 
-			log.Printf("cleanup complete")
+		log.Printf("cleanup complete")
 
-			// os.Exit(0)
-		}()
+		// os.Exit(0)
 	}()
 
 	log.Fatal(http.ListenAndServe(port, nil))
