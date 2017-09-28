@@ -344,6 +344,13 @@ func createContainer(b ciio.Buildfile, c *http.Client) (p dock.CreateResponse, e
 	postdata.Image = b.Image
 	postdata.WorkingDir = b.WorkingDir
 	postdata.Cmd = []string{b.Cmd.Exec}
+	postdata.HostConfig = dock.HostConfig{
+		PortBindings: dock.PortBindings(map[string][]interface{}{
+			b.NetworkParameters.PortOut: []interface{}{
+				struct{ HostPort string }{b.NetworkParameters.PortIn},
+			},
+		}),
+	}
 
 	for _, v := range b.Cmd.Args {
 		postdata.Cmd = append(postdata.Cmd, v)
@@ -546,10 +553,6 @@ func main() {
 		}
 
 		log.Printf("caching new container")
-
-		// if e = cacheContainer(containerCache, containerName, c.ID); e != nil {
-		// 	panic(e)
-		// }
 
 		containerCache.Lock()
 		defer containerCache.Unlock()
