@@ -594,7 +594,7 @@ func main() {
 
 		log.Printf("cleanup complete")
 
-		// os.Exit(0)
+		os.Exit(0)
 	}()
 
 	log.Fatal(http.ListenAndServe(port, nil))
