@@ -54,3 +54,5 @@ docker run \
 -it \
 -v  "$DOCKERMOUNT_SOCK" \
 "$CONTAINER_IMAGE_NAME"
+
+export CIIO_INIT_COMPLETE=0

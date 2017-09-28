@@ -1,0 +1,9 @@
+#!/bin/sh
+
+echo "`basename ${0}`"; echo
+
+if [[ -z "${CIIO_INIT_COMPLETE}" ]]; then
+    echo "APP INIT DETECTED"
+else
+    echo "APP WAS NOT INIT YO"
+fi
