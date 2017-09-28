@@ -374,11 +374,13 @@ type ULimits struct {
 	Hard float64 `json:"Hard,omitempty"`
 }
 
+// type PortBindings struct {
+// 	HostIP   string `json:"HostIp,omitempty"`
+// 	HostPort string `json:"HostPort,omitempty"`
+// }
+
 // PortBindings is a json field in HostConfig
-type PortBindings struct {
-	HostIP   string `json:"HostIp,omitempty"`
-	HostPort string `json:"HostPort,omitempty"`
-}
+type PortBindings map[string][]interface{}
 
 // RestartPolicy is a json field in HostConfig
 type RestartPolicy struct {
