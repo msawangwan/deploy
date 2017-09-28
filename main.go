@@ -12,10 +12,12 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/msawangwan/ci.io/lib/ciio"
@@ -84,7 +86,13 @@ var (
 var pwd = func(s string) { d, _ := os.Getwd(); log.Printf("[current working dir %s] %s", d, s) }
 var route = func(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
 
+var killsig = make(chan os.Signal, 1)
+
 func init() {
+	// killsig = make(chan os.Signal, 1)
+
+	signal.Notify(killsig, syscall.SIGINT, syscall.SIGTERM)
+
 	rootdir, _ := os.Getwd()
 	pathenv := os.Getenv("PATH")
 
@@ -555,36 +563,40 @@ func main() {
 		log.Printf("webhook event, handled")
 	}))
 
-	defer func() {
-		killContainer := func(id string, c *http.Client) error {
-			var e error
+	go func() {
+		<-killsig
 
-			if e = stopContainer(id, c); e != nil {
-				return e
+		func() {
+			killContainer := func(id string, c *http.Client) error {
+				var e error
+
+				if e = stopContainer(id, c); e != nil {
+					return e
+				}
+
+				if e = removeContainer(id, c); e != nil {
+					return e
+				}
+
+				return nil
 			}
 
-			if e = removeContainer(id, c); e != nil {
-				return e
-			}
+			log.Printf("kill all running containers")
 
-			return nil
-		}
+			containerCache.Lock()
+			defer containerCache.Unlock()
+			{
+				for k, v := range containerCache.store {
+					log.Printf("killing container: %s", k)
 
-		log.Printf("kill all running containers")
-
-		containerCache.Lock()
-		defer containerCache.Unlock()
-		{
-			for k, v := range containerCache.store {
-				log.Printf("killing container: %s", k)
-
-				if e := killContainer(v, dockerClient); e != nil {
-					panic(e)
+					if e := killContainer(v, dockerClient); e != nil {
+						panic(e)
+					}
 				}
 			}
-		}
 
-		log.Printf("cleanup complete")
+			log.Printf("cleanup complete")
+		}()
 	}()
 
 	log.Fatal(http.ListenAndServe(port, nil))
