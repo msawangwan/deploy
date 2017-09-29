@@ -236,8 +236,9 @@ func buildImageFromDockerfile(filename string, client *http.Client) error {
 	pwd("calling dockerfile from here")
 
 	params := map[string]string{
-		"dockerfile": filename,
-		"t":          "tyrantindex:test",
+		"remote": "https://github.com/msawangwan/tyrant-index.io",
+		//"dockerfile": filename,
+		"t": "tyrantindex:test",
 		// "rm":         "true",
 	}
 
@@ -526,8 +527,8 @@ func main() {
 		log.Printf("pull successful")
 		log.Printf("building from dockerfile")
 
-		fp := filepath.Join("/go/src/github.com/msawangwan/ci.io/__ws", ws, dockerfilepath)
-        // fp := dockerfilepath
+		//fp := filepath.Join("/go/src/github.com/msawangwan/ci.io/__ws", ws, dockerfilepath)
+		fp := dockerfilepath
 
 		if e := buildImageFromDockerfile(fp, dockerClient); e != nil {
 			panic(e)
