@@ -236,7 +236,7 @@ func buildImageFromDockerfile(filename string, client *http.Client) error {
 	params := map[string]string{
 		"dockerfile": filename,
 		"t":          "tyrantindex:test",
-		"rm":         "true",
+		// "rm":         "true",
 	}
 
 	url := dock.NewBuildDockerfileCommand(params)
@@ -251,7 +251,13 @@ func buildImageFromDockerfile(filename string, client *http.Client) error {
 	}
 
 	if req.StatusCode != 200 {
-		return responseCodeMismatchError{200, req.StatusCode, ""}
+		var m dock.ErrorResponse
+
+		if er := jsonutil.FromReader(req.Body, &m); er != nil {
+			return er
+		}
+
+		return responseCodeMismatchError{200, req.StatusCode, m.Message}
 	}
 
 	return nil

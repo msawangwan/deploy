@@ -98,6 +98,11 @@ type StartResponse struct {
 // EmptyResponse is a no error success response
 type EmptyResponse struct{}
 
+// ErrorResponse is a json error response
+type ErrorResponse struct {
+	Message string `json:"message,omitempty"`
+}
+
 // Image is a docker api json payload
 type Image struct {
 	ID          string   `json:"Id,omitempty"`
