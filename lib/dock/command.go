@@ -112,7 +112,7 @@ type BuildCommand struct {
 func (c BuildCommand) Build() []byte {
 	return []byte(
 		`{{- with . -}}
-			{{- printf "/build" -}}
+			{{- printf "build" -}}
 			{{- $q := buildQueryString .QueryStrings -}}
 			{{- printf "?%s" $q -}}
 		{{- end -}}`,
