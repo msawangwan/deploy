@@ -245,7 +245,7 @@ func buildImageFromDockerfile(filename string, client *http.Client) error {
 		return er
 	}
 
-	req, er := client.Post(cmd, mime, io.Reader(nil))
+	req, er := client.Post(apiurl(cmd), mime, io.Reader(nil))
 	if er != nil {
 		return er
 	}
