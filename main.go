@@ -526,7 +526,8 @@ func main() {
 		log.Printf("pull successful")
 		log.Printf("building from dockerfile")
 
-		fp := filepath.Join(ws, dockerfilepath)
+		fp := filepath.Join("/go/src/github.com/msawangwan/ci.io/__ws", ws, dockerfilepath)
+        // fp := dockerfilepath
 
 		if e := buildImageFromDockerfile(fp, dockerClient); e != nil {
 			panic(e)
