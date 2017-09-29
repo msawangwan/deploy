@@ -233,6 +233,8 @@ func pullRepository(c cred.Github, dir, name string) error {
 }
 
 func buildImageFromDockerfile(filename string, client *http.Client) error {
+	pwd("calling dockerfile from here")
+
 	params := map[string]string{
 		"dockerfile": filename,
 		"t":          "tyrantindex:test",
