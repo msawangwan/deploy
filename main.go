@@ -520,7 +520,9 @@ func main() {
 		log.Printf("pull successful")
 		log.Printf("building from dockerfile")
 
-		if e := buildImageFromDockerfile(dockerfilepath, dockerClient); e != nil {
+		fp := filepath.Join(ws, dockerfilepath)
+
+		if e := buildImageFromDockerfile(fp, dockerClient); e != nil {
 			panic(e)
 		}
 
