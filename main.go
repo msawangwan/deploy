@@ -239,13 +239,17 @@ func buildImageFromDockerfile(filename string, client *http.Client) error {
 		// "rm":         "true",
 	}
 
-	url := dock.NewBuildDockerfileCommand(params)
-	cmd, er := dock.BuildAPIURLString(url)
+	cmd := dock.NewBuildDockerfileCommand(params)
+	concat, er := dock.BuildAPIURLString(cmd)
 	if er != nil {
 		return er
 	}
 
-	req, er := client.Post(apiurl(cmd), mime, io.Reader(nil))
+	url := apiurl(concat)
+
+	log.Printf("build api url: %s", url)
+
+	req, er := client.Post(url, mime, io.Reader(nil))
 	if er != nil {
 		return er
 	}
