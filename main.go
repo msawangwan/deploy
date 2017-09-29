@@ -249,6 +249,12 @@ func buildImageFromDockerfile(filename string, client *http.Client) error {
 	if er != nil {
 		return er
 	}
+
+	if req.StatusCode != 200 {
+		return responseCodeMismatchError{200, req.StatusCode, ""}
+	}
+
+	return nil
 }
 
 func loadBuildfile(dirpath, filename string) (b ciio.Buildfile, e error) {
