@@ -1,0 +1,38 @@
+#!/bin/sh
+
+echo "`basename ${0}`"; echo
+
+if [ $# != 5 ]; then
+    echo "err: missing args"
+    echo "usage: `basename ${0}` <dir_bare> <dir_tmp_clone> <username> <oauth> <repo>"
+fi
+
+DIR_BARE="$1"
+DIR_TMP_CLONE="$2"
+
+USERNAME="$3"
+OAUTH="$4"
+REPO="$5"
+
+SCHEME="https"
+PREFIX="github.com"
+SUFFIX=".git"
+
+URL="${SCHEME}://${OAUTH}@${PREFIX}/${USERNAME}/${REPO}${SUFFIX}"
+
+PATH_DIR_LOCAL=
+
+cd "${DIR_BARE}" &&            \
+    git init --bare &&         \
+    PATH_DIR_LOCAL="$(pwd)" && \
+    cd ../
+
+cd "${DIR_TMP_CLONE}" &&                      \
+    git init &&                               \
+    git pull "${URL}" &&                      \
+    git remote add tmp "${PATH_DIR_LOCAL}" && \
+    git push tmp master &&                    \
+    cd ../ &&                                 \
+    rm -rf "${DIR_TMP_CLONE}"
+
+exit 0
