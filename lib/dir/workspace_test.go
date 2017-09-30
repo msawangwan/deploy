@@ -8,10 +8,10 @@ import (
 	"github.com/msawangwan/ci.io/lib/symbol"
 )
 
-func TestBasicDirectoryCacherImpl(t *testing.T) {
-	var dc DirectoryCacher
+func TestBasicWorkspaceCacherImpl(t *testing.T) {
+	var dc WorkspaceCacher
 
-	dc = &DirectoryTable{
+	dc = &WorkspaceTable{
 		cache: map[string]string{},
 	}
 
@@ -37,9 +37,9 @@ func TestBasicDirectoryCacherImpl(t *testing.T) {
 }
 
 func TestFlushingTheCache(t *testing.T) {
-	var dc DirectoryCacher
+	var dc WorkspaceCacher
 
-	dc = &DirectoryTable{
+	dc = &WorkspaceTable{
 		cache: map[string]string{},
 	}
 
@@ -53,7 +53,7 @@ func TestFlushingTheCache(t *testing.T) {
 		t.Logf("created a tmpdir: %s", dir)
 	}
 
-	cleared, er := FlushCache(dc)
+	cleared, er := dc.FlushAll()
 	if er != nil {
 		t.Fatalf("%s", er)
 	}

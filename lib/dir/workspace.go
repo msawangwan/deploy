@@ -17,20 +17,21 @@ func (e TempDirDoesNotExistError) Error() string {
 	return fmt.Sprintf("err: temp directory [%s] does not exist", e.DirPrefix)
 }
 
-// DirectoryCacher ...
-type DirectoryCacher interface {
+// WorkspaceCacher ...
+type WorkspaceCacher interface {
 	MkTempDir(prefix string) (dir string, er error)
 	FindTempDir(prefix string) (dir string, er error)
+	FlushAll() (flushcount int, er error)
 }
 
-// DirectoryTable ...
-type DirectoryTable struct {
+// WorkspaceTable ...
+type WorkspaceTable struct {
 	cache map[string]string
 	sync.Mutex
 }
 
 // MkTempDir ...
-func (dt *DirectoryTable) MkTempDir(prefix string) (dir string, er error) {
+func (dt *WorkspaceTable) MkTempDir(prefix string) (dir string, er error) {
 	dir, er = ioutil.TempDir("./", prefix)
 	if er != nil {
 		return
@@ -46,7 +47,7 @@ func (dt *DirectoryTable) MkTempDir(prefix string) (dir string, er error) {
 }
 
 // FindTempDir ...
-func (dt *DirectoryTable) FindTempDir(prefix string) (dir string, er error) {
+func (dt *WorkspaceTable) FindTempDir(prefix string) (dir string, er error) {
 	dt.Lock()
 	defer dt.Unlock()
 	{
@@ -60,17 +61,18 @@ func (dt *DirectoryTable) FindTempDir(prefix string) (dir string, er error) {
 	return
 }
 
-// FlushCache ...
-func FlushCache(dc DirectoryCacher) (flushcount int, er error) {
-	table, ok := dc.(*DirectoryTable)
-	if !ok {
-		return -1, fmt.Errorf("does not implement directory cacher")
+// FlushAll ...
+func (dt *WorkspaceTable) FlushAll() (flushcount int, er error) {
+	dt.Lock()
+	defer dt.Unlock()
+	{
+		if len(dt.cache) > 0 {
+			for _, d := range dt.cache {
+				os.Remove(d)
+				flushcount++
+			}
+		}
 	}
 
-	for _, dir := range table.cache {
-		os.Remove(dir)
-		flushcount++
-	}
-
-	return flushcount, nil
+	return
 }

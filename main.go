@@ -234,6 +234,7 @@ func pullRepository(c cred.Github, dir, name string) error {
 }
 
 func buildRepo() error {
+
 	repo := build.BareRepo{}
 	return nil
 }
