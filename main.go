@@ -19,6 +19,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/msawangwan/ci.io/lib/build"
 	"github.com/msawangwan/ci.io/lib/ciio"
 	"github.com/msawangwan/ci.io/lib/dock"
 	"github.com/msawangwan/ci.io/lib/github"
@@ -229,6 +230,11 @@ func pullRepository(c cred.Github, dir, name string) error {
 
 	log.Printf("succ: %s", cmdout.String())
 
+	return nil
+}
+
+func buildRepo() error {
+	repo := build.BareRepo{}
 	return nil
 }
 
