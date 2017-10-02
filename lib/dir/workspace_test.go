@@ -11,9 +11,7 @@ import (
 func TestBasicWorkspaceCacherImpl(t *testing.T) {
 	var dc WorkspaceCacher
 
-	dc = &WorkspaceTable{
-		cache: map[string]string{},
-	}
+	dc = NewWorkspaceCache()
 
 	t.Logf("created a directory cacher: %s", symbol.PassMark)
 
@@ -39,9 +37,7 @@ func TestBasicWorkspaceCacherImpl(t *testing.T) {
 func TestFlushingTheCache(t *testing.T) {
 	var dc WorkspaceCacher
 
-	dc = &WorkspaceTable{
-		cache: map[string]string{},
-	}
+	dc = NewWorkspaceCache()
 
 	t.Logf("created a directory cacher: %s", symbol.PassMark)
 

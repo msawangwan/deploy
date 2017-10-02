@@ -24,6 +24,13 @@ type WorkspaceCacher interface {
 	FlushAll() (flushcount int, er error)
 }
 
+// NewWorkspaceCache ...
+func NewWorkspaceCache() WorkspaceCacher {
+	return &WorkspaceTable{
+		cache: map[string]string{},
+	}
+}
+
 // WorkspaceTable ...
 type WorkspaceTable struct {
 	cache map[string]string
