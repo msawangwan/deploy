@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -15,8 +16,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/msawangwan/ci.io/lib/build"
 	"github.com/msawangwan/ci.io/lib/dir"
+	"github.com/msawangwan/ci.io/lib/dock"
 	"github.com/msawangwan/ci.io/lib/github"
 	"github.com/msawangwan/ci.io/lib/jsonutil"
 	"github.com/msawangwan/ci.io/lib/netutil"
@@ -54,11 +55,6 @@ type responseCodeMismatchError struct {
 	Expected int
 	Actual   int
 	Message  string
-}
-
-type workspaceDirectoriyes struct {
-	ws string
-	sc string
 }
 
 func (rcme responseCodeMismatchError) Error() string {
@@ -157,7 +153,12 @@ func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
 	return
 }
 
-func workspaceSetup(cache dir.WorkspaceCacher, name string) (wsd workspaceDirectoriyes, er error) {
+type directories struct {
+	workspace    string
+	scratchspace string
+}
+
+func createWorkAndScratchSpace(cache dir.WorkspaceCacher, name string) (ds directories, er error) {
 	ws, er := cache.MkTempDir(name)
 	if er != nil {
 		return er
@@ -168,9 +169,70 @@ func workspaceSetup(cache dir.WorkspaceCacher, name string) (wsd workspaceDirect
 		return er
 	}
 
-	wsd = workspaceDirectoriyes{ws, sc}
+	ds = directories{ws, sc}
 
 	return
+}
+
+func buildRepo(ds directories, c credentials, repo string) error {
+	var stdout, stderr bytes.Buffer
+
+	args := []string{
+		ds.workspace,
+		ds.scratchspace,
+		c.User,
+		c.OAuth,
+		repo,
+	}
+
+	cmd := exec.Command("makebarer", args)
+
+	cmd.Dir = "__ws"
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if er = cmd.Run(); er != nil {
+		log.Printf("%s", stderr.String())
+		return er
+	}
+
+	log.Printf("%s", stdout.String())
+
+	return nil
+}
+
+func buildImage(client *http.Client, tag, remote string) error {
+	params := map[string]string{
+		"remote": remote,
+		"t":      tag,
+	}
+
+	cmd := dock.NewBuildDockerfileCommand(params)
+	concat, er := dock.BuildAPIURLString(cmd)
+	if er != nil {
+		return er
+	}
+
+	uri := apiurl(concat)
+
+	log.Printf("build api url: %s", uri)
+
+	req, er := client.Post(client, mime, io.Reader(nil))
+	if er != nil {
+		return er
+	}
+
+	if req.StatusCode != 200 {
+		var m dock.ErrorResponse
+
+		if er = jsonutil.FromReader(req.Body, &m); er != nil {
+			return er
+		}
+
+		return responseCodeMismatchError{200, req.StatusCode, m.Message}
+	}
+
+	return nil
 }
 
 func main() {
@@ -221,13 +283,18 @@ func main() {
 
 		log.Printf("payload extracted")
 
-		if wsd, er := workspaceSetup(dirCache, repoName); er != nil {
+		if ds, er := createWorkAndScratchSpace(dirCache, repoName); er != nil {
 			panic(er)
 		}
 
-		var buildRepo build.BareRepoer
+		// need to get the url to the repo from here
+		if er = buildRepo(ds, credential, webhook.Repository.URL); er != nil {
+			panic(er)
+		}
 
-		buildRepo = build.BareRepo{wsd.ws, wsd.sc, webhook.Repository.URL}
+		if er = buildImage(dockerClient, repoName, ""); er != nil {
+			panic(er)
+		}
 
 		log.Printf("webhook event, handled")
 
