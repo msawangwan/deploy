@@ -160,7 +160,7 @@ func createWorkspace(cache dir.WorkspaceCacher, name string) (ws string, er erro
 	return
 }
 
-func buildRepo(c cred.Github, repoName string) error {
+func buildRepo(c cred.Github, repoName, workspace string) error {
 	var stdout, stderr bytes.Buffer
 
 	args := []string{
@@ -171,6 +171,7 @@ func buildRepo(c cred.Github, repoName string) error {
 
 	cmd := exec.Command("clrep", args...)
 
+	cmd.Dir = workspace
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
@@ -280,7 +281,7 @@ func main() {
 
 		log.Printf("pulling repo into: %s", workspacePath)
 
-		if er = buildRepo(credentials, repoName); er != nil {
+		if er = buildRepo(credentials, repoName, ws); er != nil {
 			panic(er)
 		}
 
