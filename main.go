@@ -251,14 +251,14 @@ func buildImage(imgtar, tag string, client *http.Client) error {
 		return er
 	}
 
-	if res.StatusCode != 200 {
+	if req.StatusCode != 200 {
 		var m dock.ErrorResponse
 
-		if er = jsonutil.FromReader(res.Body, &m); er != nil {
+		if er = jsonutil.FromReader(req.Body, &m); er != nil {
 			return er
 		}
 
-		return responseCodeMismatchError{200, res.StatusCode, m.Message}
+		return responseCodeMismatchError{200, req.StatusCode, m.Message}
 	}
 
 	return nil
