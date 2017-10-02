@@ -231,20 +231,25 @@ func buildImage(imgtar, tag string, client *http.Client) error {
 
 	defer f.Close()
 
-	req, er := http.NewRequest("POST", uri, f)
-	if er != nil {
-		return er
-	}
-
-	res, er := client.Do(req)
-	if er != nil {
-		return er
-	}
-
-	// req, er := client.Post(uri, "application/tar", io.Reader(nil))
+	// r, er := tar.NewReader(f)
 	// if er != nil {
 	// 	return er
 	// }
+
+	// req, er := http.NewRequest("POST", uri, r)
+	// if er != nil {
+	// 	return er
+	// }
+
+	// res, er := client.Do(req)
+	// if er != nil {
+	// 	return er
+	// }
+
+	req, er := client.Post(uri, "application/tar", f)
+	if er != nil {
+		return er
+	}
 
 	if res.StatusCode != 200 {
 		var m dock.ErrorResponse
