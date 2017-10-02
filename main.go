@@ -336,9 +336,12 @@ func main() {
 			panic(er)
 		}
 
-		log.Printf("building from local repo %s", repoName)
+		archName := tempws + ".tar"
 
-		if er = buildImage(workspacePath+".tar", repoName, dockerClient); er != nil {
+		log.Printf("building from local repo %s", repoName)
+		log.Printf("uploading tar of img: %s", archName)
+
+		if er = buildImage(archName, repoName, dockerClient); er != nil {
 			panic(er)
 		}
 
