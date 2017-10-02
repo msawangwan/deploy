@@ -289,6 +289,8 @@ func main() {
 		wd, _ := os.Getwd()
 		repoPath := filepath.Join(wd, ds.workspace)
 
+		log.Printf("pulling from local repo: %s", repoPath)
+
 		if er = buildRepo(ds, credentials, webhook.Repository.URL); er != nil {
 			panic(er)
 		}
@@ -303,19 +305,19 @@ func main() {
 	go func() {
 		<-killsig
 
-		killContainer := func(id string, c *http.Client) error {
-			// var e error
+		// killContainer := func(id string, c *http.Client) error {
+		// var e error
 
-			// if e = stopContainer(id, c); e != nil {
-			// 	return e
-			// }
+		// if e = stopContainer(id, c); e != nil {
+		// 	return e
+		// }
 
-			// if e = removeContainer(id, c); e != nil {
-			// 	return e
-			// }
+		// if e = removeContainer(id, c); e != nil {
+		// 	return e
+		// }
 
-			return nil
-		}
+		// 	return nil
+		// }
 
 		log.Printf("kill all running containers")
 
