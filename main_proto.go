@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/msawangwan/ci.io/lib/build"
 	"github.com/msawangwan/ci.io/lib/dir"
 	"github.com/msawangwan/ci.io/lib/github"
 	"github.com/msawangwan/ci.io/lib/jsonutil"
@@ -53,6 +54,11 @@ type responseCodeMismatchError struct {
 	Expected int
 	Actual   int
 	Message  string
+}
+
+type workspaceDirectoriyes struct {
+	ws string
+	sc string
 }
 
 func (rcme responseCodeMismatchError) Error() string {
@@ -151,7 +157,7 @@ func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
 	return
 }
 
-func workspaceSetup(cache dir.WorkspaceCacher, name string) error {
+func workspaceSetup(cache dir.WorkspaceCacher, name string) (wsd workspaceDirectoriyes, er error) {
 	ws, er := cache.MkTempDir(name)
 	if er != nil {
 		return er
@@ -161,6 +167,10 @@ func workspaceSetup(cache dir.WorkspaceCacher, name string) error {
 	if er != nil {
 		return er
 	}
+
+	wsd = workspaceDirectoriyes{ws, sc}
+
+	return
 }
 
 func main() {
@@ -202,15 +212,25 @@ func main() {
 
 		log.Printf("webhook is a valid push event, extracting payload")
 
-		webhook, e := extractWebhookPayload(r.Body)
-		if e != nil {
-			panic(e)
+		webhook, er := extractWebhookPayload(r.Body)
+		if er != nil {
+			panic(er)
 		}
 
 		repoName := webhook.Repository.Name
 
 		log.Printf("payload extracted")
+
+		if wsd, er := workspaceSetup(dirCache, repoName); er != nil {
+			panic(er)
+		}
+
+		var buildRepo build.BareRepoer
+
+		buildRepo = build.BareRepo{wsd.ws, wsd.sc, webhook.Repository.URL}
+
 		log.Printf("webhook event, handled")
+
 	}))
 
 	go func() {
