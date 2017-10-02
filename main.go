@@ -187,7 +187,7 @@ func buildRepo(c cred.Github, repoName, workspace string) error {
 
 func buildImage(client *http.Client, tag, dockerfile string) error {
 	params := map[string]string{
-		"dockerfile": dockerfile,
+		"dockerfile": dockerfile +"/Dockerfile",
 		"t":          tag,
 	}
 
