@@ -201,7 +201,7 @@ func buildImage(client *http.Client, tag, dockerfile string) error {
 
 	log.Printf("build api uri: %s", uri)
 
-	req, er := client.Post(uri, mime, io.Reader(nil))
+	req, er := client.Post(uri, "application/tar", io.Reader(nil))
 	if er != nil {
 		return er
 	}
