@@ -185,7 +185,7 @@ func buildRepo(ds directories, c cred.Github, repo string) error {
 
 	cmd := exec.Command("makebarer", args...)
 
-	cmd.Dir = "__ws"
+	// cmd.Dir = "__ws"
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
