@@ -210,7 +210,6 @@ func buildTar(target string) error {
 
 func buildImage(imgtar, tag string, client *http.Client) error {
 	params := map[string]string{
-		// "dockerfile": dockerfile + "/Dockerfile",
 		"t": tag,
 	}
 
@@ -223,11 +222,14 @@ func buildImage(imgtar, tag string, client *http.Client) error {
 	uri := apiurl(concat)
 
 	log.Printf("build api uri: %s", uri)
+	log.Printf("tarfile archive: %s", imgtar)
 
 	f, er := os.Open(imgtar)
 	if er != nil {
 		return er
 	}
+
+	defer f.Close()
 
 	req, er := http.NewRequest("POST", uri, f)
 	if er != nil {
