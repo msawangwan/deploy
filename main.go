@@ -286,7 +286,11 @@ func main() {
 			panic(er)
 		}
 
-		wd, _ := os.Getwd()
+		wd, er := os.Getwd()
+		if er != nil {
+			panic(er)
+		}
+
 		repoPath := filepath.Join(wd, ds.workspace)
 
 		log.Printf("pulling from local repo: %s", repoPath)
@@ -294,6 +298,8 @@ func main() {
 		if er = buildRepo(ds, credentials, webhook.Repository.URL); er != nil {
 			panic(er)
 		}
+
+		log.Printf("building from local repo %s", repoName)
 
 		if er = buildImage(dockerClient, repoName, repoPath); er != nil {
 			panic(er)
