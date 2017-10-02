@@ -185,10 +185,33 @@ func buildRepo(c cred.Github, repoName, workspace string) error {
 	return nil
 }
 
-func buildImage(client *http.Client, tag, dockerfile string) error {
+func buildTar(target string) error {
+	var stdout, stderr bytes.Buffer
+
+	args := []string{
+		target + ".tar",
+		target,
+	}
+
+	cmd := exec.Command("maketar", args...)
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if er := cmd.Run(); er != nil {
+		log.Printf("%s", stderr.String())
+		return er
+	}
+
+	log.Printf("%s", stdout.String())
+
+	return nil
+}
+
+func buildImage(imgtar, tag string, client *http.Client) error {
 	params := map[string]string{
-		"dockerfile": dockerfile +"/Dockerfile",
-		"t":          tag,
+		// "dockerfile": dockerfile + "/Dockerfile",
+		"t": tag,
 	}
 
 	cmd := dock.NewBuildDockerfileCommand(params)
@@ -201,19 +224,34 @@ func buildImage(client *http.Client, tag, dockerfile string) error {
 
 	log.Printf("build api uri: %s", uri)
 
-	req, er := client.Post(uri, "application/tar", io.Reader(nil))
+	f, er := os.Open(imgtar)
 	if er != nil {
 		return er
 	}
 
-	if req.StatusCode != 200 {
+	req, er := http.NewRequest("POST", uri, f)
+	if er != nil {
+		return er
+	}
+
+	res, er := client.Do(req)
+	if er != nil {
+		return er
+	}
+
+	// req, er := client.Post(uri, "application/tar", io.Reader(nil))
+	// if er != nil {
+	// 	return er
+	// }
+
+	if res.StatusCode != 200 {
 		var m dock.ErrorResponse
 
-		if er = jsonutil.FromReader(req.Body, &m); er != nil {
+		if er = jsonutil.FromReader(res.Body, &m); er != nil {
 			return er
 		}
 
-		return responseCodeMismatchError{200, req.StatusCode, m.Message}
+		return responseCodeMismatchError{200, res.StatusCode, m.Message}
 	}
 
 	return nil
@@ -267,27 +305,33 @@ func main() {
 
 		log.Printf("payload extracted")
 
-		ws, er := createWorkspace(dirCache, repoName)
+		tempws, er := createWorkspace(dirCache, repoName)
 		if er != nil {
 			panic(er)
 		}
 
-		wd, er := os.Getwd()
+		cwd, er := os.Getwd()
 		if er != nil {
 			panic(er)
 		}
 
-		workspacePath := filepath.Join(wd, ws)
+		workspacePath := filepath.Join(cwd, tempws)
 
 		log.Printf("pulling repo into: %s", workspacePath)
 
-		if er = buildRepo(credentials, repoName, ws); er != nil {
+		if er = buildRepo(credentials, repoName, tempws); er != nil {
+			panic(er)
+		}
+
+		log.Printf("building a tar file from: %s", workspacePath)
+
+		if er = buildTar(workspacePath); er != nil {
 			panic(er)
 		}
 
 		log.Printf("building from local repo %s", repoName)
 
-		if er = buildImage(dockerClient, repoName, workspacePath); er != nil {
+		if er = buildImage(workspacePath+".tar", repoName, dockerClient); er != nil {
 			panic(er)
 		}
 

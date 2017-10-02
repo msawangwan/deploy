@@ -1,0 +1,14 @@
+#!/bin/sh
+
+echo `basename ${0}`
+
+if [ $# != 2 ]; then
+    echo "err: missing args"
+    echo "usage: `basename ${0}` <output> <target>"
+    exit 1
+fi
+
+DIR_OUTPUT="$1"
+DIR_TARGET="$2"
+
+tar cvf "${1}" "${2}"
