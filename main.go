@@ -172,18 +172,16 @@ func createWorkAndScratchSpace(cache dir.WorkspaceCacher, name string) (ds direc
 	return
 }
 
-func buildRepo(ds directories, c cred.Github, repo string) error {
+func buildRepo(c cred.Github, repo string) error {
 	var stdout, stderr bytes.Buffer
 
 	args := []string{
-		ds.workspace,
-		ds.scratchspace,
 		c.User,
 		c.OAuth,
 		repo,
 	}
 
-	cmd := exec.Command("makebarer", args...)
+	cmd := exec.Command("clrep", args...)
 
 	// cmd.Dir = "__ws"
 	cmd.Stdout = &stdout
@@ -199,10 +197,10 @@ func buildRepo(ds directories, c cred.Github, repo string) error {
 	return nil
 }
 
-func buildImage(client *http.Client, tag, remote string) error {
+func buildImage(client *http.Client, tag, dockerfile string) error {
 	params := map[string]string{
-		"remote": remote,
-		"t":      tag,
+		"dockerfile": dockerfile,
+		"t":          tag,
 	}
 
 	cmd := dock.NewBuildDockerfileCommand(params)
@@ -295,7 +293,7 @@ func main() {
 
 		log.Printf("pulling from local repo: %s", repoPath)
 
-		if er = buildRepo(ds, credentials, webhook.Repository.URL); er != nil {
+		if er = buildRepo(credentials, webhook.Repository.URL); er != nil {
 			panic(er)
 		}
 
