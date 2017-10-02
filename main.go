@@ -160,13 +160,13 @@ func createWorkspace(cache dir.WorkspaceCacher, name string) (ws string, er erro
 	return
 }
 
-func buildRepo(c cred.Github, repo string) error {
+func buildRepo(c cred.Github, repoName string) error {
 	var stdout, stderr bytes.Buffer
 
 	args := []string{
 		c.User,
 		c.OAuth,
-		repo,
+		repoName,
 	}
 
 	cmd := exec.Command("clrep", args...)
@@ -280,7 +280,7 @@ func main() {
 
 		log.Printf("pulling repo into: %s", workspacePath)
 
-		if er = buildRepo(credentials, webhook.Repository.URL); er != nil {
+		if er = buildRepo(credentials, repoName); er != nil {
 			panic(er)
 		}
 
