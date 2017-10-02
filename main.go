@@ -193,7 +193,7 @@ func buildTar(target string) error {
 		target,
 	}
 
-	cmd := exec.Command("maketar", args...)
+	cmd := exec.Command("buildtar", args...)
 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
