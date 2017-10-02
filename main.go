@@ -151,23 +151,11 @@ func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
 	return
 }
 
-type directories struct {
-	workspace    string
-	scratchspace string
-}
-
-func createWorkAndScratchSpace(cache dir.WorkspaceCacher, name string) (ds directories, er error) {
-	ws, er := cache.MkTempDir(name)
+func createWorkspace(cache dir.WorkspaceCacher, name string) (ws string, er error) {
+	ws, er = cache.MkTempDir(name)
 	if er != nil {
 		return
 	}
-
-	sc, er := cache.MkTempDir(name + "scratch")
-	if er != nil {
-		return
-	}
-
-	ds = directories{ws, sc}
 
 	return
 }
@@ -183,7 +171,6 @@ func buildRepo(c cred.Github, repo string) error {
 
 	cmd := exec.Command("clrep", args...)
 
-	// cmd.Dir = "__ws"
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
@@ -279,7 +266,7 @@ func main() {
 
 		log.Printf("payload extracted")
 
-		ds, er := createWorkAndScratchSpace(dirCache, repoName)
+		ws, er := createWorkspace(dirCache, repoName)
 		if er != nil {
 			panic(er)
 		}
@@ -289,9 +276,9 @@ func main() {
 			panic(er)
 		}
 
-		repoPath := filepath.Join(wd, ds.workspace)
+		workspacePath := filepath.Join(wd, ws)
 
-		log.Printf("pulling from local repo: %s", repoPath)
+		log.Printf("pulling repo into: %s", workspacePath)
 
 		if er = buildRepo(credentials, webhook.Repository.URL); er != nil {
 			panic(er)
@@ -299,7 +286,7 @@ func main() {
 
 		log.Printf("building from local repo %s", repoName)
 
-		if er = buildImage(dockerClient, repoName, repoPath); er != nil {
+		if er = buildImage(dockerClient, repoName, workspacePath); er != nil {
 			panic(er)
 		}
 

@@ -21,8 +21,8 @@ REPO="$3"
 URL="${SCHEME}://${OAUTH}@${PREFIX}/${USERNAME}/${REPO}${SUFFIX}"
 WD="$(pwd)"
 
-echo "pulling ${URL}"
-echo "into ${WD}"
+echo "      pulling ${URL}"
+echo "      into ${WD}"
 
 git init # don't clone cus it writes creds to .git/config?
 git pull "${URL}"
