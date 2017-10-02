@@ -185,27 +185,24 @@ func buildRepo(c cred.Github, repoName, workspace string) error {
 	return nil
 }
 
-func buildTar(target string) error {
+func buildTar(target string) (arch string, er error) {
+	arch = target + ".tar"
+
 	var stdout, stderr bytes.Buffer
 
-	args := []string{
-		target + ".tar",
-		target,
-	}
-
-	cmd := exec.Command("buildtar", args...)
+	cmd := exec.Command("buildtar", arch, target)
 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	if er := cmd.Run(); er != nil {
+	if er = cmd.Run(); er != nil {
 		log.Printf("%s", stderr.String())
-		return er
+		return
 	}
 
 	log.Printf("%s", stdout.String())
 
-	return nil
+	return
 }
 
 func buildImage(imgtar, tag string, client *http.Client) error {
@@ -311,6 +308,7 @@ func main() {
 		repoName := webhook.Repository.Name
 
 		log.Printf("payload extracted")
+		log.Printf("creating workspace")
 
 		tempws, er := createWorkspace(dirCache, repoName)
 		if er != nil {
@@ -324,21 +322,22 @@ func main() {
 
 		workspacePath := filepath.Join(cwd, tempws)
 
+		log.Printf("current working dir: %s", cwd)
+		log.Printf("created workspace: %s", tempws)
 		log.Printf("pulling repo into: %s", workspacePath)
 
 		if er = buildRepo(credentials, repoName, tempws); er != nil {
 			panic(er)
 		}
 
-		log.Printf("building a tar file from: %s", workspacePath)
+		log.Printf("repo built")
+		log.Printf("building a tar file from: %s", tempws)
 
-		if er = buildTar(workspacePath); er != nil {
+		archName, er := buildTar(tempws)
+		if er != nil {
 			panic(er)
 		}
 
-		archName := tempws + ".tar"
-
-		log.Printf("building from local repo %s", repoName)
 		log.Printf("uploading tar of img: %s", archName)
 
 		if er = buildImage(archName, repoName, dockerClient); er != nil {
