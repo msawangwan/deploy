@@ -28,6 +28,7 @@ func TestTemplateBuilders(t *testing.T) {
 			HostIP:        "192.168.0.1",
 			HostPort:      "80",
 		},
+		CreateContainerAPICall{},
 		CreateContainerAPICall{
 			Parameters: map[string]string{"some_param": "some_value"},
 		},

@@ -26,16 +26,16 @@ import (
 )
 
 const (
-	version        = "1.30"
-	port           = ":80"
-	mime           = "application/json; charset=utf-8"
-	endpoint       = "/webhooks/payload"
-	mountpoint     = "/var/run/docker.sock"
-	envipaddr      = "DOCK_MASTERCONTAINER_IPADDR"
-	socktype       = "unix"
-	wsdir          = "__ws"
-	buildfilename  = "buildfile.json"
-	dockerfilepath = "Dockerfile"
+	dockerAPIVersion = "1.30"
+	port             = ":80"
+	mime             = "application/json; charset=utf-8"
+	endpoint         = "/webhooks/payload"
+	mountpoint       = "/var/run/docker.sock"
+	envipaddr        = "DOCK_MASTERCONTAINER_IPADDR"
+	socktype         = "unix"
+	wsdir            = "__ws"
+	buildfilename    = "buildfile.json"
+	dockerfilepath   = "Dockerfile"
 )
 
 var (
@@ -124,8 +124,9 @@ func init() {
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
 }
 
-func route(adr, ver, src string) string { return fmt.Sprintf("http://%s/v%s/%s", adr, ver, src) }
-func apiurl(resource string) string     { return route(dockerHostAddr, version, resource) }
+func buildAPIURL(call string) string {
+	return fmt.Sprintf("http://%s/v%s%s", dockerHostAddr, dockerAPIVersion, call)
+}
 
 func printStats(debug bool) {
 	if debug {
@@ -213,13 +214,14 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 		"dockerfile": dockfile,
 	}
 
+	// TODO: deperecate
 	cmd := dock.NewBuildDockerfileCommand(params)
 	concat, er := dock.BuildAPIURLString(cmd)
 	if er != nil {
 		return
 	}
 
-	uri := apiurl(concat)
+	uri := buildAPIURL("/" + concat)
 
 	log.Printf("build api uri: %s", uri)
 	log.Printf("tarfile archive: %s", imgtar)
@@ -250,16 +252,29 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 }
 
 func createContainer(client *http.Client, imgname, containerport string) error {
-	payload := dock.CreateContainerPayload{
+	payload, er := dock.CreateContainerPayload{
 		Image: imgname,
 		Port:  containerport,
 	}.Build()
+	if er != nil {
+		return er
+	}
 
 	log.Printf("create container payload: %s", payload)
 
-	cmd := dock.NewContainerCommand("POST", "containers", "create")
+	cmd, er := dock.CreateContainerAPICall{}.Build()
+	if er != nil {
+		return er
+	}
 
 	log.Printf("create container cmd: %s", cmd)
+
+	uri := buildAPIURL(cmd)
+
+	req, er := client.Post(uri, "application/json", &payload)
+	if er != nil {
+		return er
+	}
 
 	//req, err := client.Post(apiurl("containers
 
