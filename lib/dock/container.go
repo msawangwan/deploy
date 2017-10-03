@@ -2,6 +2,8 @@ package dock
 
 import (
 	"bytes"
+	"fmt"
+	"strings"
 	"text/template"
 )
 
@@ -71,7 +73,26 @@ func renderTmpl(jtr jsonTemplateRenderer) (s string, err error) {
 			}
 			return false
 		},
+		"build_url_string": func(ss ...string) string {
+			var u string
+
+			for _, s := range ss {
+				u += fmt.Sprintf("/%s", s)
+			}
+
+			return strings.TrimSuffix(u, "/")
+		},
+		"append_query_parameters": func(qs map[string]string) string {
+			var p string
+
+			for k, v := range qs {
+				p += fmt.Sprintf("%s=%s&", k, v)
+			}
+
+			return strings.TrimSuffix(p, "&")
+		},
 	}
+
 	str := string(jtr.render())
 
 	tmpl, err := template.New("").Funcs(helper).Parse(str)

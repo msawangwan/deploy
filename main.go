@@ -249,8 +249,19 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 	return
 }
 
-func createContainer(imgname string) error {
-	// payload :=
+func createContainer(client *http.Client, imgname, containerport string) error {
+	payload := dock.CreateContainerPayload{
+		Image: imgname,
+		Port:  containerport,
+	}.Build()
+
+	log.Printf("create container payload: %s", payload)
+
+	cmd := dock.NewContainerCommand("POST", "containers", "create")
+
+	log.Printf("create container cmd: %s", cmd)
+
+	//req, err := client.Post(apiurl("containers
 
 	return nil
 }
