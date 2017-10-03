@@ -277,63 +277,6 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 	return
 }
 
-func createContainer(client *http.Client, imgname, containerport string) error {
-	// payload, er := dock.CreateContainerPayload{
-	// 	Image: imgname,
-	// 	Port:  containerport,
-	// }.Build()
-	// if er != nil {
-	// 	return er
-	// }
-
-	// log.Printf("create container payload: %s", payload)
-
-	// cmd, er := dock.CreateContainerAPICall{}.Build()
-	// if er != nil {
-	// 	return er
-	// }
-
-	// log.Printf("create container cmd: %s", cmd)
-
-	// uri := buildAPIURL(string(cmd))
-	// bufread := bytes.NewReader(payload)
-
-	// res, er := client.Post(uri, "application/json", bufread)
-	// if er != nil {
-	// 	return er
-	// }
-
-	// if !isExpectedResponseCode(res.StatusCode, 201) {
-	// 	return parseDockerAPIErrorResponse(201, res)
-	// }
-
-	// return nil
-	req := dock.APIRequest{
-		Endpoint: dock.CreateContainerAPICall{},
-		Data: dock.CreateContainerPayload{
-			Image: imgname,
-			Port:  containerport,
-		},
-		Method:      "POST",
-		ContentType: "application/json",
-		SuccessCode: 201,
-	}
-
-	return makeAPIRequest(req, client)
-}
-
-func runContainer(client *http.Client) error {
-	req := dock.APIRequest{
-		Endpoint:    dock.StartContainerAPICall{},
-		Data:        dock.StartContainerPayload{},
-		Method:      "POST",
-		ContentType: "application/json",
-		SuccessCode: 204,
-	}
-
-	return makeAPIRequest(req, client)
-}
-
 func makeAPIRequest(req dock.APIRequest, c *http.Client) error {
 	var res *http.Response
 
@@ -343,6 +286,9 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) error {
 	}
 
 	uri := buildAPIURL(string(endpoint))
+
+	log.Printf("api request endpoint: %s", endpoint)
+	log.Printf("api request uri: %s", uri)
 
 	switch {
 	case req.Method == "GET":
@@ -370,6 +316,33 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) error {
 	}
 
 	return nil
+}
+
+func createContainer(client *http.Client, imgname, containerport string) error {
+	req := dock.APIRequest{
+		Endpoint: dock.CreateContainerAPICall{},
+		Data: dock.CreateContainerPayload{
+			Image: imgname,
+			Port:  containerport,
+		},
+		Method:      "POST",
+		ContentType: "application/json",
+		SuccessCode: 201,
+	}
+
+	return makeAPIRequest(req, client)
+}
+
+func runContainer(client *http.Client) error {
+	req := dock.APIRequest{
+		Endpoint:    dock.StartContainerAPICall{},
+		Data:        dock.StartContainerPayload{},
+		Method:      "POST",
+		ContentType: "application/json",
+		SuccessCode: 204,
+	}
+
+	return makeAPIRequest(req, client)
 }
 
 func main() {
