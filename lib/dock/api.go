@@ -2,6 +2,15 @@ package dock
 
 import "fmt"
 
+// APIRequest ...
+type APIRequest struct {
+	Endpoint    Templater
+	Data        Templater
+	Method      string
+	ContentType string
+	SuccessCode int
+}
+
 // APIResponseError ...
 type APIResponseError struct {
 	Message      string `json:"message,omitempty"`
