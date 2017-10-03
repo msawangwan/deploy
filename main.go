@@ -343,6 +343,7 @@ func main() {
 			panic(er)
 		}
 
+		log.Printf("img name: %s", imgName)
 		log.Printf("webhook event, handled")
 	}))
 
