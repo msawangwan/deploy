@@ -7,22 +7,19 @@ import (
 	"text/template"
 )
 
-type JSONPayloadBuilder interface {
+// Templater ...
+type Templater interface {
 	Build() (s string, err error)
 }
 
-type jsonTemplateRenderer interface {
-	render() []byte
-}
-
+// CreateContainerPayload ...
 type CreateContainerPayload struct {
 	Image string
 	Port  string
 }
 
-func (ccp CreateContainerPayload) Build() (s string, err error) {
-	return renderTmpl(ccp)
-}
+// Build ...
+func (ccp CreateContainerPayload) Build() (s string, err error) { return renderTmpl(ccp) }
 
 func (ccp CreateContainerPayload) render() []byte {
 	return []byte(
@@ -37,6 +34,7 @@ func (ccp CreateContainerPayload) render() []byte {
 	)
 }
 
+// StartContainerPayload ...
 type StartContainerPayload struct {
 	ContainerID   string
 	ContainerPort string
@@ -44,9 +42,8 @@ type StartContainerPayload struct {
 	HostPort      string
 }
 
-func (scp StartContainerPayload) Build() (s string, err error) {
-	return renderTmpl(scp)
-}
+// Build ...
+func (scp StartContainerPayload) Build() (s string, err error) { return renderTmpl(scp) }
 
 func (scp StartContainerPayload) render() []byte {
 	return []byte(
@@ -56,14 +53,53 @@ func (scp StartContainerPayload) render() []byte {
             "PortBindings": {{ if .ContainerPort }}{
                 "{{ .ContainerPort }}/tcp": {{ if is_at_least_one_not_null .HostIP .HostPort }}{
                     {{ if .HostIP }}"HostIP": "{{ .HostIP }}"{{ end }}
-                    {{ if .HostPort }}"HostPort" : "{{ .HostPort }}"{{ end }}
+                    {{ if .HostPort }}"HostPort": "{{ .HostPort }}"{{ end }}
                 }{{ else }}{}{{ end }}{{ else }}{}{{ end }}
         }
          {{- end -}}`,
 	)
 }
 
-func renderTmpl(jtr jsonTemplateRenderer) (s string, err error) {
+// CreateContainerAPICall ...
+type CreateContainerAPICall struct {
+	Parameters map[string]string
+}
+
+// Build ...
+func (ccac CreateContainerAPICall) Build() (s string, err error) { return renderTmpl(ccac) }
+
+func (ccac CreateContainerAPICall) render() []byte {
+	return []byte(
+		`{{- with . -}}
+			/containers/create
+				{{- if .Parameters -}}
+					?{{- append_query_parameters .Parameters -}}
+				{{- end -}}
+		{{- end -}}`,
+	)
+}
+
+// StartContainerAPICall ...
+type StartContainerAPICall struct {
+	ContainerID string
+}
+
+// Build ...
+func (scac StartContainerAPICall) Build() (s string, err error) { return renderTmpl(scac) }
+
+func (scac StartContainerAPICall) render() []byte {
+	return []byte(
+		`{{- with . -}}
+			/containers/{{- .ContainerID -}}/start
+		{{- end -}}`,
+	)
+}
+
+type renderer interface {
+	render() []byte
+}
+
+func renderTmpl(r renderer) (s string, err error) {
 	helper := template.FuncMap{
 		"is_at_least_one_not_null": func(ss ...string) bool {
 			for _, s := range ss {
@@ -93,7 +129,7 @@ func renderTmpl(jtr jsonTemplateRenderer) (s string, err error) {
 		},
 	}
 
-	str := string(jtr.render())
+	str := string(r.render())
 
 	tmpl, err := template.New("").Funcs(helper).Parse(str)
 	if err != nil {
@@ -102,7 +138,7 @@ func renderTmpl(jtr jsonTemplateRenderer) (s string, err error) {
 
 	var buf bytes.Buffer
 
-	if err = tmpl.Execute(&buf, jtr); err != nil {
+	if err = tmpl.Execute(&buf, r); err != nil {
 		return
 	}
 

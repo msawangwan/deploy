@@ -6,8 +6,8 @@ import (
 	"github.com/msawangwan/ci.io/lib/symbol"
 )
 
-func TestStartContainerPayloadWithAndWithoutPortBindings(t *testing.T) {
-	payloads := []JSONPayloadBuilder{
+func TestTemplateBuilders(t *testing.T) {
+	payloads := []Templater{
 		CreateContainerPayload{Image: "some_image"},
 		CreateContainerPayload{Image: "some_image", Port: "8080"},
 		StartContainerPayload{ContainerID: "1234"},
@@ -27,6 +27,15 @@ func TestStartContainerPayloadWithAndWithoutPortBindings(t *testing.T) {
 			ContainerPort: "9080",
 			HostIP:        "192.168.0.1",
 			HostPort:      "80",
+		},
+		CreateContainerAPICall{
+			Parameters: map[string]string{"some_param": "some_value"},
+		},
+		CreateContainerAPICall{
+			Parameters: map[string]string{"some_param": "some_value", "another_param": "another_value"},
+		},
+		StartContainerAPICall{
+			ContainerID: "1273683",
 		},
 	}
 
