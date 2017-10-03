@@ -2,26 +2,41 @@ package dock
 
 import (
 	"testing"
+
+	"github.com/msawangwan/ci.io/lib/symbol"
 )
 
-func TestASimpleCeateContainerPayload(t *testing.T) {
-	payload := CreateContainerPayload{Image: "some_img"}
-
-	result, err := payload.Build()
-	if err != nil {
-		t.Fatalf("%s", err)
+func TestStartContainerPayloadWithAndWithoutPortBindings(t *testing.T) {
+	payloads := []JSONPayloadBuilder{
+		CreateContainerPayload{Image: "some_image"},
+		CreateContainerPayload{Image: "some_image", Port: "8080"},
+		StartContainerPayload{ContainerID: "1234"},
+		StartContainerPayload{ContainerID: "4312", ContainerPort: "9090"},
+		StartContainerPayload{
+			ContainerID:   "98765",
+			ContainerPort: "8090",
+			HostIP:        "10.0.0.1",
+		},
+		StartContainerPayload{
+			ContainerID:   "82384",
+			ContainerPort: "9040",
+			HostPort:      "80",
+		},
+		StartContainerPayload{
+			ContainerID:   "233456",
+			ContainerPort: "9080",
+			HostIP:        "192.168.0.1",
+			HostPort:      "80",
+		},
 	}
 
-	t.Logf("%s", result)
-}
-
-func TestContainerWithExposedPorts(t *testing.T) {
-	payload := CreateContainerPayload{Image: "some_image", Port: "8080"}
-
-	result, err := payload.Build()
-	if err != nil {
-		t.Fatalf("%s", err)
+	for _, p := range payloads {
+		r, e := p.Build()
+		if e != nil {
+			t.Fatalf("%s", e)
+		}
+		t.Logf("%s", r)
 	}
 
-	t.Logf("%s", result)
+	t.Logf("%s", symbol.PassMark)
 }
