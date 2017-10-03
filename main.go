@@ -231,16 +231,6 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 
 	defer f.Close()
 
-	// req, er := http.NewRequest("POST", uri, f)
-	// if er != nil {
-	// 	return er
-	// }
-
-	// res, er := client.Do(req)
-	// if er != nil {
-	// 	return er
-	// }
-
 	req, er := client.Post(uri, "application/x-tar", f)
 	if er != nil {
 		return
@@ -253,10 +243,20 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 			return
 		}
 
-		return "", responseCodeMismatchError{200, req.StatusCode, m.Message}
+		er = responseCodeMismatchError{200, req.StatusCode, m.Message}
 	}
 
 	return
+}
+
+func createContainer(imgname string) error {
+	// payload :=
+
+	return nil
+}
+
+func runContainer() error {
+	return nil
 }
 
 func main() {
