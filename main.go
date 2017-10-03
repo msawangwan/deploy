@@ -207,7 +207,8 @@ func buildTar(target string) (arch string, er error) {
 
 func buildImage(imgtar, tag string, client *http.Client) error {
 	params := map[string]string{
-		"t": tag,
+		//"t": tag,
+		"dockerfile": "Dockerfile",
 	}
 
 	cmd := dock.NewBuildDockerfileCommand(params)
@@ -228,34 +229,34 @@ func buildImage(imgtar, tag string, client *http.Client) error {
 
 	defer f.Close()
 
-	// r, er := tar.NewReader(f)
-	// if er != nil {
-	// 	return er
-	// }
+	//r, er := tar.NewReader(f)
+	//if er != nil {
+	//	return er
+	//}
 
-	// req, er := http.NewRequest("POST", uri, r)
-	// if er != nil {
-	// 	return er
-	// }
-
-	// res, er := client.Do(req)
-	// if er != nil {
-	// 	return er
-	// }
-
-	req, er := client.Post(uri, "application/tar", f)
+	req, er := http.NewRequest("POST", uri, f)
 	if er != nil {
 		return er
 	}
 
-	if req.StatusCode != 200 {
+	res, er := client.Do(req)
+	if er != nil {
+		return er
+	}
+
+	//req, er := client.Post(uri, "application/tar", f)
+	//if er != nil {
+	//		return er
+	//	}
+
+	if res.StatusCode != 200 {
 		var m dock.ErrorResponse
 
-		if er = jsonutil.FromReader(req.Body, &m); er != nil {
+		if er = jsonutil.FromReader(res.Body, &m); er != nil {
 			return er
 		}
 
-		return responseCodeMismatchError{200, req.StatusCode, m.Message}
+		return responseCodeMismatchError{200, res.StatusCode, m.Message}
 	}
 
 	return nil
