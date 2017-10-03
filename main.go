@@ -338,7 +338,8 @@ func main() {
 
 		log.Printf("uploading tar of img: %s", archName)
 
-		if er = buildImage(tempws+"/Dockerfile", archName, repoName, dockerClient); er != nil {
+		imgName, er := buildImage(tempws+"/Dockerfile", archName, repoName, dockerClient)
+		if er != nil {
 			panic(er)
 		}
 
