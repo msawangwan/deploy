@@ -55,20 +55,20 @@ var (
 
 var killsig = make(chan os.Signal, 1)
 
-type responseCodeMismatchError struct {
-	Expected int
-	Actual   int
-	Message  string
-}
+// type responseCodeMismatchError struct {
+// 	Expected int
+// 	Actual   int
+// 	Message  string
+// }
 
-func (rcme responseCodeMismatchError) Error() string {
-	return fmt.Sprintf(
-		"[response_code_err][expected: %d][actual: %d] %s",
-		rcme.Expected,
-		rcme.Actual,
-		rcme.Message,
-	)
-}
+// func (rcme responseCodeMismatchError) Error() string {
+// 	return fmt.Sprintf(
+// 		"[response_code_err][expected: %d][actual: %d] %s",
+// 		rcme.Expected,
+// 		rcme.Actual,
+// 		rcme.Message,
+// 	)
+// }
 
 func init() {
 	signal.Notify(killsig, syscall.SIGINT, syscall.SIGTERM)
@@ -124,10 +124,6 @@ func init() {
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
 }
 
-func buildAPIURL(call string) string {
-	return fmt.Sprintf("http://%s/v%s%s", dockerHostAddr, dockerAPIVersion, call)
-}
-
 func printStats(debug bool) {
 	if debug {
 		log.Printf("%d", runtime.NumGoroutine())
@@ -159,6 +155,27 @@ func createWorkspace(cache dir.WorkspaceCacher, name string) (ws string, er erro
 	}
 
 	return
+}
+
+func parseDockerAPIErrorResponse(code int, r *http.Response) error {
+	p := dock.APIResponseError{
+		ExpectedCode: code,
+		ActualCode:   r.StatusCode,
+	}
+
+	if e := jsonutil.FromReader(r.Body, &p); e != nil {
+		return e
+	}
+
+	return p
+}
+
+func isExpectedResponseCode(expected, got int) bool {
+	return expected == got
+}
+
+func buildAPIURL(call string) string {
+	return fmt.Sprintf("http://%s/v%s%s", dockerHostAddr, dockerAPIVersion, call)
 }
 
 func buildRepo(c cred.Github, repoName, workspace string) error {
@@ -215,13 +232,18 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 	}
 
 	// TODO: deperecate
-	cmd := dock.NewBuildDockerfileCommand(params)
-	concat, er := dock.BuildAPIURLString(cmd)
+	// cmd := dock.NewBuildDockerfileCommand(params)
+	// concat, er := dock.BuildAPIURLString(cmd)
+	// if er != nil {
+	// 	return
+	// }
+
+	cmd, er := dock.BuildImageAPICall{Parameters: params}.Build()
 	if er != nil {
 		return
 	}
 
-	uri := buildAPIURL("/" + concat)
+	uri := buildAPIURL(string(cmd))
 
 	log.Printf("build api uri: %s", uri)
 	log.Printf("tarfile archive: %s", imgtar)
@@ -233,20 +255,24 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 
 	defer f.Close()
 
-	req, er := client.Post(uri, "application/x-tar", f)
+	res, er := client.Post(uri, "application/x-tar", f)
 	if er != nil {
 		return
 	}
 
-	if req.StatusCode != 200 {
-		var m dock.ErrorResponse
-
-		if er = jsonutil.FromReader(req.Body, &m); er != nil {
-			return
-		}
-
-		er = responseCodeMismatchError{200, req.StatusCode, m.Message}
+	if !isExpectedResponseCode(200, res.StatusCode) {
+		return "", parseDockerAPIErrorResponse(200, res)
 	}
+
+	// if req.StatusCode != 200 {
+	// 	var m dock.ErrorResponse
+
+	// 	if er = jsonutil.FromReader(req.Body, &m); er != nil {
+	// 		return
+	// 	}
+
+	// 	er = responseCodeMismatchError{200, req.StatusCode, m.Message}
+	// }
 
 	return
 }
@@ -269,14 +295,17 @@ func createContainer(client *http.Client, imgname, containerport string) error {
 
 	log.Printf("create container cmd: %s", cmd)
 
-	uri := buildAPIURL(cmd)
+	uri := buildAPIURL(string(cmd))
+	bufread := bytes.NewReader(payload)
 
-	req, er := client.Post(uri, "application/json", &payload)
+	res, er := client.Post(uri, "application/json", bufread)
 	if er != nil {
 		return er
 	}
 
-	//req, err := client.Post(apiurl("containers
+	if !isExpectedResponseCode(res.StatusCode, 201) {
+		return parseDockerAPIErrorResponse(201, res)
+	}
 
 	return nil
 }

@@ -38,6 +38,13 @@ func TestTemplateBuilders(t *testing.T) {
 		StartContainerAPICall{
 			ContainerID: "1273683",
 		},
+		BuildImageAPICall{},
+		BuildImageAPICall{
+			Parameters: map[string]string{"some_key": "some_val"},
+		},
+		BuildImageAPICall{
+			Parameters: map[string]string{"some_key": "some_val", "another_key": "another_val"},
+		},
 	}
 
 	for _, p := range payloads {

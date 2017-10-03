@@ -59,10 +59,10 @@ func (ccac CreateContainerAPICall) Build() ([]byte, error) { return renderTmpl(c
 func (ccac CreateContainerAPICall) render() string {
 	return `
 	{{- with . -}}
-			/containers/create
-				{{- if .Parameters -}}
-					?{{- append_query_parameters .Parameters -}}
-				{{- end -}}
+		/containers/create
+			{{- if .Parameters -}}
+				?{{- append_query_parameters .Parameters -}}
+			{{- end -}}
 	{{- end -}}
 	`
 }
@@ -78,7 +78,7 @@ func (scac StartContainerAPICall) Build() ([]byte, error) { return renderTmpl(sc
 func (scac StartContainerAPICall) render() string {
 	return `
 	{{- with . -}}
-			/containers/{{- .ContainerID -}}/start
+		/containers/{{- .ContainerID -}}/start
 	{{- end -}}
 	`
 }
