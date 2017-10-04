@@ -341,7 +341,7 @@ func runContainer(client *http.Client, containerID, containerPort string) error 
 		Data: dock.NewStartContainerPayload(
 			containerID,
 			fmt.Sprintf("%s/tcp", containerPort),
-			"",
+			dockerHostAddr,
 			"9091",
 		),
 		Method:      "POST",
