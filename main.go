@@ -449,6 +449,7 @@ func main() {
 			panic(er)
 		}
 
+		log.Printf("successfully tar'ed archive: %s", archName)
 		log.Printf("uploading tar of img: %s", archName)
 
 		imgName, er := buildImage(tempws+"/Dockerfile", archName, repoName, dockerClient)

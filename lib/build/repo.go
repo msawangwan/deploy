@@ -1,43 +1,43 @@
 package build
 
-import (
-	"bytes"
-	"os/exec"
-)
+// import (
+// 	"bytes"
+// 	"os/exec"
+// )
 
-// BareRepoer ...
-type BareRepoer interface {
-	Init(name string, params ...string) (result string, err error)
-}
+// // BareRepoer ...
+// type BareRepoer interface {
+// 	Init(name string, params ...string) (result string, err error)
+// }
 
-// BareRepo ...
-type BareRepo struct {
-	WorkspaceDir string
-	ScratchDir   string
-	Repository   string
-}
+// // BareRepo ...
+// type BareRepo struct {
+// 	WorkspaceDir string
+// 	ScratchDir   string
+// 	Repository   string
+// }
 
-// Init ...
-func (br BareRepo) Init(name string, params ...string) (r string, e error) {
-	var stdout, stderr bytes.Buffer
+// // Init ...
+// func (br BareRepo) Init(name string, params ...string) (r string, e error) {
+// 	var stdout, stderr bytes.Buffer
 
-	args := []string{
-		br.WorkspaceDir,
-		br.ScratchDir,
-		br.Repository,
-	}
+// 	args := []string{
+// 		br.WorkspaceDir,
+// 		br.ScratchDir,
+// 		br.Repository,
+// 	}
 
-	args = append(args, params...)
+// 	args = append(args, params...)
 
-	cmd := exec.Command("makebarer", args...)
+// 	cmd := exec.Command("makebarer", args...)
 
-	cmd.Dir = "__ws"
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+// 	cmd.Dir = "__ws"
+// 	cmd.Stdout = &stdout
+// 	cmd.Stderr = &stderr
 
-	if e = cmd.Run(); e != nil {
-		return stderr.String(), e
-	}
+// 	if e = cmd.Run(); e != nil {
+// 		return stderr.String(), e
+// 	}
 
-	return stdout.String(), nil
-}
+// 	return stdout.String(), nil
+// }
