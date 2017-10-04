@@ -7,6 +7,7 @@ func NewCreateContainerPayload(fromImg, containerPort, hostIP, hostPort string) 
 		ExposedPorts: map[string]struct{}{
 			containerPort: struct{}{},
 		},
+		OpenStdin: true,
 		HostConfig: HostConfig{
 			PortBindings: map[string][]HostNetworkSettings{
 				containerPort: []HostNetworkSettings{

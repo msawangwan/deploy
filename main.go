@@ -311,30 +311,6 @@ func createContainer(client *http.Client, fromImg, containerPort, hostIP, hostPo
 		SuccessCode: 201,
 	}
 
-	// endpoint, er := req.Endpoint.Build()
-	// if er != nil {
-	// 	return
-	// }
-
-	// uri := buildAPIURL(string(endpoint))
-
-	// log.Printf("docker api call: %s", uri)
-
-	// payload, er := req.Data.Build()
-	// if er != nil {
-	// 	return
-	// }
-
-	// res, er := client.Post(uri, req.ContentType, bytes.NewReader(payload))
-	// if er != nil {
-	// 	return
-	// }
-
-	// if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
-	// 	er = parseDockerAPIErrorResponse(req.SuccessCode, res)
-	// 	return
-	// }
-
 	res, er := makeAPIRequest(req, client)
 	if er != nil {
 		return
@@ -362,24 +338,6 @@ func runContainer(client *http.Client, containerID string) error {
 		SuccessCode: 204,
 	}
 
-	// endpoint, er := req.Endpoint.Build()
-	// if er != nil {
-	// 	return er
-	// }
-
-	// uri := buildAPIURL(string(endpoint))
-
-	// log.Printf("docker api call: %s", uri)
-
-	// res, er := client.Post(uri, req.ContentType, io.Reader(nil))
-	// if er != nil {
-	// 	return er
-	// }
-
-	// if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
-	// 	er = parseDockerAPIErrorResponse(req.SuccessCode, res)
-	// 	return er
-	// }
 	_, er := makeAPIRequest(req, client)
 	if er != nil {
 		return er
