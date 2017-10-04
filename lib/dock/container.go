@@ -25,6 +25,7 @@ func NewCreateContainerPayload(fromImg, containerPort, hostIP, hostPort string) 
 type CreateContainerPayload struct {
 	Image        string              `json:"Image,omitempty"`
 	ExposedPorts map[string]struct{} `json:"ExposedPorts,omitempty"`
+	OpenStdin    bool                `json:"OpenStdin,omitempty"`
 	HostConfig   HostConfig          `json:"hostConfig,omitempty"`
 }
 
