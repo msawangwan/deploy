@@ -11,6 +11,12 @@ type APIRequest struct {
 	SuccessCode int
 }
 
+// APIResponse ...
+type APIResponse struct {
+	ID       string   `json:"Id,omitempty"`
+	Warnings []string `json:"Warnings,omitempty"`
+}
+
 // APIResponseError ...
 type APIResponseError struct {
 	Message      string `json:"message,omitempty"`

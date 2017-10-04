@@ -1,0 +1,17 @@
+#!/bin/sh
+
+#+ extractexpose takes a dockerfile and returns the EXPOSE declaration
+#+ beware that this script makes a lot of assumptions
+
+if [ "$#" -ne 1 ]; then
+    echo "err: missing args"
+    exit 1
+fi
+
+DOCKERFILE=$1
+
+PORT="$(cat < ${DOCKERFILE} | grep "EXPOSE" | awk '{print $2}')"
+
+echo "${PORT}"
+
+exit 0

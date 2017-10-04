@@ -55,21 +55,6 @@ var (
 
 var killsig = make(chan os.Signal, 1)
 
-// type responseCodeMismatchError struct {
-// 	Expected int
-// 	Actual   int
-// 	Message  string
-// }
-
-// func (rcme responseCodeMismatchError) Error() string {
-// 	return fmt.Sprintf(
-// 		"[response_code_err][expected: %d][actual: %d] %s",
-// 		rcme.Expected,
-// 		rcme.Actual,
-// 		rcme.Message,
-// 	)
-// }
-
 func init() {
 	signal.Notify(killsig, syscall.SIGINT, syscall.SIGTERM)
 
@@ -144,6 +129,17 @@ func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
 	if e = jsonutil.FromReader(r, &payload); e != nil {
 		return
 	}
+
+	return
+}
+
+func extractExposedPort(dockerfile string) (s string, e error) {
+	out, e := exec.Command("extractexpose", dockerfile).Output()
+	if e != nil {
+		return
+	}
+
+	s = string(out)
 
 	return
 }
@@ -277,12 +273,10 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 	return
 }
 
-func makeAPIRequest(req dock.APIRequest, c *http.Client) error {
-	var res *http.Response
-
+func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er error) {
 	endpoint, er := req.Endpoint.Build()
 	if er != nil {
-		return er
+		return
 	}
 
 	uri := buildAPIURL(string(endpoint))
@@ -295,9 +289,8 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) error {
 		res, er = c.Get(uri)
 	case req.Method == "POST":
 		payload, er := req.Data.Build()
-
 		if er != nil {
-			return er
+			return nil, er
 		}
 
 		res, er = c.Post(
@@ -308,17 +301,17 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) error {
 	}
 
 	if er != nil {
-		return er
+		return
 	}
 
 	if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
-		return parseDockerAPIErrorResponse(req.SuccessCode, res)
+		return nil, parseDockerAPIErrorResponse(req.SuccessCode, res)
 	}
 
-	return nil
+	return
 }
 
-func createContainer(client *http.Client, imgname, containerport string) error {
+func createContainer(client *http.Client, imgname, containerport string) (id string, er error) {
 	req := dock.APIRequest{
 		Endpoint: dock.CreateContainerAPICall{},
 		Data: dock.CreateContainerPayload{
@@ -330,19 +323,43 @@ func createContainer(client *http.Client, imgname, containerport string) error {
 		SuccessCode: 201,
 	}
 
-	return makeAPIRequest(req, client)
+	res, er := makeAPIRequest(req, client)
+	if er != nil {
+		return
+	}
+
+	var payload dock.APIResponse
+
+	if er = jsonutil.FromReader(res.Body, &payload); er != nil {
+		return
+	}
+
+	id = payload.ID
+
+	return
 }
 
-func runContainer(client *http.Client) error {
+func runContainer(client *http.Client, containerID, containerPort string) error {
 	req := dock.APIRequest{
-		Endpoint:    dock.StartContainerAPICall{},
-		Data:        dock.StartContainerPayload{},
+		Endpoint: dock.StartContainerAPICall{
+			ContainerID: containerID,
+		},
+		Data: dock.StartContainerPayload{
+			ContainerID:   containerID,
+			ContainerPort: containerPort,
+			HostPort:      "9191",
+		},
 		Method:      "POST",
 		ContentType: "application/json",
 		SuccessCode: 204,
 	}
 
-	return makeAPIRequest(req, client)
+	_, er := makeAPIRequest(req, client)
+	if er != nil {
+		return er
+	}
+
+	return nil
 }
 
 func main() {
@@ -410,6 +427,16 @@ func main() {
 		log.Printf("created workspace: %s", tempws)
 		log.Printf("pulling repo into: %s", workspacePath)
 
+		dockerfile := filepath.Join(workspacePath, "Dockerfile")
+
+		exposedPort, er := extractExposedPort(dockerfile)
+		if er != nil {
+			panic(er)
+		}
+
+		log.Printf("dockerfile located at")
+		log.Printf("extracted exposed port from dockerfile: %s", exposedPort)
+
 		if er = buildRepo(credentials, repoName, tempws); er != nil {
 			panic(er)
 		}
@@ -430,6 +457,20 @@ func main() {
 		}
 
 		log.Printf("img name: %s", imgName)
+
+		containerID, er := createContainer(dockerClient, imgName, exposedPort)
+		if er != nil {
+			panic(er)
+		}
+
+		log.Printf("container created: %s", containerID)
+
+		if er = runContainer(dockerClient, containerID, exposedPort); er != nil {
+			panic(er)
+		}
+
+		log.Printf("container running: %s", containerID)
+
 		log.Printf("webhook event, handled")
 	}))
 
