@@ -2,6 +2,7 @@ package dock
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
@@ -16,7 +17,18 @@ type renderer interface {
 	render() string
 }
 
-func renderTmpl(r renderer) (b []byte, err error) {
+func renderJSON(r renderer) (b []byte, e error) {
+	j, e := json.MarshalIndent(r, "", "\t")
+	if e != nil {
+		return
+	}
+
+	b = []byte(j)
+
+	return
+}
+
+func renderTmpl(r renderer) (b []byte, e error) {
 	helper := template.FuncMap{
 		"is_at_least_one_not_null": func(ss ...string) bool {
 			for _, s := range ss {
@@ -57,18 +69,23 @@ func renderTmpl(r renderer) (b []byte, err error) {
 		},
 	}
 
-	tmpl, err := template.New("").Funcs(helper).Parse(r.render())
-	if err != nil {
+	t, e := template.New("").Funcs(helper).Parse(r.render())
+	if e != nil {
 		return
 	}
 
 	var buf bytes.Buffer
 
-	if err = tmpl.Execute(&buf, r); err != nil {
+	if e = t.Execute(&buf, r); e != nil {
 		return
 	}
 
 	b = buf.Bytes()
+
+	//b, e = format.Source(buf.Bytes())
+	//if e != nil {
+	//	return
+	//}
 
 	return
 }

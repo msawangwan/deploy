@@ -6,20 +6,35 @@ type CreateContainerPayload struct {
 	Port  string
 }
 
+func NewCreateContainerPayload(fromImg, containerPort string) CreateContainerPayload_new {
+    return CreateContainerPayload_new {
+        Image: fromImg,
+        ExposedPorts: map[string]struct{}{
+            containerPort: struct{},
+        },
+    }
+}
+
+type CreateContainerPayload_new struct {
+	Image        string
+	ExposedPorts map[string]struct{}
+}
+
 // Build ...
-func (ccp CreateContainerPayload) Build() ([]byte, error) { return renderTmpl(ccp) }
+//func (ccp CreateContainerPayload) Build() ([]byte, error) { return renderTmpl(ccp) }
+func (ccp CreateContainerPayload) Build() ([]byte, error) { return renderJSON(ccp) }
 
 func (ccp CreateContainerPayload) render() string {
 	return `
-	{{- with . -}}
-		{
-			"Image": "{{ .Image }}",
-			"ExposedPorts": {{ if .Port }}{
-				"{{ .Port }}/tcp": {}
-			}{{ else }}{}{{ end }}
-		}
-	{{- end -}}
-	`
+		{{- with . -}}
+			{
+				"Image": "{{ .Image }}",
+				"ExposedPorts": {{ if .Port }}{
+					"{{ .Port }}/tcp": {}
+				}{{ else }}{}{{ end }}
+			}
+		{{- end -}}
+		`
 }
 
 // StartContainerPayload ...
@@ -31,7 +46,7 @@ type StartContainerPayload struct {
 }
 
 // Build ...
-func (scp StartContainerPayload) Build() ([]byte, error) { return renderTmpl(scp) }
+func (scp StartContainerPayload) Build() ([]byte, error) { return renderJSON(scp) }
 
 func (scp StartContainerPayload) render() string {
 	return `
