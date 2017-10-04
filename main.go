@@ -436,7 +436,7 @@ func main() {
 		if er != nil {
 			panic(er)
 		}
-		exposedPort = bf.ContainerPort
+		exposedPort := bf.ContainerPort
 		//		if exposedPort == "" || len(exposedPort) == 0 {
 		//		}
 
