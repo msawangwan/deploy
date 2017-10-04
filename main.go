@@ -375,11 +375,6 @@ func runContainer(client *http.Client, containerID string) error {
 
 	log.Printf("docker api call: %s", uri)
 
-	// _, er = req.Data.Build()
-	// if er != nil {
-	// 	return er
-	// }
-
 	res, er := client.Post(uri, req.ContentType, io.Reader(nil))
 	if er != nil {
 		return er
@@ -493,7 +488,7 @@ func main() {
 
 		log.Printf("img name: %s", imgName)
 
-		containerID, er := createContainer(dockerClient, imgName, exposedPort, dockerHostAddr, "9090")
+		containerID, er := createContainer(dockerClient, imgName, exposedPort, "", "9090")
 		if er != nil {
 			panic(er)
 		}
