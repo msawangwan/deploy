@@ -427,18 +427,18 @@ func main() {
 		log.Printf("dockerfile: %s", dockerfile)
 		log.Printf("buildfile: %s", buildfile)
 
-		exposedPort, er := extractExposedPort(dockerfile)
+		//exposedPort, er := extractExposedPort(dockerfile)
+		//if er != nil {
+		//	panic(er)
+		//}
+
+		bf, er := loadBuildfile(buildfile)
 		if er != nil {
 			panic(er)
 		}
-
-		if exposedPort == "" || len(exposedPort) == 0 {
-			bf, er := loadBuildfile(buildfile)
-			if er != nil {
-				panic(er)
-			}
-			exposedPort = bf.ContainerPort
-		}
+		exposedPort = bf.ContainerPort
+		//		if exposedPort == "" || len(exposedPort) == 0 {
+		//		}
 
 		log.Printf("extracted exposed port from dockerfile: %s", exposedPort)
 
