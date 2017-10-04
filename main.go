@@ -238,13 +238,6 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 		"dockerfile": dockfile,
 	}
 
-	// TODO: deperecate
-	// cmd := dock.NewBuildDockerfileCommand(params)
-	// concat, er := dock.BuildAPIURLString(cmd)
-	// if er != nil {
-	// 	return
-	// }
-
 	cmd, er := dock.BuildImageAPICall{Parameters: params}.Build()
 	if er != nil {
 		return
@@ -270,16 +263,6 @@ func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname stri
 	if !isExpectedResponseCode(200, res.StatusCode) {
 		return "", parseDockerAPIErrorResponse(200, res)
 	}
-
-	// if req.StatusCode != 200 {
-	// 	var m dock.ErrorResponse
-
-	// 	if er = jsonutil.FromReader(req.Body, &m); er != nil {
-	// 		return
-	// 	}
-
-	// 	er = responseCodeMismatchError{200, req.StatusCode, m.Message}
-	// }
 
 	return
 }
@@ -449,7 +432,14 @@ func main() {
 			panic(er)
 		}
 
-		log.Printf("dockerfile located at")
+		if exposedPort == "" || len(exposedPort) == 0 {
+			bf, er := loadBuildfile(buildfile)
+			if er != nil {
+				panic(er)
+			}
+			exposedPort = bf.ContainerPort
+		}
+
 		log.Printf("extracted exposed port from dockerfile: %s", exposedPort)
 
 		if er = buildRepo(credentials, repoName, tempws); er != nil {
