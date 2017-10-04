@@ -146,10 +146,10 @@ func extractExposedPort(dockerfile string) (s string, e error) {
 }
 
 func loadBuildfile(fpath string) (bf *build.Buildfile, er error) {
-	bf = *build.Buildfile{}
+	bf = &build.Buildfile{}
 
 	if er := bf.Load(fpath); er != nil {
-		return er
+		return
 	}
 
 	return
