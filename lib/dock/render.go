@@ -82,10 +82,5 @@ func renderTmpl(r renderer) (b []byte, e error) {
 
 	b = buf.Bytes()
 
-	//b, e = format.Source(buf.Bytes())
-	//if e != nil {
-	//	return
-	//}
-
 	return
 }

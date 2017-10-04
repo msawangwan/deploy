@@ -1,18 +1,18 @@
 package build
 
-import (
-	"testing"
-)
+// import (
+// 	"testing"
+// )
 
-func TestLoadBuildFileSimple(t *testing.T) {
-	filepath := "../../test/mock/Buildfile.mock"
+// func TestLoadBuildFileSimple(t *testing.T) {
+// 	filepath := "../../test/mock/Buildfile.mock"
 
-	bf := &Buildfile{}
+// 	bf := &Buildfile{}
 
-	e := bf.Load(filepath)
-	if e != nil {
-		t.Fatalf("%s", e)
-	}
+// 	e := bf.Load(filepath)
+// 	if e != nil {
+// 		t.Fatalf("%s", e)
+// 	}
 
-	t.Logf("%+v", bf)
-}
+// 	t.Logf("%+v", bf)
+// }

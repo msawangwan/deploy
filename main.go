@@ -18,7 +18,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/msawangwan/ci.io/lib/build"
 	"github.com/msawangwan/ci.io/lib/dir"
 	"github.com/msawangwan/ci.io/lib/dock"
 	"github.com/msawangwan/ci.io/lib/github"
@@ -144,16 +143,6 @@ func extractExposedPort(dockerfile string) (s string, e error) {
 	s = string(out)
 
 	return strings.TrimSpace(s), nil
-}
-
-func loadBuildfile(fpath string) (bf *build.Buildfile, er error) {
-	bf = &build.Buildfile{}
-
-	if er = bf.Load(fpath); er != nil {
-		return
-	}
-
-	return
 }
 
 func createWorkspace(cache dir.WorkspaceCacher, name string) (ws string, er error) {
@@ -283,16 +272,18 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er
 	case req.Method == "GET":
 		res, er = c.Get(uri)
 	case req.Method == "POST":
-		payload, er := req.Data.Build()
-		if er != nil {
-			return nil, er
+		var payload = io.Reader(nil)
+
+		if req.Data != nil {
+			d, er := req.Data.Build()
+			if er != nil {
+				return nil, er
+			}
+
+			payload = bytes.NewReader(d)
 		}
 
-		res, er = c.Post(
-			uri,
-			req.ContentType,
-			bytes.NewReader(payload),
-		)
+		res, er = c.Post(uri, req.ContentType, payload)
 	}
 
 	if er != nil {
@@ -320,27 +311,32 @@ func createContainer(client *http.Client, fromImg, containerPort, hostIP, hostPo
 		SuccessCode: 201,
 	}
 
-	endpoint, er := req.Endpoint.Build()
+	// endpoint, er := req.Endpoint.Build()
+	// if er != nil {
+	// 	return
+	// }
+
+	// uri := buildAPIURL(string(endpoint))
+
+	// log.Printf("docker api call: %s", uri)
+
+	// payload, er := req.Data.Build()
+	// if er != nil {
+	// 	return
+	// }
+
+	// res, er := client.Post(uri, req.ContentType, bytes.NewReader(payload))
+	// if er != nil {
+	// 	return
+	// }
+
+	// if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
+	// 	er = parseDockerAPIErrorResponse(req.SuccessCode, res)
+	// 	return
+	// }
+
+	res, er := makeAPIRequest(req, client)
 	if er != nil {
-		return
-	}
-
-	uri := buildAPIURL(string(endpoint))
-
-	log.Printf("docker api call: %s", uri)
-
-	payload, er := req.Data.Build()
-	if er != nil {
-		return
-	}
-
-	res, er := client.Post(uri, req.ContentType, bytes.NewReader(payload))
-	if er != nil {
-		return
-	}
-
-	if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
-		er = parseDockerAPIErrorResponse(req.SuccessCode, res)
 		return
 	}
 
@@ -366,22 +362,26 @@ func runContainer(client *http.Client, containerID string) error {
 		SuccessCode: 204,
 	}
 
-	endpoint, er := req.Endpoint.Build()
+	// endpoint, er := req.Endpoint.Build()
+	// if er != nil {
+	// 	return er
+	// }
+
+	// uri := buildAPIURL(string(endpoint))
+
+	// log.Printf("docker api call: %s", uri)
+
+	// res, er := client.Post(uri, req.ContentType, io.Reader(nil))
+	// if er != nil {
+	// 	return er
+	// }
+
+	// if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
+	// 	er = parseDockerAPIErrorResponse(req.SuccessCode, res)
+	// 	return er
+	// }
+	_, er := makeAPIRequest(req, client)
 	if er != nil {
-		return er
-	}
-
-	uri := buildAPIURL(string(endpoint))
-
-	log.Printf("docker api call: %s", uri)
-
-	res, er := client.Post(uri, req.ContentType, io.Reader(nil))
-	if er != nil {
-		return er
-	}
-
-	if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
-		er = parseDockerAPIErrorResponse(req.SuccessCode, res)
 		return er
 	}
 
@@ -460,10 +460,8 @@ func main() {
 		log.Printf("repo built")
 
 		dockerfile := filepath.Join(workspacePath, "Dockerfile")
-		buildfile := filepath.Join(workspacePath, "Buildfile")
 
 		log.Printf("dockerfile: %s", dockerfile)
-		log.Printf("buildfile: %s", buildfile)
 
 		exposedPort, er := extractExposedPort(dockerfile)
 		if er != nil {

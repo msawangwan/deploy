@@ -20,19 +20,6 @@ func NewCreateContainerPayload(fromImg, containerPort, hostIP, hostPort string) 
 	}
 }
 
-// NewStartContainerPayload ...
-// func NewStartContainerPayload(containerID, containerPort, hostIP, hostPort string) StartContainerPayload {
-// 	return StartContainerPayload{
-// 		ID: containerID,
-// 		PortBindings: map[string]HostNetworkSettings{
-// 			containerPort: HostNetworkSettings{
-// 				HostIP:   hostIP,
-// 				HostPort: hostPort,
-// 			},
-// 		},
-// 	}
-// }
-
 // CreateContainerPayload ...
 type CreateContainerPayload struct {
 	Image        string              `json:"Image,omitempty"`
@@ -42,15 +29,6 @@ type CreateContainerPayload struct {
 
 // Build ...
 func (ccp CreateContainerPayload) Build() ([]byte, error) { return renderJSON(ccp) }
-
-// // StartContainerPayload ...
-// type StartContainerPayload struct {
-// 	ID           string                         `json:"Id,omitempty"`
-// 	PortBindings map[string]HostNetworkSettings `json:"PortBindings,omitempty"`
-// }
-
-// // Build ...
-// func (scp StartContainerPayload) Build() ([]byte, error) { return renderJSON(scp) }
 
 // CreateContainerAPICall ...
 type CreateContainerAPICall struct {
