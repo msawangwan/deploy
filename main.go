@@ -421,32 +421,32 @@ func main() {
 		log.Printf("created workspace: %s", tempws)
 		log.Printf("pulling repo into: %s", workspacePath)
 
+		if er = buildRepo(credentials, repoName, tempws); er != nil {
+			panic(er)
+		}
+
+		log.Printf("repo built")
+
 		dockerfile := filepath.Join(workspacePath, "Dockerfile")
 		buildfile := filepath.Join(workspacePath, "Buildfile")
 
 		log.Printf("dockerfile: %s", dockerfile)
 		log.Printf("buildfile: %s", buildfile)
 
-		//exposedPort, er := extractExposedPort(dockerfile)
-		//if er != nil {
-		//	panic(er)
-		//}
-
-		bf, er := loadBuildfile(buildfile)
+		exposedPort, er := extractExposedPort(dockerfile)
 		if er != nil {
 			panic(er)
 		}
-		exposedPort := bf.ContainerPort
+
+		//bf, er := loadBuildfile(buildfile)
+		//if er != nil {
+		//	panic(er)
+		//}
+		//exposedPort := bf.ContainerPort
 		//		if exposedPort == "" || len(exposedPort) == 0 {
 		//		}
 
 		log.Printf("extracted exposed port from dockerfile: %s", exposedPort)
-
-		if er = buildRepo(credentials, repoName, tempws); er != nil {
-			panic(er)
-		}
-
-		log.Printf("repo built")
 		log.Printf("building a tar file from: %s", tempws)
 
 		archName, er := buildTar(tempws)
