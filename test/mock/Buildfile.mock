@@ -1,2 +1,4 @@
-PortContainer 80
-PortHost 9091
+{
+    "ContainerPort": "80",
+    "HostPort": "9091"
+}

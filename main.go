@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/msawangwan/ci.io/lib/build"
 	"github.com/msawangwan/ci.io/lib/dir"
 	"github.com/msawangwan/ci.io/lib/dock"
 	"github.com/msawangwan/ci.io/lib/github"
@@ -141,6 +142,13 @@ func extractExposedPort(dockerfile string) (s string, e error) {
 
 	s = string(out)
 
+	return
+}
+
+func loadBuildfile(fpath string) (bf *build.Buildfile, er error) {
+	if er := bf.Load(fpath); er != nil {
+		return er
+	}
 	return
 }
 
@@ -428,6 +436,10 @@ func main() {
 		log.Printf("pulling repo into: %s", workspacePath)
 
 		dockerfile := filepath.Join(workspacePath, "Dockerfile")
+		buildfile := filepath.Join(workspacePath, "Buildfile")
+
+		log.Printf("dockerfile: %s", dockerfile)
+		log.Printf("buildfile: %s", buildfile)
 
 		exposedPort, er := extractExposedPort(dockerfile)
 		if er != nil {
