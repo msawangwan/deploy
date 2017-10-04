@@ -40,8 +40,14 @@ func (scp StartContainerPayload) render() string {
 			"ID": {{ .ContainerID }},
 			"PortBindings": {{ if .ContainerPort }}{
 				"{{ .ContainerPort }}/tcp": {{ if is_at_least_one_not_null .HostIP .HostPort }}{
-					{{ if .HostIP }}"HostIP": "{{ .HostIP }}"{{ end }}
-					{{ if .HostPort }}"HostPort": "{{ .HostPort }}"{{ end }}
+                    {{ $c := num_elements_non_empty .HostIP .HostPort }}
+                    {{ if eq $c 1 }}
+					    {{ if .HostIP }}"HostIP": "{{ .HostIP }}"{{ end }}
+					    {{ if .HostPort }}"HostPort": "{{ .HostPort }}"{{ end }}
+                    {{ else if eq $c 2}}
+                                        "HostIP": "{{ .HostIP }}",
+                                        "HostPort": "{{ .HostPort }}"
+                    {{ end }}
 				}{{ else }}{}{{ end }}{{ else }}{}{{ end }}
 		}
 	{{- end -}}

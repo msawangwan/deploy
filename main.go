@@ -438,14 +438,6 @@ func main() {
 			panic(er)
 		}
 
-		//bf, er := loadBuildfile(buildfile)
-		//if er != nil {
-		//	panic(er)
-		//}
-		//exposedPort := bf.ContainerPort
-		//		if exposedPort == "" || len(exposedPort) == 0 {
-		//		}
-
 		log.Printf("extracted exposed port from dockerfile: %s", exposedPort)
 		log.Printf("building a tar file from: %s", tempws)
 

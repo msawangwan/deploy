@@ -26,6 +26,17 @@ func renderTmpl(r renderer) (b []byte, err error) {
 			}
 			return false
 		},
+		"num_elements_non_empty": func(ss ...string) int {
+			var count = 0
+
+			for _, s := range ss {
+				if len(s) > 0 {
+					count++
+				}
+			}
+
+			return count
+		},
 		"build_url_string": func(ss ...string) string {
 			var u string
 
