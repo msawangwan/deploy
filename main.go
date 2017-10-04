@@ -305,13 +305,13 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er
 	return
 }
 
-func createContainer(client *http.Client, imgname, containerport string) (id string, er error) {
+func createContainer(client *http.Client, fromImg, containerPort string) (id string, er error) {
 	req := dock.APIRequest{
 		Endpoint: dock.CreateContainerAPICall{},
-		Data: dock.CreateContainerPayload{
-			Image: imgname,
-			Port:  containerport,
-		},
+		Data: dock.NewCreateContainerPayload(
+			fromImg,
+			fmt.Sprintf("%s/tcp", containerPort),
+		),
 		Method:      "POST",
 		ContentType: "application/json",
 		SuccessCode: 201,
@@ -338,11 +338,12 @@ func runContainer(client *http.Client, containerID, containerPort string) error 
 		Endpoint: dock.StartContainerAPICall{
 			ContainerID: containerID,
 		},
-		Data: dock.StartContainerPayload{
-			ContainerID:   containerID,
-			ContainerPort: containerPort,
-			HostPort:      "9191",
-		},
+		Data: dock.NewStartContainerPayload(
+			containerID,
+			fmt.Sprintf("%s/tcp", containerPort),
+			"",
+			"9091",
+		),
 		Method:      "POST",
 		ContentType: "application/json",
 		SuccessCode: 204,

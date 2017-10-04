@@ -17,8 +17,8 @@ type renderer interface {
 	render() string
 }
 
-func renderJSON(r renderer) (b []byte, e error) {
-	j, e := json.MarshalIndent(r, "", "\t")
+func renderJSON(v interface{}) (b []byte, e error) {
+	j, e := json.MarshalIndent(v, "", "\t")
 	if e != nil {
 		return
 	}
