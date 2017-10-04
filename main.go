@@ -305,12 +305,14 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er
 	return
 }
 
-func createContainer(client *http.Client, fromImg, containerPort string) (id string, er error) {
+func createContainer(client *http.Client, fromImg, containerPort, hostIP, hostPort string) (id string, er error) {
 	req := dock.APIRequest{
 		Endpoint: dock.CreateContainerAPICall{},
 		Data: dock.NewCreateContainerPayload(
 			fromImg,
 			fmt.Sprintf("%s/tcp", containerPort),
+			hostIP,
+			hostPort,
 		),
 		Method:      "POST",
 		ContentType: "application/json",
@@ -352,17 +354,12 @@ func createContainer(client *http.Client, fromImg, containerPort string) (id str
 	return
 }
 
-func runContainer(client *http.Client, containerID, containerPort string) error {
+func runContainer(client *http.Client, containerID string) error {
 	req := dock.APIRequest{
 		Endpoint: dock.StartContainerAPICall{
 			ContainerID: containerID,
 		},
-		Data: dock.NewStartContainerPayload(
-			containerID,
-			fmt.Sprintf("%s/tcp", containerPort),
-			dockerHostAddr,
-			"9091",
-		),
+		Data:        nil,
 		Method:      "POST",
 		ContentType: "application/json",
 		SuccessCode: 204,
@@ -495,14 +492,14 @@ func main() {
 
 		log.Printf("img name: %s", imgName)
 
-		containerID, er := createContainer(dockerClient, imgName, exposedPort)
+		containerID, er := createContainer(dockerClient, imgName, exposedPort, dockerHostAddr, "9090")
 		if er != nil {
 			panic(er)
 		}
 
 		log.Printf("container created: %s", containerID)
 
-		if er = runContainer(dockerClient, containerID, exposedPort); er != nil {
+		if er = runContainer(dockerClient, containerID); er != nil {
 			panic(er)
 		}
 
