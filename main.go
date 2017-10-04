@@ -143,7 +143,7 @@ func extractExposedPort(dockerfile string) (s string, e error) {
 
 	s = string(out)
 
-	return strings.TrimSpace(s)
+	return strings.TrimSpace(s), nil
 }
 
 func loadBuildfile(fpath string) (bf *build.Buildfile, er error) {
@@ -553,4 +553,5 @@ func main() {
 		os.Exit(0)
 	}()
 
-	log.Fatal(http.ListenAndServe(por
+	log.Fatal(http.ListenAndServe(port, nil))
+}
