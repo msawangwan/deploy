@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -142,7 +143,7 @@ func extractExposedPort(dockerfile string) (s string, e error) {
 
 	s = string(out)
 
-	return
+	return strings.TrimSpace(s)
 }
 
 func loadBuildfile(fpath string) (bf *build.Buildfile, er error) {
@@ -552,5 +553,4 @@ func main() {
 		os.Exit(0)
 	}()
 
-	log.Fatal(http.ListenAndServe(port, nil))
-}
+	log.Fatal(http.ListenAndServe(por
