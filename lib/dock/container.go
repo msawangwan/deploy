@@ -7,7 +7,8 @@ func NewCreateContainerPayload(fromImg, containerPort, hostIP, hostPort string) 
 		ExposedPorts: map[string]struct{}{
 			containerPort: struct{}{},
 		},
-		OpenStdin: true,
+		AttachStdin: true,
+		OpenStdin:   true,
 		HostConfig: HostConfig{
 			PortBindings: map[string][]HostNetworkSettings{
 				containerPort: []HostNetworkSettings{
@@ -25,6 +26,7 @@ func NewCreateContainerPayload(fromImg, containerPort, hostIP, hostPort string) 
 type CreateContainerPayload struct {
 	Image        string              `json:"Image,omitempty"`
 	ExposedPorts map[string]struct{} `json:"ExposedPorts,omitempty"`
+	AttachStdin  bool                `json:"AttachStdin,omitempty"`
 	OpenStdin    bool                `json:"OpenStdin,omitempty"`
 	HostConfig   HostConfig          `json:"hostConfig,omitempty"`
 }
