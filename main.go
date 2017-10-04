@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	dockerAPIVersion = "1.30"
+	dockerAPIVersion = "1.32"
 	port             = ":80"
 	mime             = "application/json; charset=utf-8"
 	endpoint         = "/webhooks/payload"
@@ -317,18 +317,37 @@ func createContainer(client *http.Client, fromImg, containerPort string) (id str
 		SuccessCode: 201,
 	}
 
-	res, er := makeAPIRequest(req, client)
+	endpoint, er := req.Endpoint.Build()
 	if er != nil {
 		return
 	}
 
-	var payload dock.APIResponse
+	uri := buildAPIURL(string(endpoint))
 
-	if er = jsonutil.FromReader(res.Body, &payload); er != nil {
+	log.Printf("docker api call: %s", uri)
+
+	payload, er := req.Data.Build()
+	if er != nil {
 		return
 	}
 
-	id = payload.ID
+	res, er := client.Post(uri, req.ContentType, bytes.NewReader(payload))
+	if er != nil {
+		return
+	}
+
+	if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
+		er = parseDockerAPIErrorResponse(req.SuccessCode, res)
+		return
+	}
+
+	var resPayload dock.APIResponse
+
+	if er = jsonutil.FromReader(res.Body, &resPayload); er != nil {
+		return
+	}
+
+	id = resPayload.ID
 
 	return
 }
@@ -349,8 +368,27 @@ func runContainer(client *http.Client, containerID, containerPort string) error 
 		SuccessCode: 204,
 	}
 
-	_, er := makeAPIRequest(req, client)
+	endpoint, er := req.Endpoint.Build()
 	if er != nil {
+		return er
+	}
+
+	uri := buildAPIURL(string(endpoint))
+
+	log.Printf("docker api call: %s", uri)
+
+	_, er = req.Data.Build()
+	if er != nil {
+		return er
+	}
+
+	res, er := client.Post(uri, req.ContentType, io.Reader(nil))
+	if er != nil {
+		return er
+	}
+
+	if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
+		er = parseDockerAPIErrorResponse(req.SuccessCode, res)
 		return er
 	}
 
