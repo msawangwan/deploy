@@ -8,10 +8,12 @@ func NewCreateContainerPayload(fromImg, containerPort, hostIP, hostPort string) 
 			containerPort: struct{}{},
 		},
 		HostConfig: HostConfig{
-			PortBindings: map[string]HostNetworkSettings{
-				containerPort: HostNetworkSettings{
-					HostIP:   hostIP,
-					HostPort: hostPort,
+			PortBindings: map[string][]HostNetworkSettings{
+				containerPort: []HostNetworkSettings{
+					HostNetworkSettings{
+						HostIP:   hostIP,
+						HostPort: hostPort,
+					},
 				},
 			},
 		},
