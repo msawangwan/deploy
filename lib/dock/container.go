@@ -1,5 +1,7 @@
 package dock
 
+import "fmt"
+
 // NewCreateContainerPayload ...
 func NewCreateContainerPayload(fromImg, containerPort, hostIP, hostPort string) CreateContainerPayload {
 	return CreateContainerPayload{
@@ -53,6 +55,11 @@ func (ccac CreateContainerAPICall) render() string {
 	`
 }
 
+func (ccac CreateContainerAPICall) Call(prefix, version string) string {
+	qp := ccac.render()
+	return fmt.Sprintf("%s/%s%s", prefix, version, qp)
+}
+
 // StartContainerAPICall ...
 type StartContainerAPICall struct {
 	ContainerID string
@@ -67,4 +74,62 @@ func (scac StartContainerAPICall) render() string {
 		/containers/{{- .ContainerID -}}/start
 	{{- end -}}
 	`
+}
+
+func (scac StartContainerAPICall) Call(prefix, version string) string {
+	return fmt.Sprintf("%s/%s/containers/%s/start", prefix, version, scac.ContainerID)
+}
+
+type StopContainerAPICall struct {
+	ContainerID string
+}
+
+func (scac StopContainerAPICall) Build() ([]byte, error) { return renderTmpl(scac) }
+
+func (scac StopContainerAPICall) render() string {
+	return `
+        {{- with .-}}
+            /containers/{{- .ContainerID -}}/stop
+        {{- end -}}
+    `
+}
+
+func (scac StopContainerAPICall) Call(prefix, version string) string {
+	return fmt.Sprintf("%s/%s/containers/%s/stop", prefix, version, scac.ContainerID)
+}
+
+type KillContainerAPICall struct {
+	ContainerID
+}
+
+func (kcac KillContainerAPICall) Build() ([]byte, error) { return renderTmpl(kcac) }
+
+func (kcac KillContainerAPICall) render() string {
+	return `
+        {{- with . -}}
+            /containers/{{- .ContainerID -}}/kill
+        {{- end -}}
+    `
+}
+
+func (kcac KillContainerAPICall) Call(prefix, version string) string {
+	return fmt.Sprintf("%s/%s/containers/%s/kill", prefix, version, kcac.ContainerID)
+}
+
+type RemoveContainerAPICall struct {
+	ContainerID
+}
+
+func (rcac RemoveContainerAPICall) Build() ([]byte, error) { return renderTmpl(rcac) }
+
+func (rcac RemoveContainerAPICall) render() string {
+	return `
+        {{- with . -}}
+            /containers/{{- .ContainerID -}}
+        {{- end -}}
+    `
+}
+
+func (rcac RemoveContainerAPICall) Call(prefix, version string) string {
+	return fmt.Sprintf("%s/%s/containers/%s", prefix, version, rcac.ContainerID)
 }

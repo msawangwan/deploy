@@ -2,6 +2,10 @@ package dock
 
 import "fmt"
 
+type APICaller interface {
+	Call(prefix, version string) string
+}
+
 // APIRequest ...
 type APIRequest struct {
 	Endpoint    Templater

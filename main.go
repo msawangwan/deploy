@@ -360,12 +360,43 @@ func runContainer(client *http.Client, containerID string) error {
 }
 
 func stopContainer(client *http.Client, containerID string) error {
+	req := dock.APIRequest{
+		Endpoint: dock.StopContainerAPICall{
+			ContainerID: containerID,
+		},
+		Data:        nil,
+		Method:      "POST",
+		ContentType: "application/json",
+		SuccessCode: 204,
+	}
+
+	_, er := makeAPIRequest(req, client)
+	if er != nil {
+		return er
+	}
+
 	return nil
 }
 
 func killContainer(client *http.Client, containerID string) error {
 	return nil
 }
+
+func removeContainer(client *http.Client, containerID string) error {
+	req := dock.APIRequestP{
+
+		Endpoint: dock.RemoveContainerAPICall{
+			ContainerID: containerID,
+		},
+		Data:        nil,
+		Method:      "DELETE",
+		ContentType: "application/json",
+		SuccessCode: 204,
+	}
+
+}
+
+// leflleek
 
 func main() {
 	var panicHandler = func(h http.HandlerFunc) http.HandlerFunc {
