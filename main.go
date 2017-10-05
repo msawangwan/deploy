@@ -220,7 +220,17 @@ func buildTar(target string) (arch string, er error) {
 	return
 }
 
-func buildImage(dockfile, imgtar, tag string, client *http.Client) (imgname string, er error) {
+func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (imgname string, er error) {
+	er = os.Chdir(builddir)
+	if er != nil {
+		return
+	}
+	defer os.Chdir("../")
+
+	wd, _ := os.Getwd()
+
+	log.Printf("build dir: %s", wd)
+
 	imgname = tag
 
 	params := map[string]string{
@@ -437,7 +447,7 @@ func main() {
 		log.Printf("successfully tar'ed archive: %s", archName)
 		log.Printf("uploading tar of img: %s", archName)
 
-		imgName, er := buildImage(tempws+"/Dockerfile", archName, repoName, dockerClient)
+		imgName, er := buildImage(tempws, tempws+"/Dockerfile", archName, repoName, dockerClient)
 		if er != nil {
 			panic(er)
 		}
