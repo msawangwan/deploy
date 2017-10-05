@@ -254,7 +254,7 @@ func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (im
 	}
 	defer os.Chdir("../")
 
-	wd, _ := os.Getwd()
+	wd, _ = os.Getwd()
 
 	log.Printf("build dir: %s", wd)
 
