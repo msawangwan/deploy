@@ -221,10 +221,13 @@ func buildTar(target string) (arch string, er error) {
 }
 
 func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (imgname string, er error) {
+	wd, _ := os.Getwd()
 	imgname = tag
 
+	log.Printf("building image [tag=%s] from dir: %s", wd, imgname)
+
 	params := map[string]string{
-		"t":          tag,
+		"t":          imgname,
 		"dockerfile": dockfile,
 	}
 
