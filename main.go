@@ -224,7 +224,7 @@ func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (im
 	wd, _ := os.Getwd()
 	imgname = tag
 
-	log.Printf("building image [tag=%s] from dir: %s", wd, imgname)
+	log.Printf("building image [tag=%s] from dir: %s", imgname, wd)
 
 	params := map[string]string{
 		"t":          imgname,
@@ -356,6 +356,14 @@ func runContainer(client *http.Client, containerID string) error {
 		return er
 	}
 
+	return nil
+}
+
+func stopContainer(client *http.Client, containerID string) error {
+	return nil
+}
+
+func killContainer(client *http.Client, containerID string) error {
 	return nil
 }
 
