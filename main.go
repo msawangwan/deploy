@@ -221,16 +221,6 @@ func buildTar(target string) (arch string, er error) {
 }
 
 func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (imgname string, er error) {
-	er = os.Chdir(builddir)
-	if er != nil {
-		return
-	}
-	defer os.Chdir("../")
-
-	wd, _ := os.Getwd()
-
-	log.Printf("build dir: %s", wd)
-
 	imgname = tag
 
 	params := map[string]string{
@@ -254,6 +244,16 @@ func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (im
 	}
 
 	defer f.Close()
+
+	er = os.Chdir(builddir)
+	if er != nil {
+		return
+	}
+	defer os.Chdir("../")
+
+	wd, _ := os.Getwd()
+
+	log.Printf("build dir: %s", wd)
 
 	res, er := client.Post(uri, "application/x-tar", f)
 	if er != nil {
