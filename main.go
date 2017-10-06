@@ -251,9 +251,8 @@ func buildTar(target string) (arch string, er error) {
 
 func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (imgname string, er error) {
 	wd, _ := os.Getwd()
-	imgname = tag
 
-	log.Printf("building image [tag=%s] from dir: %s", imgname, wd)
+	imgname = tag
 
 	params := map[string]string{
 		"t":          imgname,
@@ -275,7 +274,11 @@ func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (im
 		return
 	}
 
-	defer f.Close()
+	//defer f.Close()
+	defer func() {
+		f.Close()
+		os.Remove(imgtar)
+	}()
 
 	er = os.Chdir(builddir)
 	if er != nil {
@@ -478,17 +481,17 @@ func main() {
 			panic(er)
 		}
 
-		log.Printf("workspace dir [key: %s][value: %s]", repoName, ws)
+		log.Printf("workspace dir [key: %s][value: %s]", repoName, wsName)
 
 		cwd, er := os.Getwd()
 		if er != nil {
 			panic(er)
 		}
 
+		log.Printf("current working dir: %s", cwd)
+
 		wsPath := filepath.Join(cwd, wsName)
 
-		log.Printf("current working dir: %s", cwd)
-		log.Printf("created workspace: %s", wsName)
 		log.Printf("pulling repo into: %s", wsPath)
 
 		if er = buildRepo(credentials, repoName, wsName); er != nil {
