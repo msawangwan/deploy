@@ -464,14 +464,6 @@ func main() {
 
 		log.Printf("webhook is a valid push event, extracting repository name")
 
-		//		webhook, er := extractWebhookPayload(r.Body)
-		//		if er != nil {
-		//			panic(er)
-		//		}
-
-		//		repoName := webhook.Repository.Name
-
-		//		log.Printf("payload extracted")
 		repoName, er := github.ExtractRepositoryName(r.Body)
 		if er != nil {
 			panic(er)
@@ -479,30 +471,30 @@ func main() {
 
 		log.Printf("creating workspace")
 
-		ws, er := getWorkspace(wsCache, repoName)
+		wsName, er := getWorkspace(wsCache, repoName)
 		if er != nil {
 			panic(er)
 		}
 
 		log.Printf("workspace dir [key: %s][value: %s]", repoName, ws)
 
-		tempws, er := createWorkspace(dirCache, repoName)
-		if er != nil {
-			panic(er)
-		}
+		//tempws, er := createWorkspace(dirCache, repoName)
+		//if er != nil {
+		//	panic(er)
+		//}
 
 		cwd, er := os.Getwd()
 		if er != nil {
 			panic(er)
 		}
 
-		workspacePath := filepath.Join(cwd, tempws)
+		workspacePath := filepath.Join(cwd, wsName)
 
 		log.Printf("current working dir: %s", cwd)
-		log.Printf("created workspace: %s", tempws)
+		log.Printf("created workspace: %s", wsName)
 		log.Printf("pulling repo into: %s", workspacePath)
 
-		if er = buildRepo(credentials, repoName, tempws); er != nil {
+		if er = buildRepo(credentials, repoName, wsName); er != nil {
 			panic(er)
 		}
 
@@ -518,9 +510,9 @@ func main() {
 		}
 
 		log.Printf("extracted exposed port from dockerfile: %s", exposedPort)
-		log.Printf("building a tar file from: %s", tempws)
+		log.Printf("building a tar file from: %s", wsName)
 
-		archName, er := buildTar(tempws)
+		archName, er := buildTar(wsName)
 		if er != nil {
 			panic(er)
 		}
@@ -528,7 +520,7 @@ func main() {
 		log.Printf("successfully tar'ed archive: %s", archName)
 		log.Printf("uploading tar of img: %s", archName)
 
-		imgName, er := buildImage(tempws, tempws+"/Dockerfile", archName, repoName, dockerClient)
+		imgName, er := buildImage(wsName, wsName+"/Dockerfile", archName, repoName, dockerClient)
 		if er != nil {
 			panic(er)
 		}
