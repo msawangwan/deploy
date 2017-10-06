@@ -18,6 +18,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/msawangwan/ci.io/lib/strutil"
+
+	"github.com/msawangwan/ci.io/lib/cache"
 	"github.com/msawangwan/ci.io/lib/dir"
 	"github.com/msawangwan/ci.io/lib/dock"
 	"github.com/msawangwan/ci.io/lib/github"
@@ -40,9 +43,15 @@ const (
 )
 
 var (
-	credentials    cred.Github
+	credentials cred.Github
+
 	dirCache       dir.WorkspaceCacher
-	dockerClient   *http.Client
+	imgCache       cache.KVStorer
+	containerCache cache.KVStorer
+	wsCache        cache.KVStorer
+
+	dockerClient *http.Client
+
 	dockerHostAddr string
 	localip        string
 	accesstoken    string
@@ -104,6 +113,9 @@ func init() {
 		log.Printf("%s", err)
 	}
 
+	imgCache = dock.NewCache("image")
+	containerCache = dock.NewCache("container")
+	wsCache = dir.NewWorkspaceCacheee()
 	dirCache = dir.NewWorkspaceCache()
 
 	log.Printf("server container ip: %s\n", localip)
@@ -143,6 +155,21 @@ func extractExposedPort(dockerfile string) (s string, e error) {
 	s = string(out)
 
 	return strings.TrimSpace(s), nil
+}
+
+func getWorkspace(store cache.KVStorer, key string) (ws string, er error) {
+	ws = store.Fetch(key)
+
+	if strutil.IsNullOrEmpty(ws) {
+		ws, er = dir.MkTempWorkspace(key)
+		if er != nil {
+			return
+		}
+
+		store.Store(key, ws)
+	}
+
+	return
 }
 
 func createWorkspace(cache dir.WorkspaceCacher, name string) (ws string, er error) {
@@ -446,6 +473,13 @@ func main() {
 
 		log.Printf("payload extracted")
 		log.Printf("creating workspace")
+
+		ws, er := getWorkspace(wsCache, repoName)
+		if er != nil {
+			panic(er)
+		}
+
+		log.Printf("workspace dir [key: %s][value: %s]", repoName, ws)
 
 		tempws, er := createWorkspace(dirCache, repoName)
 		if er != nil {

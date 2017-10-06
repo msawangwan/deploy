@@ -17,10 +17,59 @@ func (e TempDirDoesNotExistError) Error() string {
 	return fmt.Sprintf("err: temp directory [%s] does not exist", e.DirPrefix)
 }
 
+// WorkspaceCache ...
+type WorkspaceCache struct {
+	sync.Mutex
+	store map[string]string
+}
+
+// Store ...
+func (wc *WorkspaceCache) Store(k, v string) {
+
+}
+
+// Fetch ...
+func (wc *WorkspaceCache) Fetch(k string) string {
+	var d string
+
+	wc.Lock()
+	defer wc.Unlock()
+	{
+		if stored, found := wc.store[k]; found {
+			d = stored
+		}
+	}
+
+	return d
+}
+
+// Flush ...
+func (wc *WorkspaceCache) Flush() (n int, e error) {
+	return
+}
+
+// NewWorkspaceCachee ...
+func NewWorkspaceCachee() *WorkspaceCache {
+	return &WorkspaceCache{
+		store: map[string]string{}
+	}
+}
+
+func MkTempWorkspace(prefix string) (d string, e error) {
+	d, e = ioutil.TempDir("./", prefix)
+	if e != nil {
+		return
+	}
+
+	return
+}
+
+/* DEPRECATED BELOW THIS COMMENT */
+
 // WorkspaceCacher ...
 type WorkspaceCacher interface {
-	MkTempDir(prefix string) (dir string, er error)
-	FindTempDir(prefix string) (dir string, er error)
+	MkTempDir(prefix string) (d string, er error)
+	FindTempDir(prefix string) (d string, er error)
 	FlushAll() (flushcount int, er error)
 }
 
@@ -38,7 +87,7 @@ type WorkspaceTable struct {
 }
 
 // MkTempDir ...
-func (dt *WorkspaceTable) MkTempDir(prefix string) (dir string, er error) {
+func (dt *WorkspaceTable) MkTempDir(prefix string) (d string, er error) {
 	dir, er = ioutil.TempDir("./", prefix)
 	if er != nil {
 		return
@@ -54,12 +103,12 @@ func (dt *WorkspaceTable) MkTempDir(prefix string) (dir string, er error) {
 }
 
 // FindTempDir ...
-func (dt *WorkspaceTable) FindTempDir(prefix string) (dir string, er error) {
+func (dt *WorkspaceTable) FindTempDir(prefix string) (d string, er error) {
 	dt.Lock()
 	defer dt.Unlock()
 	{
 		if cached, found := dt.cache[prefix]; found {
-			dir = cached
+			d = cached
 		} else {
 			er = TempDirDoesNotExistError{prefix}
 		}
