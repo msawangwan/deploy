@@ -55,6 +55,7 @@ func (ccac CreateContainerAPICall) render() string {
 	`
 }
 
+// Call ...
 func (ccac CreateContainerAPICall) Call(prefix, version string) string {
 	qp := ccac.render()
 	return fmt.Sprintf("%s/%s%s", prefix, version, qp)
@@ -76,32 +77,38 @@ func (scac StartContainerAPICall) render() string {
 	`
 }
 
+// Call ...
 func (scac StartContainerAPICall) Call(prefix, version string) string {
 	return fmt.Sprintf("%s/%s/containers/%s/start", prefix, version, scac.ContainerID)
 }
 
+// StopContainerAPICall ...
 type StopContainerAPICall struct {
 	ContainerID string
 }
 
+// Build ...
 func (scac StopContainerAPICall) Build() ([]byte, error) { return renderTmpl(scac) }
 
 func (scac StopContainerAPICall) render() string {
 	return `
-        {{- with .-}}
+        {{- with . -}}
             /containers/{{- .ContainerID -}}/stop
         {{- end -}}
     `
 }
 
+// Call ...
 func (scac StopContainerAPICall) Call(prefix, version string) string {
 	return fmt.Sprintf("%s/%s/containers/%s/stop", prefix, version, scac.ContainerID)
 }
 
+// KillContainerAPICall ...
 type KillContainerAPICall struct {
 	ContainerID string
 }
 
+// Build ...
 func (kcac KillContainerAPICall) Build() ([]byte, error) { return renderTmpl(kcac) }
 
 func (kcac KillContainerAPICall) render() string {
@@ -112,14 +119,17 @@ func (kcac KillContainerAPICall) render() string {
     `
 }
 
+// Call ...
 func (kcac KillContainerAPICall) Call(prefix, version string) string {
 	return fmt.Sprintf("%s/%s/containers/%s/kill", prefix, version, kcac.ContainerID)
 }
 
+// RemoveContainerAPICall ...
 type RemoveContainerAPICall struct {
 	ContainerID string
 }
 
+// Build ...
 func (rcac RemoveContainerAPICall) Build() ([]byte, error) { return renderTmpl(rcac) }
 
 func (rcac RemoveContainerAPICall) render() string {
@@ -130,6 +140,7 @@ func (rcac RemoveContainerAPICall) render() string {
     `
 }
 
+// Call ...
 func (rcac RemoveContainerAPICall) Call(prefix, version string) string {
 	return fmt.Sprintf("%s/%s/containers/%s", prefix, version, rcac.ContainerID)
 }

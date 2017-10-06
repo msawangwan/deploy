@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	mock_wsCache cache.KVStorer
+	wsCacheMock cache.KVStorer
 )
 
 func TestCreateTempWorkspace(t *testing.T) {
-	mock_wsCache = cache.NullKVStore
+	wsCacheMock = cache.NullKVStore
 }
