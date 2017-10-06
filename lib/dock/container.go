@@ -99,7 +99,7 @@ func (scac StopContainerAPICall) Call(prefix, version string) string {
 }
 
 type KillContainerAPICall struct {
-	ContainerID
+	ContainerID string
 }
 
 func (kcac KillContainerAPICall) Build() ([]byte, error) { return renderTmpl(kcac) }
@@ -117,7 +117,7 @@ func (kcac KillContainerAPICall) Call(prefix, version string) string {
 }
 
 type RemoveContainerAPICall struct {
-	ContainerID
+	ContainerID string
 }
 
 func (rcac RemoveContainerAPICall) Build() ([]byte, error) { return renderTmpl(rcac) }

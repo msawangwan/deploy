@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/msawangwan/ci.io/lib/midware"
 	"github.com/msawangwan/ci.io/lib/strutil"
 
 	"github.com/msawangwan/ci.io/lib/cache"
@@ -138,13 +139,13 @@ func isPushEvent(r *http.Request) bool {
 	return true
 }
 
-func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
-	if e = jsonutil.FromReader(r, &payload); e != nil {
-		return
-	}
+// func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
+// 	if e = jsonutil.FromReader(r, &payload); e != nil {
+// 		return
+// 	}
 
-	return
-}
+// 	return
+// }
 
 func extractExposedPort(dockerfile string) (s string, e error) {
 	out, e := exec.Command("extractexpose", dockerfile).Output()
@@ -431,34 +432,34 @@ func removeContainer(client *http.Client, containerID string) error {
 // leflleek
 
 func main() {
-	var panicHandler = func(h http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			var e error
+	// var panicHandler = func(h http.HandlerFunc) http.HandlerFunc {
+	// 	return func(w http.ResponseWriter, r *http.Request) {
+	// 		var e error
 
-			defer func() {
-				r := recover()
+	// 		defer func() {
+	// 			r := recover()
 
-				if r != nil {
-					switch t := r.(type) {
-					case string:
-						e = errors.New(t)
-					case error:
-						e = t
-					default:
-						e = errors.New("unknown error")
-					}
+	// 			if r != nil {
+	// 				switch t := r.(type) {
+	// 				case string:
+	// 					e = errors.New(t)
+	// 				case error:
+	// 					e = t
+	// 				default:
+	// 					e = errors.New("unknown error")
+	// 				}
 
-					http.Error(w, e.Error(), http.StatusInternalServerError)
+	// 				http.Error(w, e.Error(), http.StatusInternalServerError)
 
-					log.Printf("[panic_handler] %s", e)
-				}
-			}()
+	// 				log.Printf("[panic_handler] %s", e)
+	// 			}
+	// 		}()
 
-			h(w, r)
-		}
-	}
+	// 		h(w, r)
+	// 	}
+	// }
 
-	http.HandleFunc(endpoint, panicHandler(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(endpoint, midware.Catch(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("handling incoming webhook")
 
 		printStats(true)
