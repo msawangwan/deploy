@@ -51,7 +51,7 @@ func (wc *WorkspaceCache) Flush() (n int, e error) {
 }
 
 // NewWorkspaceCachee ...
-func NewWorkspaceCachee() *WorkspaceCache {
+func NewWorkspaceCache() *WorkspaceCache {
 	return &WorkspaceCache{
 		store: map[string]string{},
 	}

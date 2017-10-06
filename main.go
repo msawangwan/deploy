@@ -46,7 +46,7 @@ const (
 var (
 	credentials cred.Github
 
-	dirCache       dir.WorkspaceCacher
+	// dirCache       dir.WorkspaceCacher
 	imgCache       cache.KVStorer
 	containerCache cache.KVStorer
 	wsCache        cache.KVStorer
@@ -116,8 +116,8 @@ func init() {
 
 	imgCache = dock.NewCache("image")
 	containerCache = dock.NewCache("container")
-	wsCache = dir.NewWorkspaceCacheee()
-	dirCache = dir.NewWorkspaceCache()
+	wsCache = dir.NewWorkspaceCache()
+	// dirCache = dir.NewWorkspaceCache()
 
 	log.Printf("server container ip: %s\n", localip)
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
@@ -175,14 +175,14 @@ func getWorkspace(store cache.KVStorer, key string) (ws string, er error) {
 	return
 }
 
-func createWorkspace(cache dir.WorkspaceCacher, name string) (ws string, er error) {
-	ws, er = cache.MkTempDir(name)
-	if er != nil {
-		return
-	}
+// func createWorkspace(cache dir.WorkspaceCacher, name string) (ws string, er error) {
+// 	ws, er = cache.MkTempDir(name)
+// 	if er != nil {
+// 		return
+// 	}
 
-	return
-}
+// 	return
+// }
 
 func parseDockerAPIErrorResponse(code int, r *http.Response) error {
 	p := dock.APIResponseError{
@@ -416,7 +416,7 @@ func killContainer(client *http.Client, containerID string) error {
 }
 
 func removeContainer(client *http.Client, containerID string) error {
-	req := dock.APIRequestP{
+	req := dock.APIRequest{
 
 		Endpoint: dock.RemoveContainerAPICall{
 			ContainerID: containerID,
@@ -427,37 +427,15 @@ func removeContainer(client *http.Client, containerID string) error {
 		SuccessCode: 204,
 	}
 
+	_, er := makeAPIRequest(req, client)
+	if er != nil {
+		return er
+	}
+
+	return nil
 }
 
-// leflleek
-
 func main() {
-	// var panicHandler = func(h http.HandlerFunc) http.HandlerFunc {
-	// 	return func(w http.ResponseWriter, r *http.Request) {
-	// 		var e error
-
-	// 		defer func() {
-	// 			r := recover()
-
-	// 			if r != nil {
-	// 				switch t := r.(type) {
-	// 				case string:
-	// 					e = errors.New(t)
-	// 				case error:
-	// 					e = t
-	// 				default:
-	// 					e = errors.New("unknown error")
-	// 				}
-
-	// 				http.Error(w, e.Error(), http.StatusInternalServerError)
-
-	// 				log.Printf("[panic_handler] %s", e)
-	// 			}
-	// 		}()
-
-	// 		h(w, r)
-	// 	}
-	// }
 
 	http.HandleFunc(endpoint, midware.Catch(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("handling incoming webhook")
