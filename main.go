@@ -46,7 +46,6 @@ const (
 var (
 	credentials cred.Github
 
-	// dirCache       dir.WorkspaceCacher
 	imgCache       cache.KVStorer
 	containerCache cache.KVStorer
 	wsCache        cache.KVStorer
@@ -114,10 +113,9 @@ func init() {
 		log.Printf("%s", err)
 	}
 
-	imgCache = dock.NewCache("image")
-	containerCache = dock.NewCache("container")
+	imgCache = dock.NewIDCache()
+	containerCache = dock.NewIDCache()
 	wsCache = dir.NewWorkspaceCache()
-	// dirCache = dir.NewWorkspaceCache()
 
 	log.Printf("server container ip: %s\n", localip)
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
@@ -138,14 +136,6 @@ func isPushEvent(r *http.Request) bool {
 
 	return true
 }
-
-// func extractWebhookPayload(r io.Reader) (payload *github.PushEvent, e error) {
-// 	if e = jsonutil.FromReader(r, &payload); e != nil {
-// 		return
-// 	}
-
-// 	return
-// }
 
 func extractExposedPort(dockerfile string) (s string, e error) {
 	out, e := exec.Command("extractexpose", dockerfile).Output()
@@ -174,15 +164,6 @@ func getWorkspace(store cache.KVStorer, key string) (ws string, er error) {
 
 	return
 }
-
-// func createWorkspace(cache dir.WorkspaceCacher, name string) (ws string, er error) {
-// 	ws, er = cache.MkTempDir(name)
-// 	if er != nil {
-// 		return
-// 	}
-
-// 	return
-// }
 
 func parseDockerAPIErrorResponse(code int, r *http.Response) error {
 	p := dock.APIResponseError{
@@ -275,7 +256,6 @@ func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (im
 		return
 	}
 
-	//defer f.Close()
 	defer func() {
 		f.Close()
 		os.Remove(imgtar)
@@ -330,6 +310,13 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er
 		}
 
 		res, er = c.Post(uri, req.ContentType, payload)
+	case req.Method == "DELETE":
+		r, er := http.NewRequest("DELETE", uri, nil)
+		if er != nil {
+			return nil, er
+		}
+
+		res, er = c.Do(r)
 	}
 
 	if er != nil {
@@ -371,6 +358,24 @@ func createContainer(client *http.Client, fromImg, containerPort, hostIP, hostPo
 	id = resPayload.ID
 
 	return
+}
+
+func cacheContainer(client *http.Client, store cache.KVStorer, imgName, containerID string) error {
+	prevID := store.Fetch(imgName)
+
+	if !strutil.IsNullOrEmpty(prevID) {
+		if er := stopContainer(client, prevID); er != nil {
+			return er
+		}
+
+		if er := removeContainer(client, prevID); er != nil {
+			return er
+		}
+	}
+
+	store.Store(imgName, containerID)
+
+	return nil
 }
 
 func runContainer(client *http.Client, containerID string) error {
@@ -417,7 +422,6 @@ func killContainer(client *http.Client, containerID string) error {
 
 func removeContainer(client *http.Client, containerID string) error {
 	req := dock.APIRequest{
-
 		Endpoint: dock.RemoveContainerAPICall{
 			ContainerID: containerID,
 		},
@@ -512,6 +516,12 @@ func main() {
 		}
 
 		log.Printf("container created: %s", containerID)
+		log.Printf("caching container: %s", containerID)
+
+		cacheContainer(containerCache, imgName, containerID)
+
+		log.Printf("container cached: %s", containerID)
+		log.Printf("start container: %s", containerID)
 
 		if er = runContainer(dockerClient, containerID); er != nil {
 			panic(er)
