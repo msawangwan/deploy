@@ -518,7 +518,9 @@ func main() {
 		log.Printf("container created: %s", containerID)
 		log.Printf("caching container: %s", containerID)
 
-		cacheContainer(containerCache, imgName, containerID)
+		if er = cacheContainer(dockerClient, containerCache, imgName, containerID); er != nil {
+			panic(er)
+		}
 
 		log.Printf("container cached: %s", containerID)
 		log.Printf("start container: %s", containerID)
