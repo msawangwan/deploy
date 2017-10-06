@@ -462,16 +462,21 @@ func main() {
 			panic(errInvalidWebhookEvent)
 		}
 
-		log.Printf("webhook is a valid push event, extracting payload")
+		log.Printf("webhook is a valid push event, extracting repository name")
 
-		webhook, er := extractWebhookPayload(r.Body)
+		//		webhook, er := extractWebhookPayload(r.Body)
+		//		if er != nil {
+		//			panic(er)
+		//		}
+
+		//		repoName := webhook.Repository.Name
+
+		//		log.Printf("payload extracted")
+		repoName, er := github.ExtractRepositoryName(r.Body)
 		if er != nil {
 			panic(er)
 		}
 
-		repoName := webhook.Repository.Name
-
-		log.Printf("payload extracted")
 		log.Printf("creating workspace")
 
 		ws, er := getWorkspace(wsCache, repoName)
