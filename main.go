@@ -160,14 +160,16 @@ func extractExposedPort(dockerfile string) (s string, e error) {
 func getWorkspace(store cache.KVStorer, key string) (ws string, er error) {
 	ws = store.Fetch(key)
 
-	if strutil.IsNullOrEmpty(ws) {
-		ws, er = dir.MkTempWorkspace(key)
-		if er != nil {
-			return
-		}
-
-		store.Store(key, ws)
+	if !strutil.IsNullOrEmpty(ws) {
+		os.Remove(ws)
 	}
+
+	ws, er = dir.MkTempWorkspace(key)
+	if er != nil {
+		return
+	}
+
+	store.Store(key, ws)
 
 	return
 }
@@ -478,21 +480,16 @@ func main() {
 
 		log.Printf("workspace dir [key: %s][value: %s]", repoName, ws)
 
-		//tempws, er := createWorkspace(dirCache, repoName)
-		//if er != nil {
-		//	panic(er)
-		//}
-
 		cwd, er := os.Getwd()
 		if er != nil {
 			panic(er)
 		}
 
-		workspacePath := filepath.Join(cwd, wsName)
+		wsPath := filepath.Join(cwd, wsName)
 
 		log.Printf("current working dir: %s", cwd)
 		log.Printf("created workspace: %s", wsName)
-		log.Printf("pulling repo into: %s", workspacePath)
+		log.Printf("pulling repo into: %s", wsPath)
 
 		if er = buildRepo(credentials, repoName, wsName); er != nil {
 			panic(er)
@@ -500,7 +497,7 @@ func main() {
 
 		log.Printf("repo built")
 
-		dockerfile := filepath.Join(workspacePath, "Dockerfile")
+		dockerfile := filepath.Join(wsPath, "Dockerfile")
 
 		log.Printf("dockerfile: %s", dockerfile)
 
