@@ -510,26 +510,28 @@ func main() {
 
 		log.Printf("img name: %s", imgName)
 
-		containerID, er := createContainer(dockerClient, imgName, exposedPort, "", "9090")
-		if er != nil {
-			panic(er)
-		}
+		go func() {
+			containerID, er := createContainer(dockerClient, imgName, exposedPort, "", "9090")
+			if er != nil {
+				panic(er)
+			}
 
-		log.Printf("container created: %s", containerID)
-		log.Printf("caching container: %s", containerID)
+			log.Printf("container created: %s", containerID)
+			log.Printf("caching container: %s", containerID)
 
-		if er = cacheContainer(dockerClient, containerCache, imgName, containerID); er != nil {
-			panic(er)
-		}
+			if er = cacheContainer(dockerClient, containerCache, imgName, containerID); er != nil {
+				panic(er)
+			}
 
-		log.Printf("container cached: %s", containerID)
-		log.Printf("start container: %s", containerID)
+			log.Printf("container cached: %s", containerID)
+			log.Printf("start container: %s", containerID)
 
-		if er = runContainer(dockerClient, containerID); er != nil {
-			panic(er)
-		}
+			if er = runContainer(dockerClient, containerID); er != nil {
+				panic(er)
+			}
 
-		log.Printf("container running: %s", containerID)
+			log.Printf("container running: %s", containerID)
+		}()
 
 		log.Printf("webhook event, handled")
 	}))
