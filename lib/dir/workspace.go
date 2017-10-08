@@ -49,6 +49,11 @@ func (wc *WorkspaceCache) Flush() (n int, e error) {
 	return
 }
 
+// Map ...
+func (wc *WorkspaceCache) Map(apply func(v string) error) error {
+	return nil
+}
+
 // NewWorkspaceCache ...
 func NewWorkspaceCache() *WorkspaceCache {
 	return &WorkspaceCache{

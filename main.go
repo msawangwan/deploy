@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -62,6 +63,8 @@ var (
 	wsCache        cache.KVStorer
 
 	dockerClient *http.Client
+
+	onetimeCleanup sync.Once
 
 	dockerHostAddr string
 	localip        string
@@ -110,8 +113,7 @@ func init() {
 	}
 
 	defer func() {
-		_ = os.Chdir("../")
-		_ = os.Remove(wsdir)
+		onetimeCleanup.Do(cleanup)
 	}()
 
 	dockerClient = &http.Client{
@@ -136,6 +138,21 @@ func init() {
 
 	log.Printf("server container ip: %s\n", localip)
 	log.Printf("docker host container ip: %s\n", dockerHostAddr)
+}
+
+func cleanup() {
+	apply := func(cid string) error { return killContainer(dockerClient, cid) }
+
+	containerCache.Map(apply)
+	imgCache.Map(apply)
+
+	containerCache.Flush()
+	imgCache.Flush()
+
+	_ = os.Chdir("../")
+	_ = os.Remove(wsdir)
+
+	wsCache.Flush()
 }
 
 func printStats(debug bool) {
@@ -338,8 +355,6 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string)
 		return
 	}
 
-	// defer os.Chdir("../")
-
 	wd, _ = os.Getwd()
 
 	log.Printf("build dir: %s", wd)
@@ -355,7 +370,7 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string)
 		return "", parseDockerAPIErrorResponse(200, res)
 	}
 
-	log.Printf("image built")
+	log.Printf("image built: %s", imgname)
 
 	imgid, er = getImageID(client, imgname)
 	if er != nil {
@@ -386,26 +401,6 @@ func getImageID(client *http.Client, imgName string) (imgID string, er error) {
 	}
 
 	imgID = payload.ID
-
-	return
-}
-
-func cacheImage(client *http.Client, store cache.KVStorer, imgname, imgid string) (result string, er error) {
-	result = fmt.Sprintf("cached image [%s][%s]", imgname, imgid)
-
-	id, er := store.Fetch(imgname)
-	if er == nil {
-		buf, er := removeImage(client, id)
-		if er != nil {
-			return "", er
-		}
-
-		result = string(buf)
-	}
-
-	er = nil
-
-	store.Store(imgname, imgid)
 
 	return
 }
@@ -560,18 +555,6 @@ func stopContainer(client *http.Client, containerID string) error {
 	return nil
 }
 
-func killContainer(client *http.Client, containerID string) error {
-	if er := stopContainer(client, containerID); er != nil {
-		return er
-	}
-
-	if er := removeContainer(client, containerID); er != nil {
-		return er
-	}
-
-	return nil
-}
-
 func removeContainer(client *http.Client, containerID string) error {
 	req := dock.APIRequest{
 		Endpoint: dock.RemoveContainerAPICall{
@@ -585,6 +568,18 @@ func removeContainer(client *http.Client, containerID string) error {
 
 	_, er := makeAPIRequest(req, client)
 	if er != nil {
+		return er
+	}
+
+	return nil
+}
+
+func killContainer(client *http.Client, containerID string) error {
+	if er := stopContainer(client, containerID); er != nil {
+		return er
+	}
+
+	if er := removeContainer(client, containerID); er != nil {
 		return er
 	}
 
@@ -693,11 +688,6 @@ func main() {
 				panic(er)
 			}
 
-			// imgID, er = getImageID(dockerClient, imgName)
-			// if er != nil {
-			// 	panic(er)
-			// }
-
 			log.Printf("latest img name: %s", imgName)
 			log.Printf("latest img ID: %s", imgID)
 
@@ -715,9 +705,6 @@ func main() {
 			log.Printf("container created: %s", containerID)
 			log.Printf("caching container: %s", containerID)
 
-			// if er = cacheContainer(dockerClient, containerCache, imgName, containerID); er != nil {
-			// 	panic(er)
-			// }
 			containerCache.Store(imgName, containerID)
 
 			log.Printf("container cached: %s", containerID)
@@ -731,12 +718,7 @@ func main() {
 			log.Printf("cache image: %s", imgID)
 
 			imgCache.Store(imgName, imgID)
-			// result, er := cacheImage(dockerClient, imgCache, imgName, imgID)
-			// if er != nil {
-			// 	panic(er)
-			// }
 
-			// log.Printf("%s", result)
 			log.Printf("remove and delete unused images")
 
 			deleted, er := deleteUnusedImages(dockerClient)
@@ -753,35 +735,16 @@ func main() {
 	go func() {
 		<-killsig
 
-		// killContainer := func(id string, c *http.Client) error {
-		// var e error
+		// apply := func(cid string) error { return killContainer(dockerClient, cid) }
 
-		// if e = stopContainer(id, c); e != nil {
-		// 	return e
-		// }
+		// containerCache.Map(apply)
+		// imgCache.Map(apply)
 
-		// if e = removeContainer(id, c); e != nil {
-		// 	return e
-		// }
+		// containerCache.Flush()
+		// imgCache.Flush()
+		log.Printf("run cleanup, remove images and containers")
 
-		// 	return nil
-		// }
-
-		log.Printf("kill all running containers")
-
-		// containerCache.Lock()
-		// {
-		// 	for k, v := range containerCache.store {
-		// 		log.Printf("killing container: %s", k)
-
-		// 		if e := killContainer(v, dockerClient); e != nil {
-		// 			panic(e)
-		// 		}
-		// 	}
-		// }
-		// containerCache.Unlock()
-
-		log.Printf("cleanup complete")
+		onetimeCleanup.Do(cleanup)
 
 		o, e := exec.Command("cleanup").Output()
 		if e != nil {
@@ -790,6 +753,7 @@ func main() {
 		}
 
 		log.Printf("cleanp cmd: %s", string(o))
+		log.Printf("cleanup complete")
 
 		os.Exit(0)
 	}()
