@@ -3,6 +3,7 @@ package main
 /*
 todo:
 - cleanup old images
+-- run prune at the end
 - ping service to list stats
 -- print out the cache contents
 -- num goroutines
@@ -97,6 +98,8 @@ func init() {
 	if err != nil {
 		log.Printf("%s", err)
 	}
+
+	defer os.Remove(wsdir)
 
 	err = os.Chdir(wsdir)
 	if err != nil {
@@ -240,6 +243,53 @@ func buildTar(target string) (arch string, er error) {
 	return
 }
 
+func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er error) {
+	endpoint, er := req.Endpoint.Build()
+	if er != nil {
+		return
+	}
+
+	uri := buildAPIURL(string(endpoint))
+
+	log.Printf("api request endpoint: %s", endpoint)
+	log.Printf("api request uri: %s", uri)
+
+	switch {
+	case req.Method == "GET":
+		res, er = c.Get(uri)
+	case req.Method == "POST":
+		var payload = io.Reader(nil)
+
+		if req.Data != nil {
+			d, er := req.Data.Build()
+			if er != nil {
+				return nil, er
+			}
+
+			payload = bytes.NewReader(d)
+		}
+
+		res, er = c.Post(uri, req.ContentType, payload)
+	case req.Method == "DELETE":
+		r, er := http.NewRequest("DELETE", uri, nil)
+		if er != nil {
+			return nil, er
+		}
+
+		res, er = c.Do(r)
+	}
+
+	if er != nil {
+		return
+	}
+
+	if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
+		return nil, parseDockerAPIErrorResponse(req.SuccessCode, res)
+	}
+
+	return
+}
+
 func buildImage(client *http.Client, builddir, dockfile, imgtar, tag string) (imgname string, er error) {
 	wd, _ := os.Getwd()
 
@@ -337,7 +387,10 @@ func cacheCurrentAndRemovePreviousImageID(client *http.Client, store cache.KVSto
 
 func removeImage(client *http.Client, imgName string) (buf []byte, er error) {
 	req := dock.APIRequest{
-		Endpoint:    dock.RemoveImageAPICall{Name: imgName},
+		Endpoint: dock.RemoveImageAPICall{
+			Name:       imgName,
+			Parameters: map[string]string{"force": "true"},
+		},
 		Data:        nil,
 		Method:      "DELETE",
 		ContentType: "application/json",
@@ -363,48 +416,33 @@ func removeImage(client *http.Client, imgName string) (buf []byte, er error) {
 	return
 }
 
-func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er error) {
-	endpoint, er := req.Endpoint.Build()
+func deleteUnusedImages(client *http.Client) (buf []byte, er error) {
+	req := dock.APIRequest{
+		Endpoint: dock.DeleteUnusedImagesAPICall{
+			Filters: map[string]string{
+				"dangling": "true",
+			},
+		},
+		Data:        nil,
+		Method:      "POST",
+		ContentType: "application/json",
+		SuccessCode: 200,
+	}
+
+	res, er := makeAPIRequest(req, client)
 	if er != nil {
 		return
 	}
 
-	uri := buildAPIURL(string(endpoint))
+	var p dock.ImageDeleteUnusedResponse
 
-	log.Printf("api request endpoint: %s", endpoint)
-	log.Printf("api request uri: %s", uri)
-
-	switch {
-	case req.Method == "GET":
-		res, er = c.Get(uri)
-	case req.Method == "POST":
-		var payload = io.Reader(nil)
-
-		if req.Data != nil {
-			d, er := req.Data.Build()
-			if er != nil {
-				return nil, er
-			}
-
-			payload = bytes.NewReader(d)
-		}
-
-		res, er = c.Post(uri, req.ContentType, payload)
-	case req.Method == "DELETE":
-		r, er := http.NewRequest("DELETE", uri, nil)
-		if er != nil {
-			return nil, er
-		}
-
-		res, er = c.Do(r)
-	}
-
-	if er != nil {
+	if er = json.NewDecoder(res.Body).Decode(&p); er != nil {
 		return
 	}
 
-	if !isExpectedResponseCode(res.StatusCode, req.SuccessCode) {
-		return nil, parseDockerAPIErrorResponse(req.SuccessCode, res)
+	buf, er = json.MarshalIndent(p, "", "\t")
+	if er != nil {
+		return
 	}
 
 	return
@@ -624,7 +662,15 @@ func main() {
 				panic(er)
 			}
 
-			log.Printf("cleanup complete: %s", result)
+			log.Printf("previous image: %s", result)
+			log.Printf("remove and delete unused images")
+
+			deleted, er := deleteUnusedImages(dockerClient)
+			if er != nil {
+				panic(er)
+			}
+
+			log.Printf("cleanup completed: %s", deleted)
 		}()
 
 		log.Printf("webhook event, handled")

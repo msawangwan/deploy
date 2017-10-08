@@ -6,6 +6,12 @@ type ImageDeleteResponseItem struct {
 	Deleted  string `json:"Deleted,omitempty"`
 }
 
+// ImageDeleteUnusedResponse ...
+type ImageDeleteUnusedResponse struct {
+	ImagesDeleted  []ImageDeleteResponseItem `json:"ImagesDeleted,omitempty"`
+	SpaceReclaimed float64                   `json:"SpaceReclaimed,omitempty"`
+}
+
 // ImageInspectResponse ...
 type ImageInspectResponse struct {
 	ID              string          `json:"Id,omitempty"`

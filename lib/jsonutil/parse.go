@@ -58,7 +58,3 @@ func PrettyPrintStruct(v interface{}) error {
 
 	return nil
 }
-
-// func PreparePrettyPrintedStruct(v interface{}) error {
-// 	b, e := json.MarshalIndent
-// }

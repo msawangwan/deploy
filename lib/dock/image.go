@@ -65,13 +65,17 @@ func (iiac InspectImageAPICall) Build() ([]byte, error) { return renderTmpl(iiac
 
 // RemoveImageAPICall ...
 type RemoveImageAPICall struct {
-	Name string
+	Name       string
+	Parameters map[string]string
 }
 
 func (riac RemoveImageAPICall) render() string {
 	return `
 	{{- with . -}}
 		/images/{{- .Name -}}
+			{{- if .Parameters -}}
+				?{{- append_query_parameters .Parameters -}}
+			{{- end -}}
 	{{- end -}}
 	`
 }

@@ -41,6 +41,7 @@ func TestTemplateBuilders(t *testing.T) {
 			Parameters: map[string]string{"some_key": "some_val", "another_key": "another_val"},
 		},
 		RemoveImageAPICall{Name: "some_image_name"},
+		RemoveImageAPICall{Name: "another_image_name", Parameters: map[string]string{"force": "true"}},
 		DeleteUnusedImagesAPICall{
 			Filters: map[string]string{"dangling": "true"},
 		},
