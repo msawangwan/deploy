@@ -236,15 +236,14 @@ func buildTar(target string) (arch string, er error) {
 
 	cmd := exec.Command("buildtar", arch, target)
 
+	// TODO: print these outputs to a log!
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	if er = cmd.Run(); er != nil {
-		log.Printf("%s", stderr.String())
+		log.Print(er)
 		return
 	}
-
-	log.Printf("%s", stdout.String())
 
 	return
 }
@@ -257,8 +256,7 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er
 
 	uri := buildAPIURL(string(endpoint))
 
-	log.Printf("api request endpoint: %s", endpoint)
-	log.Printf("api request uri: %s", uri)
+	log.Printf("making API request: %s", endpoint)
 
 	switch {
 	case req.Method == "GET":
@@ -333,13 +331,15 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string)
 	defer func() {
 		f.Close()
 		os.Remove(imgtar)
+		os.Chdir("../")
 	}()
 
 	er = os.Chdir(builddir)
 	if er != nil {
 		return
 	}
-	defer os.Chdir("../")
+
+	// defer os.Chdir("../")
 
 	wd, _ = os.Getwd()
 
@@ -349,6 +349,8 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string)
 	if er != nil {
 		return
 	}
+
+	log.Printf("image built")
 
 	if !isExpectedResponseCode(200, res.StatusCode) {
 		return "", parseDockerAPIErrorResponse(200, res)
