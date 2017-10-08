@@ -215,6 +215,7 @@ func buildRepo(c cred.Github, repoName, workspace string) error {
 
 	cmd := exec.Command("clrep", args...)
 
+	// TODO: log these to an output log
 	cmd.Dir = workspace
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -223,8 +224,6 @@ func buildRepo(c cred.Github, repoName, workspace string) error {
 		log.Printf("%s", stderr.String())
 		return er
 	}
-
-	log.Printf("%s", stdout.String())
 
 	return nil
 }
@@ -349,6 +348,8 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string)
 	if er != nil {
 		return
 	}
+
+	time.Sleep(5 * time.Second)
 
 	if !isExpectedResponseCode(200, res.StatusCode) {
 		return "", parseDockerAPIErrorResponse(200, res)
