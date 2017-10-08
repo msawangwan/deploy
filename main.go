@@ -72,7 +72,8 @@ var (
 )
 
 var (
-	killsig = make(chan os.Signal, 1)
+	killsig    = make(chan os.Signal, 1)
+	cleanupsig = make(chan struct{}, 1)
 )
 
 var (
@@ -153,6 +154,8 @@ func cleanup() {
 	_ = os.Remove(wsdir)
 
 	wsCache.Flush()
+
+	close(cleanupsig)
 }
 
 func printStats(debug bool) {
@@ -735,13 +738,6 @@ func main() {
 	go func() {
 		<-killsig
 
-		// apply := func(cid string) error { return killContainer(dockerClient, cid) }
-
-		// containerCache.Map(apply)
-		// imgCache.Map(apply)
-
-		// containerCache.Flush()
-		// imgCache.Flush()
 		log.Printf("run cleanup, remove images and containers")
 
 		onetimeCleanup.Do(cleanup)
@@ -754,6 +750,8 @@ func main() {
 
 		log.Printf("cleanp cmd: %s", string(o))
 		log.Printf("cleanup complete")
+
+		<-cleanupsig
 
 		os.Exit(0)
 	}()
