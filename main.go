@@ -498,20 +498,8 @@ func createContainer(client *http.Client, fromImg, containerPort, hostIP, hostPo
 }
 
 func cacheContainer(client *http.Client, store cache.KVStorer, imgName, containerID string) error {
-	prevID, er := store.Fetch(imgName)
-	if er == nil {
-		if er := stopContainer(client, prevID); er != nil {
-			return er
-		}
-
-		if er := removeContainer(client, prevID); er != nil {
-			return er
-		}
-	}
-
-	er = nil
-
-	// if !strutil.IsNullOrEmpty(prevID) {
+	// prevID, er := store.Fetch(imgName)
+	// if er == nil {
 	// 	if er := stopContainer(client, prevID); er != nil {
 	// 		return er
 	// 	}
@@ -520,6 +508,8 @@ func cacheContainer(client *http.Client, store cache.KVStorer, imgName, containe
 	// 		return er
 	// 	}
 	// }
+
+	// er = nil
 
 	store.Store(imgName, containerID)
 
@@ -565,6 +555,14 @@ func stopContainer(client *http.Client, containerID string) error {
 }
 
 func killContainer(client *http.Client, containerID string) error {
+	if er := stopContainer(client, containerID); er != nil {
+		return er
+	}
+
+	if er := removeContainer(client, containerID); er != nil {
+		return er
+	}
+
 	return nil
 }
 
@@ -590,9 +588,10 @@ func removeContainer(client *http.Client, containerID string) error {
 func main() {
 	http.HandleFunc(endpoint, midware.Catch(func(w http.ResponseWriter, r *http.Request) {
 		var (
-			repoName string
-			imgName  string
-			imgID    string
+			repoName    string
+			imgName     string
+			imgID       string
+			containerID string
 		)
 		log.Printf("handling incoming webhook")
 
@@ -655,6 +654,11 @@ func main() {
 				log.Printf("%s", er)
 			}
 		} else {
+			containerID, er = containerCache.Fetch(imgName)
+			if er == nil {
+				killContainer(dockerClient, containerID)
+			}
+
 			buf, er := removeImage(dockerClient, imgID)
 			if er != nil {
 				panic(er)
@@ -696,9 +700,10 @@ func main() {
 			log.Printf("container created: %s", containerID)
 			log.Printf("caching container: %s", containerID)
 
-			if er = cacheContainer(dockerClient, containerCache, imgName, containerID); er != nil {
-				panic(er)
-			}
+			// if er = cacheContainer(dockerClient, containerCache, imgName, containerID); er != nil {
+			// 	panic(er)
+			// }
+			containerCache.Store(imgName, containerID)
 
 			log.Printf("container cached: %s", containerID)
 			log.Printf("start container: %s", containerID)
