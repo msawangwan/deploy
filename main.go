@@ -319,9 +319,10 @@ func getImageID(client *http.Client, imgName string) (imgID string, er error) {
 
 func cacheCurrentAndRemovePreviousImageID(client *http.Client, store cache.KVStorer, imgname, imgid string) (result string, er error) {
 	id := store.Fetch(imgname)
+	result = fmt.Sprintf("no previous image found for : %s", imgname)
 
 	if !strutil.IsNullOrEmpty(id) {
-		buf, er := removeImage(client, imgname)
+		buf, er := removeImage(client, id)
 		if er != nil {
 			return "", er
 		}

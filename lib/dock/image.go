@@ -4,6 +4,25 @@ import (
 	"fmt"
 )
 
+// ListImageAPICall ...
+type ListImageAPICall struct {
+	Parameters map[string]string
+}
+
+func (liac ListImageAPICall) render() string {
+	return `
+	{{- with . -}}
+		/images/json
+			{{- if .Parameters -}}
+				?{{- append_query_parameters .Parameters -}}
+			{{- end -}}
+	{{- end -}}
+	`
+}
+
+// Build ...
+func (liac ListImageAPICall) Build() ([]byte, error) { return renderTmpl(liac) }
+
 // BuildImageAPICall ...
 type BuildImageAPICall struct {
 	Parameters map[string]string

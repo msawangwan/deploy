@@ -30,6 +30,9 @@ func TestTemplateBuilders(t *testing.T) {
 		StartContainerAPICall{
 			ContainerID: id,
 		},
+		ListImageAPICall{
+			Parameters: map[string]string{"one_param": "one_val", "another_param": "and_another_val"},
+		},
 		BuildImageAPICall{},
 		BuildImageAPICall{
 			Parameters: map[string]string{"some_key": "some_val"},
