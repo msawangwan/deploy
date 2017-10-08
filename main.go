@@ -388,15 +388,16 @@ func cacheImage(client *http.Client, store cache.KVStorer, imgname, imgid string
 	result = fmt.Sprintf("cached image [%s][%s]", imgname, imgid)
 
 	id, er := store.Fetch(imgname)
-	if er != nil {
+	if er == nil {
 		buf, er := removeImage(client, id)
 		if er != nil {
 			return "", er
 		}
 
 		result = string(buf)
-		er = nil
 	}
+
+	er = nil
 
 	store.Store(imgname, imgid)
 
