@@ -14,15 +14,16 @@ type IDCache struct {
 // Store ...
 func (c *IDCache) Store(k, v string) {
 	c.Lock()
+	defer c.Unlock()
 	{
 		c.store[k] = v
 	}
-	c.Unlock()
 }
 
 // Fetch ...
 func (c *IDCache) Fetch(k string) (v string, e error) {
 	c.Lock()
+	defer c.Unlock()
 	{
 		if id, found := c.store[k]; found {
 			v = id
@@ -30,7 +31,6 @@ func (c *IDCache) Fetch(k string) (v string, e error) {
 			return v, fmt.Errorf("[warn] no entry in cache for: %s", k)
 		}
 	}
-	c.Unlock()
 
 	return
 }
@@ -45,13 +45,13 @@ func (c *IDCache) Map(apply func(v string) error) error {
 	var e error
 
 	c.Lock()
+	defer c.Unlock()
 	for _, v := range c.store {
 		e = apply(v)
 		if e != nil {
 			return e
 		}
 	}
-	c.Unlock()
 
 	return nil
 }
