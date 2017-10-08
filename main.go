@@ -93,14 +93,19 @@ func init() {
 		err error
 	)
 
-	err = setupLoggers(
-		logger{Logger: statlog, file: statuslog, out: os.Stdout, prefix: "[STATUS]", flags: log.Lshortfile},
-		logger{Logger: outlog, file: outputlog, prefix: "[DEBUG]", flags: log.Lshortfile},
-		logger{Logger: errlog, file: errorlog, prefix: "[ERR]", flags: log.Ldate | log.Ltime | log.Lshortfile},
-	)
+	l1 := &logger{Logger: statlog, file: statuslog, out: os.Stdout, prefix: "[STATUS]", flags: log.Lshortfile}
+	l2 := &logger{Logger: outlog, file: outputlog, prefix: "[DEBUG]", flags: log.Lshortfile}
+	l3 := &logger{Logger: errlog, file: errorlog, prefix: "[ERR]", flags: log.Ldate | log.Ltime | log.Lshortfile}
+
+	err = setupLoggers(l1, l2, l3)
 	if err != nil {
 		log.Fatalf("logger setup failed")
 	}
+
+	// TODO: rework this mess
+	statlog = l1.Logger
+	outlog = l2.Logger
+	errlog = l3.Logger
 
 	errlog.SetPrefix("[ERR][INIT]")
 	defer errlog.SetPrefix("[ERR]")
@@ -186,7 +191,7 @@ type logger struct {
 	flags  int
 }
 
-func setupLoggers(loggers ...logger) error {
+func setupLoggers(loggers ...*logger) error {
 	for _, l := range loggers {
 		var (
 			f *os.File
