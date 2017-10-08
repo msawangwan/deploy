@@ -715,12 +715,13 @@ func main() {
 			log.Printf("container running: %s", containerID)
 			log.Printf("cache image: %s", imgID)
 
-			result, er := cacheImage(dockerClient, imgCache, imgName, imgID)
-			if er != nil {
-				panic(er)
-			}
+			imgCache.Store(imgName, imgID)
+			// result, er := cacheImage(dockerClient, imgCache, imgName, imgID)
+			// if er != nil {
+			// 	panic(er)
+			// }
 
-			log.Printf("%s", result)
+			// log.Printf("%s", result)
 			log.Printf("remove and delete unused images")
 
 			deleted, er := deleteUnusedImages(dockerClient)
