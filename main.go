@@ -307,10 +307,8 @@ func fetchCachedImage(store cache.KVStorer, imgname string) (imgID string, er er
 	return
 }
 
-func buildImage(client *http.Client, builddir, dockfile, imgtar, tag string) (imgname string, er error) {
+func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string) (imgid string, er error) {
 	wd, _ := os.Getwd()
-
-	imgname = tag
 
 	params := map[string]string{
 		"t":          imgname,
@@ -354,6 +352,11 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, tag string) (im
 
 	if !isExpectedResponseCode(200, res.StatusCode) {
 		return "", parseDockerAPIErrorResponse(200, res)
+	}
+
+	imgid, er = getImageID(client, imgname)
+	if er != nil {
+		return
 	}
 
 	return
@@ -646,52 +649,61 @@ func main() {
 		}
 
 		log.Printf("extracted expose port from dockerfile: %s", exposedPort)
-		log.Printf("find previous image with name: %s", imgName)
 
-		imgID, er = fetchCachedImage(imgCache, imgName)
-		if er != nil {
-			if _, ok := er.(*cache.ItemNotInCacheError); ok {
-				log.Printf("%s", er)
-			}
-		} else {
-			containerID, er = containerCache.Fetch(imgName)
-			if er == nil {
-				killContainer(dockerClient, containerID)
+		readySig := make(chan struct{})
+
+		go func(ready chan struct{}) {
+			log.Printf("find previous image with name: %s", imgName)
+
+			imgID, er = fetchCachedImage(imgCache, imgName)
+			if er != nil {
+				if _, ok := er.(*cache.ItemNotInCacheError); ok {
+					log.Printf("%s", er)
+				}
+			} else {
+				containerID, er = containerCache.Fetch(imgName)
+				if er == nil {
+					killContainer(dockerClient, containerID)
+				}
+
+				buf, er := removeImage(dockerClient, imgID)
+				if er != nil {
+					panic(er)
+				}
+
+				log.Printf("found previous image: %s", imgID)
+				log.Printf("removed previous image and layers: %s", string(buf))
 			}
 
-			buf, er := removeImage(dockerClient, imgID)
+			log.Printf("building a tar file from: %s", wsName)
+
+			archName, er := buildTar(wsName)
 			if er != nil {
 				panic(er)
 			}
 
-			log.Printf("found previous image: %s", imgID)
-			log.Printf("removed previous image and layers: %s", string(buf))
-		}
+			log.Printf("successfully tar'ed archive: %s", archName)
+			log.Printf("uploading tar of img: %s", archName)
 
-		log.Printf("building a tar file from: %s", wsName)
+			imgID, er = buildImage(dockerClient, wsName, wsName+"/Dockerfile", archName, repoName)
+			if er != nil {
+				panic(er)
+			}
 
-		archName, er := buildTar(wsName)
-		if er != nil {
-			panic(er)
-		}
+			// imgID, er = getImageID(dockerClient, imgName)
+			// if er != nil {
+			// 	panic(er)
+			// }
 
-		log.Printf("successfully tar'ed archive: %s", archName)
-		log.Printf("uploading tar of img: %s", archName)
+			log.Printf("latest img name: %s", imgName)
+			log.Printf("latest img ID: %s", imgID)
 
-		imgName, er = buildImage(dockerClient, wsName, wsName+"/Dockerfile", archName, repoName)
-		if er != nil {
-			panic(er)
-		}
+			close(ready)
+		}(readySig)
 
-		imgID, er = getImageID(dockerClient, imgName)
-		if er != nil {
-			panic(er)
-		}
+		go func(ready chan struct{}) {
+			<-ready
 
-		log.Printf("latest img name: %s", imgName)
-		log.Printf("latest img ID: %s", imgID)
-
-		go func() {
 			containerID, er := createContainer(dockerClient, imgName, exposedPort, "", "9090")
 			if er != nil {
 				panic(er)
@@ -730,7 +742,7 @@ func main() {
 			}
 
 			log.Printf("cleanup completed: %s", deleted)
-		}()
+		}(readySig)
 
 		log.Printf("webhook event, handled")
 	}))
