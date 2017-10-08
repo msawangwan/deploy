@@ -2,6 +2,7 @@ package dock
 
 import "fmt"
 
+// APICaller is an meant to replace the Templater interface
 type APICaller interface {
 	Call(prefix, version string) string
 }

@@ -1,8 +1,17 @@
 package main
 
+/*
+todo:
+- cleanup old images
+- ping service to list stats
+-- print out the cache contents
+-- num goroutines
+*/
+
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -58,12 +67,12 @@ var (
 )
 
 var (
-	errInvalidWebhookEvent = errors.New("not a valid webhook event, expected: push")
-	errDoesNotExistInCache = errors.New("does not exist in cache")
-	errIDMismatch          = errors.New("expected id doesnt match id")
+	killsig = make(chan os.Signal, 1)
 )
 
-var killsig = make(chan os.Signal, 1)
+var (
+	errInvalidWebhookEvent = errors.New("not a valid webhook event, expected: push")
+)
 
 func init() {
 	signal.Notify(killsig, syscall.SIGINT, syscall.SIGTERM)
@@ -98,7 +107,7 @@ func init() {
 	}
 
 	dockerClient = &http.Client{
-		Timeout: time.Second * 60,
+		Timeout: time.Second * 10,
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 				return net.Dial(socktype, mountpoint)
@@ -231,7 +240,7 @@ func buildTar(target string) (arch string, er error) {
 	return
 }
 
-func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (imgname string, er error) {
+func buildImage(client *http.Client, builddir, dockfile, imgtar, tag string) (imgname string, er error) {
 	wd, _ := os.Getwd()
 
 	imgname = tag
@@ -278,6 +287,76 @@ func buildImage(builddir, dockfile, imgtar, tag string, client *http.Client) (im
 
 	if !isExpectedResponseCode(200, res.StatusCode) {
 		return "", parseDockerAPIErrorResponse(200, res)
+	}
+
+	return
+}
+
+func getImageID(client *http.Client, imgName string) (imgID string, er error) {
+	req := dock.APIRequest{
+		Endpoint:    dock.InspectImageAPICall{Name: imgName},
+		Data:        nil,
+		Method:      "GET",
+		ContentType: "application/json",
+		SuccessCode: 200,
+	}
+
+	res, er := makeAPIRequest(req, client)
+	if er != nil {
+		return 
+	}
+
+	var payload dock.ImageInspectResponse
+
+	if er = json.Decoder(res.Body).Decode(&payload); er != nil {
+		return
+	}
+
+	imgID = payload.ID
+
+	return
+}
+
+func cacheCurrentAndRemovePreviousImageID(client *http.Client, store cache.KVStorer, imgname, imgid string) (result string, er error) {
+	id := store.Fetch(imgname)
+
+	if !strutil.IsNullOrEmpty(id) {
+		buf, er = removeImage(client, imgname)
+		if er != nil {
+			return
+		}
+
+		result = string(buf)
+	}
+
+	store.Store(imgname, imgid)
+
+	return
+}
+
+func removeImage(client *http.Client, imgName string) (buf []byte, er error) {
+	req := dock.APIRequest{
+		Endpoint:    dock.RemoveImageAPICall{Name: imgName},
+		Data:        nil,
+		Method:      "DELETE",
+		ContentType: "application/json",
+		SuccessCode: 200,
+	}
+
+	res, er := makeAPIRequest(req, client)
+	if er != nil {
+		return
+	}
+
+	var payload []dock.ImageDeleteResponseItem
+
+	if er = json.NewDecoder(res.Body).Decode(&payload); er != nil {
+		return
+	}
+
+	buf, er = json.MarshalIndent(&payload, "", " \t")
+	if er != nil {
+		return
 	}
 
 	return
@@ -440,7 +519,6 @@ func removeContainer(client *http.Client, containerID string) error {
 }
 
 func main() {
-
 	http.HandleFunc(endpoint, midware.Catch(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("handling incoming webhook")
 
@@ -503,12 +581,21 @@ func main() {
 		log.Printf("successfully tar'ed archive: %s", archName)
 		log.Printf("uploading tar of img: %s", archName)
 
-		imgName, er := buildImage(wsName, wsName+"/Dockerfile", archName, repoName, dockerClient)
+		imgName, er := buildImage(dockerClient, wsName, wsName+"/Dockerfile", archName, repoName)
 		if er != nil {
 			panic(er)
 		}
 
 		log.Printf("img name: %s", imgName)
+
+		imgID, er := getImageID(dockerClient, imgName)
+		if er != nil {
+			panic(er)
+		}
+
+		log.Printf("img ID: %s", imgID)
+
+
 
 		go func() {
 			containerID, er := createContainer(dockerClient, imgName, exposedPort, "", "9090")
@@ -531,6 +618,14 @@ func main() {
 			}
 
 			log.Printf("container running: %s", containerID)
+			log.Printf("remove previous image associated with container: %s", containerID)
+
+			result, er := cacheCurrentAndRemovePreviousImageID(dockerClient, imgCache, imgName, imgID)
+			if er != nil {
+				panic(er)
+			}
+
+			log.Printf("cleanup complete: %s", result)
 		}()
 
 		log.Printf("webhook event, handled")
@@ -581,4 +676,5 @@ func main() {
 	}()
 
 	log.Fatal(http.ListenAndServe(port, nil))
+}
 }

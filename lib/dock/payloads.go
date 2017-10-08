@@ -1,9 +1,36 @@
-// https://docs.docker.com/engine/api/v1.31/swagger.yaml
-
 package dock
 
-// ListResponse is a docker api json payload
-type ListResponse struct {
+// ImageDeleteResponseItem ...
+type ImageDeleteResponseItem struct {
+	Untagged string `json:"Untagged,omitempty"`
+	Deleted  string `json:"Deleted,omitempty"`
+}
+
+// ImageInspectResponse ...
+type ImageInspectResponse struct {
+	ID              string          `json:"Id,omitempty"`
+	RepoTags        []string        `json:"RepoTags,omitempty"`
+	RepoDigests     []string        `json:"RepoDigests,omitempty"`
+	Parent          string          `json:"Parent,omitempty"`
+	Comment         string          `json:"Comment,omitempty"`
+	Created         string          `json:"Created,omitempty"`
+	Container       string          `json:"Container,omitempty"`
+	ContainerConfig ContainerConfig `json:"ContainerConfig,omitempty"`
+	DockerVersion   string          `json:"DockerVersion,omitempty"`
+	Author          string          `json:"Author,omitempty"`
+	Config          ContainerConfig `json:"Config,omitempty"`
+	Architecture    string          `json:"Architecture,omitempty"`
+	OS              string          `json:"Os,omitempty"`
+	OSVersion       string          `json:"OsVersion,omitempty"`
+	Size            float64         `json:"Size,omitempty"`
+	VirtualSize     float64         `json:"VirtualSize,omitempty"`
+	GraphDriver     GraphDriverData `json:"GraphDriver,omitempty"`
+	RootFS          RootFS          `json:"RootFS,omitempty"`
+	Metadata        Metadata        `json:"Metadata,omitempty"`
+}
+
+// ListContainerResponse is a docker api json payload
+type ListContainerResponse struct {
 	ID              string          `json:"Id,omitempty"`
 	Names           []string        `json:"Names,omitempty"`
 	Image           string          `json:"Image,omitempty"`
@@ -22,8 +49,8 @@ type ListResponse struct {
 	Message         string          `json:"message,omitempty"`
 }
 
-// InspectResponse is the schema for docker api command 'inspect' on 200 ok
-type InspectResponse struct {
+// InspectContainerResponse is the schema for docker api command 'inspect' on 200 ok
+type InspectContainerResponse struct {
 	ID              string          `json:"Id,omitempty"`
 	Created         string          `json:"Created,omitempty"`
 	Path            string          `json:"Path,omitempty"`
@@ -421,6 +448,18 @@ type VolumeOptions struct {
 type TMPFSOptions struct {
 	SizeBytes float64 `json:"SizeBytes,omitempty"`
 	Mode      float64 `json:"Mode,omitempty"`
+}
+
+// RootFS ...
+type RootFS struct {
+	Type      string   `json:"Type,omitempty"`
+	Layers    []string `json:"Layers,omitempty"`
+	BaseLayer string   `json:"BaseLayer,omitempty"`
+}
+
+// Metadata ...
+type Metadata struct {
+	LastTagTime string `json:"LastTagTime,omitempty"`
 }
 
 // StorageOpt is a json field in HostConfig

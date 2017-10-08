@@ -37,6 +37,11 @@ func TestTemplateBuilders(t *testing.T) {
 		BuildImageAPICall{
 			Parameters: map[string]string{"some_key": "some_val", "another_key": "another_val"},
 		},
+		RemoveImageAPICall{Name: "some_image_name"},
+		DeleteUnusedImagesAPICall{
+			Filters: map[string]string{"dangling": "true"},
+		},
+		InspectImageAPICall{Name: "inspect_some_image_name"},
 	}
 
 	for _, p := range payloads {
