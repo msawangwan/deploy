@@ -107,7 +107,7 @@ func init() {
 	}
 
 	dockerClient = &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: time.Second * 60,
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 				return net.Dial(socktype, mountpoint)
