@@ -753,7 +753,7 @@ func main() {
 
 		<-cleanupsig
 
-		os.Exit(0)
+		// os.Exit(0)
 	}()
 
 	log.Fatal(http.ListenAndServe(port, nil))
