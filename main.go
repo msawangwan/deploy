@@ -600,6 +600,7 @@ func main() {
 			imgID       string
 			containerID string
 		)
+
 		log.Printf("handling incoming webhook")
 
 		printStats(true)
@@ -732,7 +733,7 @@ func main() {
 				panic(er)
 			}
 
-			log.Printf("cleanup completed: %s", deleted)
+			log.Printf("unused images deleted: %s", deleted)
 		}(readySig)
 
 		log.Printf("webhook event, handled")
