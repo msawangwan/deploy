@@ -53,7 +53,14 @@ docker run \
 --rm \
 -it \
 -v  "$DOCKERMOUNT_SOCK" \
-"$CONTAINER_IMAGE_NAME"
+"$CONTAINER_IMAGE_NAME" \
+&
+
+MASTER_CONTAINER_PID=$!
 
 # export CIIO_INIT_COMPLETE=0
-export CIIO_MASTER_CONTAINER_RUNNING=0
+# export CIIO_MASTER_CONTAINER_RUNNING=0
+
+wait ${MASTER_CONTAINER_PID}
+
+echo "${MASTER_CONTAINER_PID} terminated, executing cleanup"
