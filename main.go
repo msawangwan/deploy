@@ -51,8 +51,9 @@ const (
 	envipaddr        = "DOCK_MASTERCONTAINER_IPADDR"
 	socktype         = "unix"
 	wsdir            = "__ws"
-	buildfilename    = "buildfile.json"
-	dockerfilepath   = "Dockerfile"
+	errorlog         = "errors.log"
+	outputlog        = "out.log"
+	statuslog        = "status.log"
 )
 
 var (
@@ -63,6 +64,10 @@ var (
 	wsCache        cache.KVStorer
 
 	dockerClient *http.Client
+
+	outlog  *log.Logger
+	errlog  *log.Logger
+	statlog *log.Logger
 
 	onetimeCleanup sync.Once
 
@@ -84,34 +89,46 @@ var (
 func init() {
 	signal.Notify(killsig, syscall.SIGINT, syscall.SIGTERM)
 
+	var (
+		err error
+	)
+
+	err = setupLoggers(
+		logger{Logger: statlog, file: statuslog, out: os.Stdout, prefix: "[STATUS]", flags: log.Lshortfile},
+		logger{Logger: outlog, file: outputlog, prefix: "[DEBUG]", flags: log.Lshortfile},
+		logger{Logger: errlog, file: errorlog, prefix: "[ERR]", flags: log.Ldate | log.Ltime | log.Lshortfile},
+	)
+	if err != nil {
+		log.Fatalf("logger setup failed")
+	}
+
+	errlog.SetPrefix("[ERR][INIT]")
+	defer errlog.SetPrefix("[ERR]")
+
 	rootdir, _ := os.Getwd()
 	pathenv := os.Getenv("PATH")
 
 	os.Setenv("PATH", fmt.Sprintf("%s:%s/bin", pathenv, rootdir))
 
-	var (
-		err error
-	)
-
 	err = jsonutil.FromFilepath("secret/github.auth.json", &credentials)
 	if err != nil {
-		log.Printf("%s", err)
-	} else {
-		log.Printf("loaded credentials: %+v", credentials)
+		errlog.Fatalf("%s", err)
 	}
+
+	outlog.Printf("loaded credentials: %+v", credentials)
 
 	err = os.Mkdir(wsdir, 655)
 	if err != nil {
-		log.Printf("%s", err)
+		errlog.Printf("%s", err)
 	}
 
 	err = os.Chdir(wsdir)
 	if err != nil {
-		log.Printf("%s", err)
-	} else {
-		d, _ := os.Getwd()
-		log.Printf("working dir: %s", d)
+		errlog.Fatalf("%s", err)
 	}
+
+	d, _ := os.Getwd()
+	outlog.Printf("working dir: %s", d)
 
 	defer func() {
 		onetimeCleanup.Do(cleanup)
@@ -130,15 +147,15 @@ func init() {
 
 	localip, err = netutil.LocalIP("eth0")
 	if err != nil {
-		log.Printf("%s", err)
+		errlog.Fatalf("%s", err)
 	}
 
 	imgCache = dock.NewIDCache()
 	containerCache = dock.NewIDCache()
 	wsCache = dir.NewWorkspaceCache()
 
-	log.Printf("server container ip: %s\n", localip)
-	log.Printf("docker host container ip: %s\n", dockerHostAddr)
+	outlog.Printf("server container ip: %s\n", localip)
+	outlog.Printf("docker host container ip: %s\n", dockerHostAddr)
 }
 
 func cleanup() {
@@ -161,9 +178,47 @@ func cleanup() {
 	close(cleanupsig)
 }
 
+type logger struct {
+	*log.Logger
+	out    io.Writer
+	file   string
+	prefix string
+	flags  int
+}
+
+func setupLoggers(loggers ...logger) error {
+	for _, l := range loggers {
+		var (
+			f *os.File
+			w io.Writer
+		)
+
+		if len(l.file) > 0 {
+			o, e := os.OpenFile(l.file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+			if e != nil {
+				return e
+			}
+
+			f = o
+		}
+
+		if l.out != nil {
+			if len(l.file) > 0 {
+				w = io.MultiWriter(f, l.out)
+			} else {
+				w = l.out
+			}
+		}
+
+		l.Logger = log.New(w, l.prefix, l.flags)
+	}
+
+	return nil
+}
+
 func printStats(debug bool) {
 	if debug {
-		log.Printf("%d", runtime.NumGoroutine())
+		statlog.Printf("%d", runtime.NumGoroutine())
 	}
 }
 
@@ -238,15 +293,16 @@ func buildRepo(c cred.Github, repoName, workspace string) error {
 
 	cmd := exec.Command("clrep", args...)
 
-	// TODO: log these to an output log
 	cmd.Dir = workspace
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	if er := cmd.Run(); er != nil {
-		log.Printf("%s", stderr.String())
+		errlog.Print(stderr.String())
 		return er
 	}
+
+	outlog.Print(stdout.String())
 
 	return nil
 }
@@ -258,14 +314,15 @@ func buildTar(target string) (arch string, er error) {
 
 	cmd := exec.Command("buildtar", arch, target)
 
-	// TODO: print these outputs to a log!
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	if er = cmd.Run(); er != nil {
-		log.Print(er)
+		errlog.Print(stderr.String())
 		return
 	}
+
+	outlog.Print(stdout.String())
 
 	return
 }
@@ -278,7 +335,7 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er
 
 	uri := buildAPIURL(string(endpoint))
 
-	log.Printf("making API request: %s", endpoint)
+	outlog.Printf("making API request: %s", endpoint)
 
 	switch {
 	case req.Method == "GET":
@@ -342,8 +399,8 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string)
 
 	uri := buildAPIURL(string(cmd))
 
-	log.Printf("build api uri: %s", uri)
-	log.Printf("tarfile archive: %s", imgtar)
+	outlog.Printf("build api uri: %s", uri)
+	outlog.Printf("tarfile archive: %s", imgtar)
 
 	f, er := os.Open(imgtar)
 	if er != nil {
@@ -363,7 +420,7 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string)
 
 	wd, _ = os.Getwd()
 
-	log.Printf("build dir: %s", wd)
+	outlog.Printf("build dir: %s", wd)
 
 	res, er := client.Post(uri, "application/x-tar", f)
 	if er != nil {
@@ -376,7 +433,7 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string)
 		return "", parseDockerAPIErrorResponse(200, res)
 	}
 
-	log.Printf("image built: %s", imgname)
+	outlog.Printf("image built: %s", imgname)
 
 	imgid, er = getImageID(client, imgname)
 	if er != nil {
@@ -504,25 +561,6 @@ func createContainer(client *http.Client, fromImg, containerPort, hostIP, hostPo
 	return
 }
 
-func cacheContainer(client *http.Client, store cache.KVStorer, imgName, containerID string) error {
-	// prevID, er := store.Fetch(imgName)
-	// if er == nil {
-	// 	if er := stopContainer(client, prevID); er != nil {
-	// 		return er
-	// 	}
-
-	// 	if er := removeContainer(client, prevID); er != nil {
-	// 		return er
-	// 	}
-	// }
-
-	// er = nil
-
-	store.Store(imgName, containerID)
-
-	return nil
-}
-
 func runContainer(client *http.Client, containerID string) error {
 	req := dock.APIRequest{
 		Endpoint: dock.StartContainerAPICall{
@@ -601,7 +639,7 @@ func main() {
 			containerID string
 		)
 
-		log.Printf("handling incoming webhook")
+		statlog.Printf("handling incoming webhook")
 
 		printStats(true)
 
@@ -609,7 +647,7 @@ func main() {
 			panic(errInvalidWebhookEvent)
 		}
 
-		log.Printf("webhook is a valid push event, extracting repository name")
+		outlog.Printf("webhook is a valid push event, extracting repository name")
 
 		repoName, er := github.ExtractRepositoryName(r.Body)
 		if er != nil {
@@ -618,52 +656,52 @@ func main() {
 
 		imgName = repoName
 
-		log.Printf("creating workspace")
+		outlog.Printf("creating workspace")
 
 		wsName, er := getWorkspace(wsCache, repoName)
 		if er != nil {
 			panic(er)
 		}
 
-		log.Printf("workspace dir [key: %s][value: %s]", repoName, wsName)
+		outlog.Printf("workspace dir [key: %s][value: %s]", repoName, wsName)
 
 		cwd, er := os.Getwd()
 		if er != nil {
 			panic(er)
 		}
 
-		log.Printf("current working dir: %s", cwd)
+		outlog.Printf("current working dir: %s", cwd)
 
 		wsPath := filepath.Join(cwd, wsName)
 
-		log.Printf("pulling repo into: %s", wsPath)
+		outlog.Printf("pulling repo into: %s", wsPath)
 
 		if er = buildRepo(credentials, repoName, wsName); er != nil {
 			panic(er)
 		}
 
-		log.Printf("repo built")
+		outlog.Printf("repo built")
 
 		dockerfile := filepath.Join(wsPath, "Dockerfile")
 
-		log.Printf("dockerfile: %s", dockerfile)
+		outlog.Printf("dockerfile: %s", dockerfile)
 
 		exposedPort, er := extractExposedPort(dockerfile)
 		if er != nil {
 			panic(er)
 		}
 
-		log.Printf("extracted expose port from dockerfile: %s", exposedPort)
+		outlog.Printf("extracted expose port from dockerfile: %s", exposedPort)
 
 		readySig := make(chan struct{})
 
 		go func(ready chan struct{}) {
-			log.Printf("find previous image with name: %s", imgName)
+			outlog.Printf("find previous image with name: %s", imgName)
 
 			imgID, er = fetchCachedImage(imgCache, imgName)
 			if er != nil {
 				if _, ok := er.(*cache.ItemNotInCacheError); ok {
-					log.Printf("%s", er)
+					outlog.Printf("%s", er)
 				}
 			} else {
 				containerID, er = containerCache.Fetch(imgName)
@@ -676,27 +714,27 @@ func main() {
 					panic(er)
 				}
 
-				log.Printf("found previous image: %s", imgID)
-				log.Printf("removed previous image and layers: %s", string(buf))
+				outlog.Printf("found previous image: %s", imgID)
+				outlog.Printf("removed previous image and layers: %s", string(buf))
 			}
 
-			log.Printf("building a tar file from: %s", wsName)
+			outlog.Printf("building a tar file from: %s", wsName)
 
 			archName, er := buildTar(wsName)
 			if er != nil {
 				panic(er)
 			}
 
-			log.Printf("successfully tar'ed archive: %s", archName)
-			log.Printf("uploading tar of img: %s", archName)
+			outlog.Printf("successfully tar'ed archive: %s", archName)
+			outlog.Printf("uploading tar of img: %s", archName)
 
 			imgID, er = buildImage(dockerClient, wsName, wsName+"/Dockerfile", archName, repoName)
 			if er != nil {
 				panic(er)
 			}
 
-			log.Printf("latest img name: %s", imgName)
-			log.Printf("latest img ID: %s", imgID)
+			outlog.Printf("latest img name: %s", imgName)
+			outlog.Printf("latest img ID: %s", imgID)
 
 			close(ready)
 		}(readySig)
@@ -709,34 +747,34 @@ func main() {
 				panic(er)
 			}
 
-			log.Printf("container created: %s", containerID)
-			log.Printf("caching container: %s", containerID)
+			statlog.Printf("container created: %s", containerID)
+			outlog.Printf("caching container: %s", containerID)
 
 			containerCache.Store(imgName, containerID)
 
-			log.Printf("container cached: %s", containerID)
-			log.Printf("start container: %s", containerID)
+			statlog.Printf("container cached: %s", containerID)
+			outlog.Printf("start container: %s", containerID)
 
 			if er = runContainer(dockerClient, containerID); er != nil {
 				panic(er)
 			}
 
-			log.Printf("container running: %s", containerID)
-			log.Printf("cache image: %s", imgID)
+			statlog.Printf("container running: %s", containerID)
+			outlog.Printf("cache image: %s", imgID)
 
 			imgCache.Store(imgName, imgID)
 
-			log.Printf("remove and delete unused images")
+			outlog.Printf("remove and delete unused images")
 
 			deleted, er := deleteUnusedImages(dockerClient)
 			if er != nil {
 				panic(er)
 			}
 
-			log.Printf("unused images deleted: %s", deleted)
+			outlog.Printf("unused images deleted: %s", deleted)
 		}(readySig)
 
-		log.Printf("webhook event, handled")
+		statlog.Printf("webhook event, handled")
 	}))
 
 	go func() {

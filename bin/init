@@ -52,10 +52,8 @@ docker run \
 --name "$CONTAINER_PREFIX.$CONTAINER_NAME" \
 --rm \
 -it \
--d \
 -v  "$DOCKERMOUNT_SOCK" \
 "$CONTAINER_IMAGE_NAME" \
-&
 
 MASTER_CONTAINER_PID=$!
 
