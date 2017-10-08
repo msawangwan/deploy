@@ -384,23 +384,24 @@ func getImageID(client *http.Client, imgName string) (imgID string, er error) {
 	return
 }
 
-// func cacheCurrentAndRemovePreviousImageID(client *http.Client, store cache.KVStorer, imgname, imgid string) (result string, er error) {
-// 	id, _ := store.Fetch(imgname)
-// 	result = fmt.Sprintf("no previous image found for : %s", imgname)
+func cacheImage(client *http.Client, store cache.KVStorer, imgname, imgid string) (result string, er error) {
+	result = fmt.Sprintf("cached image [%s][%s]", imgname, imgid)
 
-// 	if !strutil.IsNullOrEmpty(id) {
-// 		buf, er := removeImage(client, id)
-// 		if er != nil {
-// 			return "", er
-// 		}
+	id, er := store.Fetch(imgname)
+	if er != nil {
+		buf, er := removeImage(client, id)
+		if er != nil {
+			return "", er
+		}
 
-// 		result = string(buf)
-// 	}
+		result = string(buf)
+		er = nil
+	}
 
-// 	store.Store(imgname, imgid)
+	store.Store(imgname, imgid)
 
-// 	return
-// }
+	return
+}
 
 func removeImage(client *http.Client, imgName string) (buf []byte, er error) {
 	req := dock.APIRequest{
@@ -677,14 +678,13 @@ func main() {
 			panic(er)
 		}
 
-		log.Printf("img name: %s", imgName)
-
 		imgID, er = getImageID(dockerClient, imgName)
 		if er != nil {
 			panic(er)
 		}
 
-		log.Printf("img ID: %s", imgID)
+		log.Printf("latest img name: %s", imgName)
+		log.Printf("latest img ID: %s", imgID)
 
 		go func() {
 			containerID, er := createContainer(dockerClient, imgName, exposedPort, "", "9090")
@@ -707,14 +707,14 @@ func main() {
 			}
 
 			log.Printf("container running: %s", containerID)
-			// log.Printf("remove previous image associated with container: %s", containerID)
+			log.Printf("cache image: %s", imgID)
 
-			// result, er := cacheCurrentAndRemovePreviousImageID(dockerClient, imgCache, imgName, imgID)
-			// if er != nil {
-			// 	panic(er)
-			// }
+			result, er := cacheImage(dockerClient, imgCache, imgName, imgID)
+			if er != nil {
+				panic(er)
+			}
 
-			// log.Printf("previous image: %s", result)
+			log.Printf("%s", result)
 			log.Printf("remove and delete unused images")
 
 			deleted, er := deleteUnusedImages(dockerClient)
