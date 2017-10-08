@@ -740,7 +740,7 @@ func main() {
 
 		log.Printf("run cleanup, remove images and containers")
 
-		onetimeCleanup.Do(cleanup)
+		go onetimeCleanup.Do(cleanup)
 
 		o, e := exec.Command("cleanup").Output()
 		if e != nil {
