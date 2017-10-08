@@ -1,3 +1,5 @@
+// +build !testing
+
 package main
 
 /*
@@ -99,8 +101,6 @@ func init() {
 		log.Printf("%s", err)
 	}
 
-	defer os.Remove(wsdir)
-
 	err = os.Chdir(wsdir)
 	if err != nil {
 		log.Printf("%s", err)
@@ -108,6 +108,11 @@ func init() {
 		d, _ := os.Getwd()
 		log.Printf("working dir: %s", d)
 	}
+
+	defer func() {
+		_ = os.Chdir("../")
+		_ = os.Remove(wsdir)
+	}()
 
 	dockerClient = &http.Client{
 		Timeout: time.Second * 60,
