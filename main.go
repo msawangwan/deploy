@@ -142,7 +142,10 @@ func init() {
 }
 
 func cleanup() {
-	apply := func(cid string) error { return killContainer(dockerClient, cid) }
+	apply := func(cid string) error {
+		log.Printf("CLEANUP CALLED ON :%s", cid)
+		return killContainer(dockerClient, cid)
+	}
 
 	containerCache.Map(apply)
 	imgCache.Map(apply)
@@ -741,15 +744,6 @@ func main() {
 		log.Printf("run cleanup, remove images and containers")
 
 		go onetimeCleanup.Do(cleanup)
-
-		// o, e := exec.Command("cleanup").Output()
-		// if e != nil {
-		// 	log.Printf("%s", e)
-		// 	os.Exit(1)
-		// }
-
-		// log.Printf("cleanp cmd: %s", string(o))
-		// log.Printf("cleanup complete")
 
 		<-cleanupsig
 
