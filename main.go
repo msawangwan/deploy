@@ -303,12 +303,12 @@ func getImageID(client *http.Client, imgName string) (imgID string, er error) {
 
 	res, er := makeAPIRequest(req, client)
 	if er != nil {
-		return 
+		return
 	}
 
 	var payload dock.ImageInspectResponse
 
-	if er = json.Decoder(res.Body).Decode(&payload); er != nil {
+	if er = json.NewDecoder(res.Body).Decode(&payload); er != nil {
 		return
 	}
 
@@ -321,9 +321,9 @@ func cacheCurrentAndRemovePreviousImageID(client *http.Client, store cache.KVSto
 	id := store.Fetch(imgname)
 
 	if !strutil.IsNullOrEmpty(id) {
-		buf, er = removeImage(client, imgname)
+		buf, er := removeImage(client, imgname)
 		if er != nil {
-			return
+			return "", er
 		}
 
 		result = string(buf)
@@ -595,8 +595,6 @@ func main() {
 
 		log.Printf("img ID: %s", imgID)
 
-
-
 		go func() {
 			containerID, er := createContainer(dockerClient, imgName, exposedPort, "", "9090")
 			if er != nil {
@@ -676,5 +674,4 @@ func main() {
 	}()
 
 	log.Fatal(http.ListenAndServe(port, nil))
-}
 }
