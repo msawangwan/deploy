@@ -350,11 +350,11 @@ func buildImage(client *http.Client, builddir, dockfile, imgtar, imgname string)
 		return
 	}
 
-	log.Printf("image built")
-
 	if !isExpectedResponseCode(200, res.StatusCode) {
 		return "", parseDockerAPIErrorResponse(200, res)
 	}
+
+	log.Printf("image built")
 
 	imgid, er = getImageID(client, imgname)
 	if er != nil {
