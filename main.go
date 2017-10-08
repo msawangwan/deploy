@@ -742,18 +742,18 @@ func main() {
 
 		go onetimeCleanup.Do(cleanup)
 
-		o, e := exec.Command("cleanup").Output()
-		if e != nil {
-			log.Printf("%s", e)
-			os.Exit(1)
-		}
+		// o, e := exec.Command("cleanup").Output()
+		// if e != nil {
+		// 	log.Printf("%s", e)
+		// 	os.Exit(1)
+		// }
 
-		log.Printf("cleanp cmd: %s", string(o))
-		log.Printf("cleanup complete")
+		// log.Printf("cleanp cmd: %s", string(o))
+		// log.Printf("cleanup complete")
 
 		<-cleanupsig
 
-		// os.Exit(0)
+		os.Exit(0)
 	}()
 
 	log.Fatal(http.ListenAndServe(port, nil))
