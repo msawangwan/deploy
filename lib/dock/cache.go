@@ -1,6 +1,7 @@
 package dock
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -20,18 +21,18 @@ func (c *IDCache) Store(k, v string) {
 }
 
 // Fetch ...
-func (c *IDCache) Fetch(k string) string {
-	var id string
-
+func (c *IDCache) Fetch(k string) (v string, e error) {
 	c.Lock()
 	defer c.Unlock()
 	{
-		if v, found := c.store[k]; found {
-			id = v
+		if id, found := c.store[k]; found {
+			v = id
+		} else {
+			return v, fmt.Errorf("[warn] no entry in cache for: %s", k)
 		}
 	}
 
-	return id
+	return
 }
 
 // Flush ...

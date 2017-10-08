@@ -28,7 +28,10 @@ func TestBasicWorkspaceCacherImpl(t *testing.T) {
 
 	t.Logf("created and cached dir: %s %s", dir, symbol.PassMark)
 
-	dir = dc.Fetch(pre)
+	dir, e := dc.Fetch(pre)
+	if e != nil {
+		t.Fatalf("%s", e)
+	}
 
 	t.Logf("fetched dir: %s %s", dir, symbol.PassMark)
 }

@@ -3,7 +3,7 @@ package cache
 // KVStorer ...
 type KVStorer interface {
 	Store(k, v string)
-	Fetch(k string) string
+	Fetch(k string) (v string, e error)
 	Flush() (n int, e error)
 }
 
@@ -13,7 +13,7 @@ type nullKVStore struct{}
 func (nu nullKVStore) Store(k, v string) {}
 
 // Fetch ...
-func (nu nullKVStore) Fetch(k string) (v string) { return }
+func (nu nullKVStore) Fetch(k string) (v string, e error) { return }
 
 // Flush ....
 func (nu nullKVStore) Flush() (n int, e error) { return }

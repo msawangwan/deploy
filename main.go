@@ -31,7 +31,6 @@ import (
 	"time"
 
 	"github.com/msawangwan/ci.io/lib/midware"
-	"github.com/msawangwan/ci.io/lib/strutil"
 
 	"github.com/msawangwan/ci.io/lib/cache"
 	"github.com/msawangwan/ci.io/lib/dir"
@@ -75,6 +74,7 @@ var (
 
 var (
 	errInvalidWebhookEvent = errors.New("not a valid webhook event, expected: push")
+	errItemNotInCache      = errors.New("item not in cache")
 )
 
 func init() {
@@ -166,11 +166,12 @@ func extractExposedPort(dockerfile string) (s string, e error) {
 }
 
 func getWorkspace(store cache.KVStorer, key string) (ws string, er error) {
-	ws = store.Fetch(key)
-
-	if !strutil.IsNullOrEmpty(ws) {
+	ws, er = store.Fetch(key)
+	if er == nil {
 		os.Remove(ws)
 	}
+
+	er = nil
 
 	ws, er = dir.MkTempWorkspace(key)
 	if er != nil {
@@ -295,6 +296,17 @@ func makeAPIRequest(req dock.APIRequest, c *http.Client) (res *http.Response, er
 	return
 }
 
+func fetchCachedImage(store cache.KVStorer, imgname string) (imgID string, er error) {
+	imgID, er = store.Fetch(imgname)
+	if er != nil {
+		return imgID, cache.NewItemNotInCacheError(
+			fmt.Sprintf("no image found with name: %s", imgname),
+		)
+	}
+
+	return
+}
+
 func buildImage(client *http.Client, builddir, dockfile, imgtar, tag string) (imgname string, er error) {
 	wd, _ := os.Getwd()
 
@@ -372,23 +384,23 @@ func getImageID(client *http.Client, imgName string) (imgID string, er error) {
 	return
 }
 
-func cacheCurrentAndRemovePreviousImageID(client *http.Client, store cache.KVStorer, imgname, imgid string) (result string, er error) {
-	id := store.Fetch(imgname)
-	result = fmt.Sprintf("no previous image found for : %s", imgname)
+// func cacheCurrentAndRemovePreviousImageID(client *http.Client, store cache.KVStorer, imgname, imgid string) (result string, er error) {
+// 	id, _ := store.Fetch(imgname)
+// 	result = fmt.Sprintf("no previous image found for : %s", imgname)
 
-	if !strutil.IsNullOrEmpty(id) {
-		buf, er := removeImage(client, id)
-		if er != nil {
-			return "", er
-		}
+// 	if !strutil.IsNullOrEmpty(id) {
+// 		buf, er := removeImage(client, id)
+// 		if er != nil {
+// 			return "", er
+// 		}
 
-		result = string(buf)
-	}
+// 		result = string(buf)
+// 	}
 
-	store.Store(imgname, imgid)
+// 	store.Store(imgname, imgid)
 
-	return
-}
+// 	return
+// }
 
 func removeImage(client *http.Client, imgName string) (buf []byte, er error) {
 	req := dock.APIRequest{
@@ -484,9 +496,8 @@ func createContainer(client *http.Client, fromImg, containerPort, hostIP, hostPo
 }
 
 func cacheContainer(client *http.Client, store cache.KVStorer, imgName, containerID string) error {
-	prevID := store.Fetch(imgName)
-
-	if !strutil.IsNullOrEmpty(prevID) {
+	prevID, er := store.Fetch(imgName)
+	if er == nil {
 		if er := stopContainer(client, prevID); er != nil {
 			return er
 		}
@@ -495,6 +506,18 @@ func cacheContainer(client *http.Client, store cache.KVStorer, imgName, containe
 			return er
 		}
 	}
+
+	er = nil
+
+	// if !strutil.IsNullOrEmpty(prevID) {
+	// 	if er := stopContainer(client, prevID); er != nil {
+	// 		return er
+	// 	}
+
+	// 	if er := removeContainer(client, prevID); er != nil {
+	// 		return er
+	// 	}
+	// }
 
 	store.Store(imgName, containerID)
 
@@ -564,6 +587,11 @@ func removeContainer(client *http.Client, containerID string) error {
 
 func main() {
 	http.HandleFunc(endpoint, midware.Catch(func(w http.ResponseWriter, r *http.Request) {
+		var (
+			repoName string
+			imgName  string
+			imgID    string
+		)
 		log.Printf("handling incoming webhook")
 
 		printStats(true)
@@ -578,6 +606,8 @@ func main() {
 		if er != nil {
 			panic(er)
 		}
+
+		imgName = repoName
 
 		log.Printf("creating workspace")
 
@@ -614,7 +644,24 @@ func main() {
 			panic(er)
 		}
 
-		log.Printf("extracted exposed port from dockerfile: %s", exposedPort)
+		log.Printf("extracted expose port from dockerfile: %s", exposedPort)
+		log.Printf("find previous image with name: %s", imgName)
+
+		imgID, er = fetchCachedImage(imgCache, imgName)
+		if er != nil {
+			if _, ok := er.(*cache.ItemNotInCacheError); ok {
+				log.Printf("%s", er)
+			}
+		} else {
+			buf, er := removeImage(dockerClient, imgID)
+			if er != nil {
+				panic(er)
+			}
+
+			log.Printf("found previous image: %s", imgID)
+			log.Printf("removed previous image and layers: %s", string(buf))
+		}
+
 		log.Printf("building a tar file from: %s", wsName)
 
 		archName, er := buildTar(wsName)
@@ -625,14 +672,14 @@ func main() {
 		log.Printf("successfully tar'ed archive: %s", archName)
 		log.Printf("uploading tar of img: %s", archName)
 
-		imgName, er := buildImage(dockerClient, wsName, wsName+"/Dockerfile", archName, repoName)
+		imgName, er = buildImage(dockerClient, wsName, wsName+"/Dockerfile", archName, repoName)
 		if er != nil {
 			panic(er)
 		}
 
 		log.Printf("img name: %s", imgName)
 
-		imgID, er := getImageID(dockerClient, imgName)
+		imgID, er = getImageID(dockerClient, imgName)
 		if er != nil {
 			panic(er)
 		}
@@ -660,14 +707,14 @@ func main() {
 			}
 
 			log.Printf("container running: %s", containerID)
-			log.Printf("remove previous image associated with container: %s", containerID)
+			// log.Printf("remove previous image associated with container: %s", containerID)
 
-			result, er := cacheCurrentAndRemovePreviousImageID(dockerClient, imgCache, imgName, imgID)
-			if er != nil {
-				panic(er)
-			}
+			// result, er := cacheCurrentAndRemovePreviousImageID(dockerClient, imgCache, imgName, imgID)
+			// if er != nil {
+			// 	panic(er)
+			// }
 
-			log.Printf("previous image: %s", result)
+			// log.Printf("previous image: %s", result)
 			log.Printf("remove and delete unused images")
 
 			deleted, er := deleteUnusedImages(dockerClient)

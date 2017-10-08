@@ -1,6 +1,7 @@
 package dir
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -22,18 +23,18 @@ func (wc *WorkspaceCache) Store(k, v string) {
 }
 
 // Fetch ...
-func (wc *WorkspaceCache) Fetch(k string) string {
-	var d string
-
+func (wc *WorkspaceCache) Fetch(k string) (v string, e error) {
 	wc.Lock()
 	defer wc.Unlock()
 	{
 		if stored, found := wc.store[k]; found {
-			d = stored
+			v = stored
+		} else {
+			return v, fmt.Errorf("[warning] workspace does not exist for key: %s", k)
 		}
 	}
 
-	return d
+	return
 }
 
 // Flush ...
