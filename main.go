@@ -4,8 +4,6 @@ package main
 
 /*
 todo:
-- cleanup old images
--- run prune at the end
 - ping service to list stats
 -- print out the cache contents
 -- num goroutines
@@ -77,6 +75,7 @@ var (
 )
 
 var (
+	routes     = make(map[string]string)
 	killsig    = make(chan os.Signal, 1)
 	cleanupsig = make(chan struct{}, 1)
 )
@@ -93,23 +92,23 @@ func init() {
 		err error
 	)
 
-	statlog, err = initLogger(statuslog, "[status]", os.Stdout, log.Lshortfile)
+	statlog, err = createLogger(statuslog, "[status]", os.Stdout, log.Lshortfile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	outlog, err = initLogger(outputlog, "[debug]", nil, log.Lshortfile)
+	outlog, err = createLogger(outputlog, "[debug]", nil, log.Lshortfile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	errlog, err = initLogger(errorlog, "[err]", nil, log.Ldate|log.Ltime|log.Lshortfile)
+	errlog, err = createLogger(errorlog, "[err]", nil, log.Ldate|log.Ltime|log.Lshortfile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	errlog.SetPrefix("[ERR][INIT]")
-	defer errlog.SetPrefix("[ERR]")
+	errlog.SetPrefix("[err][init]")
+	defer errlog.SetPrefix("[err]")
 
 	rootdir, _ := os.Getwd()
 	pathenv := os.Getenv("PATH")
@@ -162,11 +161,15 @@ func init() {
 
 	outlog.Printf("server container ip: %s\n", localip)
 	outlog.Printf("docker host container ip: %s\n", dockerHostAddr)
+
+	routes["webhook"] = "/webhooks/payload"
+	routes["service"] = "/service/stats"
+	routes["images"] = "/docker/images"
+	routes["containers"] = "/docker/containers"
 }
 
 func cleanup() {
 	apply := func(cid string) error {
-		log.Printf("CLEANUP CALLED ON :%s", cid)
 		return killContainer(dockerClient, cid)
 	}
 
@@ -192,7 +195,7 @@ type logger struct {
 	flags  int
 }
 
-func initLogger(logfile, logprefix string, logout io.Writer, logflags int) (*log.Logger, error) {
+func createLogger(logfile, logprefix string, logout io.Writer, logflags int) (*log.Logger, error) {
 	var (
 		f *os.File
 		w io.Writer
@@ -219,10 +222,14 @@ func initLogger(logfile, logprefix string, logout io.Writer, logflags int) (*log
 	return log.New(w, logprefix, logflags), nil
 }
 
-func printStats(debug bool) {
-	if debug {
-		statlog.Printf("%d", runtime.NumGoroutine())
-	}
+// func printStats(debug bool) {
+// 	if debug {
+// 		statlog.Printf("%d", runtime.NumGoroutine())
+// 	}
+// }
+
+func serviceStats() string {
+	return fmt.Sprintf("number of goroutines: %d", runtime.NumGoroutine())
 }
 
 func isPushEvent(r *http.Request) bool {
@@ -634,7 +641,7 @@ func killContainer(client *http.Client, containerID string) error {
 }
 
 func main() {
-	http.HandleFunc(endpoint, midware.Catch(func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(routes["webhook"], midware.Catch(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			repoName    string
 			imgName     string
@@ -644,7 +651,7 @@ func main() {
 
 		statlog.Printf("handling incoming webhook")
 
-		printStats(true)
+		// printStats(true)
 
 		if !isPushEvent(r) {
 			panic(errInvalidWebhookEvent)
@@ -778,6 +785,19 @@ func main() {
 		}(readySig)
 
 		statlog.Printf("webhook event, handled")
+	}))
+
+	http.HandleFunc(routes["service"], midware.Catch(func(w http.ResponseWriter, r *http.Request) {
+		statlog.Print("incoming service status request")
+
+		stats := serviceStats()
+
+		statlog.Print(stats)
+
+		w.WriteHeader(200)
+		w.Write([]byte(stats))
+
+		statlog.Printf("service status request handled")
 	}))
 
 	go func() {
