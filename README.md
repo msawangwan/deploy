@@ -77,3 +77,8 @@ and now you should have another container running your app, with the latest revs
 there's still a lot to be done on the project but since all i needed was 
 something that made iterating on my node and go apps super easy, this thing does
 the trick.
+
+there are aa few scripts lying around that need to be removed and refactoring
+that could be done and some more endpoints that need to be added for checking
+statuses and stuff. probably next on the list is adding both a config and
+systemd init file.
