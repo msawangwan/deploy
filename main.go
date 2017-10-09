@@ -93,19 +93,20 @@ func init() {
 		err error
 	)
 
-	l1 := &logger{Logger: statlog, file: statuslog, out: os.Stdout, prefix: "[STATUS]", flags: log.Lshortfile}
-	l2 := &logger{Logger: outlog, file: outputlog, prefix: "[DEBUG]", flags: log.Lshortfile}
-	l3 := &logger{Logger: errlog, file: errorlog, prefix: "[ERR]", flags: log.Ldate | log.Ltime | log.Lshortfile}
-
-	err = setupLoggers(l1, l2, l3)
+	statlog, err = initLogger(statuslog, "[status]", os.Stdout, log.Lshortfile)
 	if err != nil {
-		log.Fatalf("logger setup failed")
+		log.Fatal(err)
 	}
 
-	// TODO: rework this mess
-	statlog = l1.Logger
-	outlog = l2.Logger
-	errlog = l3.Logger
+	outlog, err = initLogger(outputlog, "[debug]", nil, log.Lshortfile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	errlog, err = initLogger(errorlog, "[err]", nil, log.Ldate|log.Ltime|log.Lshortfile)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	errlog.SetPrefix("[ERR][INIT]")
 	defer errlog.SetPrefix("[ERR]")
@@ -191,34 +192,31 @@ type logger struct {
 	flags  int
 }
 
-func setupLoggers(loggers ...*logger) error {
-	for _, l := range loggers {
-		var (
-			f *os.File
-			w io.Writer
-		)
+func initLogger(logfile, logprefix string, logout io.Writer, logflags int) (*log.Logger, error) {
+	var (
+		f *os.File
+		w io.Writer
+	)
 
-		if len(l.file) > 0 {
-			o, e := os.OpenFile(l.file, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-			if e != nil {
-				return e
-			}
-
-			f = o
+	if len(logfile) > 0 {
+		o, e := os.OpenFile(logfile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if e != nil {
+			return nil, e
 		}
 
-		if l.out != nil {
-			if len(l.file) > 0 {
-				w = io.MultiWriter(f, l.out)
-			} else {
-				w = l.out
-			}
-		}
-
-		l.Logger = log.New(w, l.prefix, l.flags)
+		f = o
+		w = f
 	}
 
-	return nil
+	if logout != nil {
+		if f != nil {
+			w = io.MultiWriter(f, logout)
+		} else {
+			w = logout
+		}
+	}
+
+	return log.New(w, logprefix, logflags), nil
 }
 
 func printStats(debug bool) {
