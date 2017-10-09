@@ -15,8 +15,8 @@ docker containers and github webhooks.
 goals and features:
 
 * interfaces with both:
-   * the github api and
-   * the docker api
+  * the github api and
+  * the docker api
 * designed to be used within a web developer pipeline
 * designed for simplicity
 
@@ -44,11 +44,11 @@ one full, rich learning expierence.
 so to get started:
 
 * create github account
-    * you must have a repo with valid dockerfile at the root of the project
+  * you must have a repo with valid dockerfile at the root of the project
 * install docker
-    * user running the app needs docker permissions
-    * also assumes you have the docker dameon listening on the default unix socket
-        * /var/run/docker.sock
+  * user running the app needs docker permissions
+  * also assumes you have the docker dameon listening on the default unix socket
+    * /var/run/docker.sock
 * pull the repo
 * cd bin && ./run
 
@@ -56,14 +56,14 @@ at this point two containers should be running:
 
 * the init and master container
 * the webhook listener
-   * listens for webhooks @ "/webhook/payload"
-   * defaults to listening on 9001 (TODO: allow this to be configurable)
+  * listens for webhooks @ "/webhook/payload"
+  * defaults to listening on 9001 (TODO: allow this to be configurable)
 
 now all you need to do is:
 
-* go to github.com/<you>
-   * settings>webhooks
-   * create a webhook by specifiying your server url+the endpoint "/webhooks/payload"
+* go to github.com/_you_
+  * settings > webhooks
+  * create a webhook by specifiying your server url+the endpoint "/webhooks/payload"
 * ok now push a commit to this repo
 
 and now you should have another container running your app, with the latest revs
