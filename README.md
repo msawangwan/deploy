@@ -32,9 +32,9 @@ require all the features of a fancy build pipeline such as jenkins. in fact for 
 i believe you can achieve similar results if not do more, with just this little app. also
 i found jenkins to be slow, cumbersome and worst-of-all written in java.
 
-but more importantly, i really love writting in golang and find continiously(sp?) find myself
+but more importantly, i really love writting in golang and continiously(sp?) find myself
 looking for excuses to build infastructure using the language. i also really love learning, and
-projects like this one (although some may cry, is a case of 'reinventing the wheel'), are full 
+projects like this one -- although some may cry, is a case of 'reinventing the wheel' -- are full 
 of many priceless, learning expierences.
 
 * * *
@@ -64,7 +64,7 @@ so to get started:
 }
 ```
 
-* `cd bin && ./run`
+* to launch the app `cd bin && ./run`
 
 at this point two containers should be running:
 
