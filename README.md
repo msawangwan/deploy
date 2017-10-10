@@ -85,3 +85,5 @@ there are aa few scripts lying around that need to be removed and refactoring
 that could be done and some more endpoints that need to be added for checking
 statuses and stuff. probably next on the list is adding both a config and
 systemd init file.
+
+read more [here](TODO.md).

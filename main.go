@@ -1,13 +1,4 @@
-// +build !testing
-
 package main
-
-/*
-todo:
-- ping service to list stats
--- print out the cache contents
--- num goroutines
-*/
 
 import (
 	"bytes"
@@ -32,12 +23,12 @@ import (
 	"github.com/msawangwan/ci.io/lib/midware"
 
 	"github.com/msawangwan/ci.io/lib/cache"
+	"github.com/msawangwan/ci.io/lib/cred"
 	"github.com/msawangwan/ci.io/lib/dir"
 	"github.com/msawangwan/ci.io/lib/dock"
 	"github.com/msawangwan/ci.io/lib/github"
 	"github.com/msawangwan/ci.io/lib/jsonutil"
 	"github.com/msawangwan/ci.io/lib/netutil"
-	"github.com/msawangwan/ci.io/types/cred"
 )
 
 const (
