@@ -2,7 +2,7 @@
 
 * * *
 
-simple cd/ci server
+simple cd/ci server for web developers.
 
 * * *
 
@@ -10,16 +10,16 @@ simple cd/ci server
 
 * * *
 
-deploy is a very minimal continous deploy server. it is built in go, utilizes
-docker containers and github webhooks.
+deploy is a very minimal continous deploy server. it is built in go, while
+leveraging the powerful technologies offered by docker and github.
 
 goals and features:
 
-* interfaces with both:
+* utilizes both:
   * the github api and
   * the docker api
 * designed to be used within a web developer pipeline
-* designed for simplicity
+* designed for simplicity and flexability
 
 * * *
 
@@ -27,14 +27,15 @@ goals and features:
 
 * * *
 
-i created this tool for myself because i needed something simple and did not
-require all the features of a build pipeline such as jenkins. in fact for web dev,
-i believe you can achieve similar results if not do more, with just this little app.
+i created this tool for myself, because i needed something simple and did not
+require all the features of a fancy build pipeline such as jenkins. in fact for web dev,
+i believe you can achieve similar results if not do more, with just this little app. also
+i found jenkins to be slow, cumbersome and worst-of-all written in java.
 
-i also really love writting in golang and am always looking for excuses to
-build infastructure using the language. i also really love learning so projects
-like this one, although many would say is a case of 'reinventing the wheel', is 
-one full, rich learning expierence.
+but more importantly, i really love writting in golang and find continiously(sp?) find myself
+looking for excuses to build infastructure using the language. i also really love learning, and
+projects like this one (although some may cry, is a case of 'reinventing the wheel'), are full 
+of many priceless, learning expierences.
 
 * * *
 
@@ -51,7 +52,7 @@ so to get started:
   * also assumes you have the docker dameon listening on the default unix socket
     * for those of you listening at home, that's: `/var/run/docker.sock`
 * pull the repo
-  * if you're NOT using private repos, skip these nested bullet points, otherwise ...
+  * if you're NOT using private repos, skip these two nested bullet points, otherwise ...
     * in the project root `mkdir secret && touch github.auth.json`
     * edit file to look like:
 
@@ -69,19 +70,19 @@ at this point two containers should be running:
 
 * the init and master container
 * the webhook listener
-  * listens for webhooks @ _"/webhook/payload"_
-  * defaults to listening on _9001_ (TODO: allow this to be configurable)
+  * listens for webhooks @ `/webhook/payload`
+  * defaults to listening on `9001` (TODO: allow this to be configurable)
 
 now all you need to do is:
 
-* go to github.com/_you_
-  * settings > webhooks
-  * create a webhook by specifiying your server url+the endpoint "/webhooks/payload"
-  * content type should be "application/json"
-  * tick _just the push event_
+* go to `github.com/${you}`
+  * `settings > webhooks`
+  * create a webhook by specifiying your server `${server_url}/webhooks/payload`
+  * content type should be `application/json`
+  * tick `just the push event`
 * ok now push a commit to this repo
 
-and now you should have another container running your app, with the latest revs
+if all's well, you should have another container running your app, with the latest revs
 
 * * *
 
