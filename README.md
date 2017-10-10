@@ -49,9 +49,21 @@ so to get started:
 * install docker
   * user running the app needs docker permissions
   * also assumes you have the docker dameon listening on the default unix socket
-    * for those of you listening at, that's: _/var/run/docker.sock_
+    * for those of you listening at home, that's: `/var/run/docker.sock`
 * pull the repo
-* cd bin && ./run
+  * if you're NOT using private repos, skip these nested bullet points, otherwise ...
+    * in the project root `mkdir secret && touch github.auth.json`
+    * edit file to look like:
+
+```javascript
+{
+
+    "user": $GITHUB_USER_ACCOUNT,
+    "oauth": $GITHUB_PERSONAL_ACCESS_TOKEN
+}
+```
+
+* `cd bin && ./run`
 
 at this point two containers should be running:
 
